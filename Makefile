@@ -33,3 +33,6 @@ build: clean
 
 start: clean
 	make rescript-build; make -j 2 rescript-start webpack-dev-server
+
+watch-builder:
+	$(NODE_BINS)/nodemon src/builder.mjs --watch src
