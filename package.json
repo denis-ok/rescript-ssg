@@ -1,0 +1,37 @@
+{
+  "name": "builder",
+  "description": "static pages generator",
+  "homepage": "https://github.com/denis-ok/builder",
+  "version": "0.0.1",
+  "scripts": {},
+  "type": "module",
+  "keywords": [
+    "rescript",
+    "react"
+  ],
+  "files": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/denis-ok/builder.git"
+  },
+  "author": "Denis Strelkov",
+  "license": "MIT",
+  "dependencies": {
+    "clean-webpack-plugin": "^4.0.0",
+    "html-webpack-plugin": "^5.5.0",
+    "webpack": "^5.69.1",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4"
+  },
+  "peerDependencies": {
+    "@rescript/react": "^0.10.3",
+    "react": ">=16.8.1",
+    "react-dom": ">=16.8.1"
+  },
+  "devDependencies": {
+    "@rescript/react": "^0.10.3",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "rescript": "^9.1.4"
+  }
+}

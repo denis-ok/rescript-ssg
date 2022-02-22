@@ -1,0 +1,30 @@
+{
+  "name": "builder",
+  "version": "0.0.1",
+  "sources": [
+    {
+      "dir": "src",
+      "subdirs": true
+    },
+    {
+      "dir": "demo",
+      "type" : "dev",
+      "subdirs": true
+    }
+  ],
+  "package-specs": {
+    "module": "es6",
+    "in-source": true
+  },
+  "suffix": ".bs.js",
+  "reason": {
+    "react-jsx": 3
+  },
+  "bs-dependencies": [
+    "@rescript/react"
+  ],
+  "warnings": {
+    "number": "+A-4-9-20-102",
+    "error": "+A"
+  }
+}
