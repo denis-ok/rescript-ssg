@@ -13,6 +13,11 @@ module String = {
 
 let srcPath = Utils.srcPath
 
+type page = {
+  path: list<string>,
+  component: unit => React.element,
+}
+
 let defaultRoot = `<div id="app"></div>`
 
 let makeDefaultRootWithRenderedData = data => `<div id="app">${data}</div>`

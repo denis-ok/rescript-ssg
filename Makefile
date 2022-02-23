@@ -13,8 +13,8 @@ rescript-build: rescript-clean
 rescript-start:
 	$(NODE_BINS)/rescript build -w
 
-webpack:
-	$(NODE_BINS)/webpack
+webpack-dev:
+	NODE_ENV=development $(NODE_BINS)/webpack
 
 webpack-prod:
 	NODE_ENV=production $(NODE_BINS)/webpack
@@ -25,14 +25,16 @@ webpack-dev-server:
 clean:
 	make rescript-clean
 
-build-page:
+build-page-template:
 	node ./src/builder.mjs
 
 build: clean
 	make rescript-build
+	make build-page-template
+	make webpack-prod
 
 start: clean
-	make rescript-build; make -j 2 rescript-start webpack-dev-server
+	make rescript-build; build-page-template; make -j 2 rescript-start webpack-dev-server
 
 watch-builder:
 	$(NODE_BINS)/nodemon src/PageBuilder.bs.js --watch src
