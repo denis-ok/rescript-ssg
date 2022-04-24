@@ -6,3 +6,4 @@
 *.bs.js
 /dist
 /demo/bundle
+.trash

@@ -7,7 +7,12 @@
       "subdirs": true
     },
     {
-      "dir": "demo",
+      "dir": "example/src",
+      "type" : "dev",
+      "subdirs": true
+    },
+    {
+      "dir": "example/build",
       "type" : "dev",
       "subdirs": true
     }
