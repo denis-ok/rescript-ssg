@@ -4,6 +4,8 @@
 
 NODE_BINS = node_modules/.bin
 
+EXAMPLE_DIR = example
+
 rescript-clean:
 	$(NODE_BINS)/rescript clean -with-deps
 
@@ -20,13 +22,10 @@ webpack-prod:
 	NODE_ENV=production $(NODE_BINS)/webpack
 
 webpack-dev-server:
-	$(NODE_BINS)/webpack-dev-server --open --hot
+	$(NODE_BINS)/webpack-dev-server --open
 
 clean:
 	make rescript-clean
-
-build-page-template:
-	node ./src/builder.mjs
 
 build: clean
 	make rescript-build
@@ -36,5 +35,9 @@ build: clean
 start: clean
 	make rescript-build; build-page-template; make -j 2 rescript-start webpack-dev-server
 
-watch-builder:
-	$(NODE_BINS)/nodemon src/PageBuilder.bs.js --watch src
+build-example:
+	rm -rf $(EXAMPLE_DIR)/build
+	node $(EXAMPLE_DIR)/src/ExampleBuild.bs.js
+
+serve-example:
+	npx serve -l 3005 $(EXAMPLE_DIR)/build

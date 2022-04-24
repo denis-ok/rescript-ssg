@@ -1,10 +1,20 @@
 module Path = {
   @module("path") external join2: (string, string) => string = "join"
+  @module("path") external join3: (string, string, string) => string = "join"
 }
 
 module Fs = {
   @module("fs") external readFileSync: (string, string) => string = "readFileSync"
+
   @module("fs") external writeFileSync: (string, string) => unit = "writeFileSync"
+
+  type makeDirSyncOptions = {recursive: bool}
+
+  @module("fs") external mkDirSync: (string, makeDirSyncOptions) => unit = "mkdirSync"
+
+  type rmSyncOptions = {force: bool, recursive: bool}
+
+  @module("fs") external rmSync: (string, rmSyncOptions) => unit = "rmSync"
 }
 
 module String = {
@@ -13,24 +23,101 @@ module String = {
 
 let srcPath = Utils.srcPath
 
-type page = {
-  path: list<string>,
-  component: unit => React.element,
+module Webpack = {
+  type page = {
+    title: string,
+    slug: string,
+    entryPath: string,
+    outputDir: string,
+    htmlTemplatePath: string,
+  }
+
+  let pages: Js.Dict.t<page> = Js.Dict.empty()
 }
 
 let defaultRoot = `<div id="app"></div>`
 
 let makeDefaultRootWithRenderedData = data => `<div id="app">${data}</div>`
 
-let template = Fs.readFileSync(Path.join2(srcPath, "../demo/index.html"), "utf8")
+let htmlTemplate = Fs.readFileSync(Path.join2(srcPath, "default-template.html"), "utf8")
 
-let rendered = ReactDOMServer.renderToString(<Example />)
+let userOutputDir: ref<option<string>> = ref(None)
 
-let updatedTemplate =
-  template->String.replace(defaultRoot, makeDefaultRootWithRenderedData(rendered))
+let setOutputDir = path => {
+  Js.log2("Output dir set to: ", path)
+  userOutputDir.contents = Some(path)
+}
 
-Fs.writeFileSync(Path.join2(srcPath, "../demo/index-static.html"), updatedTemplate)
+let getOutputDir = () => {
+  switch userOutputDir.contents {
+  | None => Js.Exn.raiseError("[getOutputDir] Output dir wasn't set.")
+  | Some(dir) => dir
+  }
+}
 
-Js.log(updatedTemplate)
+let defaultReactRootName = "RootComponent"
 
-Js.log("Success")
+let reactRootTemplate = `
+switch ReactDOM.querySelector("#app") {
+| Some(root) => ReactDOM.hydrate(<${defaultReactRootName} />, root)
+| None => ()
+}
+`
+
+type page = {
+  component: React.element,
+  moduleName: string,
+  slug: string,
+  path: string,
+}
+
+let pages: Js.Dict.t<page> = Js.Dict.empty()
+
+let buildPage = (page: page) => {
+  let {component, moduleName, slug, path} = page
+
+  let pageOutputDir = Path.join2(getOutputDir(), path)
+  Js.log2("Output dir for page: ", pageOutputDir)
+
+  let renderedComponent = ReactDOMServer.renderToString(component)
+
+  let resultHtml =
+    htmlTemplate->String.replace(defaultRoot, makeDefaultRootWithRenderedData(renderedComponent))
+  let resultHtmlFilename = "index.html"
+  let resultHtmlPath = Path.join2(pageOutputDir, resultHtmlFilename)
+
+  let resultReactApp = reactRootTemplate->String.replace(defaultReactRootName, moduleName)
+  let resultReactRescriptAppFilename = moduleName ++ "App.res"
+  let resultReactCompiledAppFilename = moduleName ++ "App.bs.js"
+
+  let () = {
+    Fs.mkDirSync(pageOutputDir, {recursive: true})
+    Fs.writeFileSync(resultHtmlPath, resultHtml)
+    Fs.writeFileSync(Path.join2(pageOutputDir, resultReactRescriptAppFilename), resultReactApp)
+  }
+
+  let () = {
+    let webpackPage: Webpack.page = {
+      title: moduleName,
+      slug: slug,
+      entryPath: Path.join2(pageOutputDir, resultReactCompiledAppFilename),
+      outputDir: pageOutputDir,
+      htmlTemplatePath: resultHtmlPath,
+    }
+    Webpack.pages->Js.Dict.set(moduleName, webpackPage)
+  }
+
+  let () = {
+    switch pages->Js.Dict.get(moduleName) {
+    | None => pages->Js.Dict.set(moduleName, page)
+    | Some(_) => ()
+    }
+  }
+
+  Js.log2("Page build finished: ", moduleName)
+}
+
+let buildPagesJson = () => {
+  let json = Webpack.pages->Js.Dict.values->Js.Json.serializeExn
+  Fs.writeFileSync(Path.join2(getOutputDir(), "pages.json"), json)
+}
