@@ -67,6 +67,7 @@ switch ReactDOM.querySelector("#app") {
 type page = {
   component: React.element,
   moduleName: string,
+  modulePath: string,
   slug: string,
   path: string,
 }
@@ -117,7 +118,41 @@ let buildPage = (page: page) => {
   Js.log2("Page build finished: ", moduleName)
 }
 
-let buildPagesJson = () => {
+let buildJsonWithWebpackPages = () => {
   let json = Webpack.pages->Js.Dict.values->Js.Json.serializeExn
   Fs.writeFileSync(Path.join2(getOutputDir(), "pages.json"), json)
+}
+
+let startWatcher = () => {
+  if true {
+    let pagesPaths = pages->Js.Dict.entries->Js.Array2.map(((_, page)) => page.modulePath)
+
+    let watcher = Chokidar.chokidar->Chokidar.watchFiles(pagesPaths)
+    watcher->Chokidar.on("all", (event, filepath) => {
+      Js.log3(Js.Date.make(), "file event: ", event)
+      Js.log2("file path: ", filepath)
+
+      let filename =
+        filepath
+        ->Js.String2.replace(".bs.js", "")
+        ->Js.String2.split("/")
+        ->Belt.List.fromArray
+        ->Belt.List.reverse
+        ->Belt.List.head
+
+      let () = switch filename {
+      | None => ()
+      | Some("") => ()
+      | Some(moduleName) =>
+        Js.log2("Trying to rebuild page: ", moduleName)
+
+        switch pages->Js.Dict.get(moduleName) {
+        | None => Js.Console.error2("Can't rebuild page, page data is missing: ", moduleName)
+        | Some(page) =>
+          Js.log2("Rebuilding page: ", moduleName)
+          buildPage(page)
+        }
+      }
+    })
+  }
 }

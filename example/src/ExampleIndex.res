@@ -1,6 +1,8 @@
 let moduleName = __MODULE__
 
+let modulePath = Utils.getFilepath()
+
 @react.component
 let make = () => {
-  <div> {"Index page"->React.string} </div>
+  <div> {"Index page1"->React.string} </div>
 }
