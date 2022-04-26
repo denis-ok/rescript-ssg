@@ -74,11 +74,26 @@ type page = {
 
 let pages: Js.Dict.t<page> = Js.Dict.empty()
 
+module Log = {
+  let log = (scope, msg) => {
+    let scope = `[${scope}]: `
+    Js.log(scope ++ msg)
+  }
+
+  let buildPage = log("buildPage")
+
+  let buildPage2 = (msg1, msg2) => log("buildPage", msg1 ++ msg2)
+
+  let watcher = log("watcher")
+
+  let watcher2 = (msg1, msg2) => watcher(msg1 ++ msg2)
+}
+
 let buildPage = (page: page) => {
   let {component, moduleName, slug, path} = page
 
   let pageOutputDir = Path.join2(getOutputDir(), path)
-  Js.log2("Output dir for page: ", pageOutputDir)
+  Log.buildPage2("Output dir for page: ", pageOutputDir)
 
   let renderedComponent = ReactDOMServer.renderToString(component)
 
@@ -115,7 +130,7 @@ let buildPage = (page: page) => {
     }
   }
 
-  Js.log2("Page build finished: ", moduleName)
+  Log.buildPage2("Build finished: ", moduleName)
 }
 
 let buildJsonWithWebpackPages = () => {
@@ -128,11 +143,10 @@ let startWatcher = () => {
     let pagesPaths = pages->Js.Dict.entries->Js.Array2.map(((_, page)) => page.modulePath)
 
     let watcher = Chokidar.chokidar->Chokidar.watchFiles(pagesPaths)
-    watcher->Chokidar.on("all", (event, filepath) => {
-      Js.log3(Js.Date.make(), "file event: ", event)
-      Js.log2("file path: ", filepath)
+    watcher->Chokidar.onChange(filepath => {
+      Log.watcher2("File changed: ", filepath)
 
-      let filename =
+      let moduleName =
         filepath
         ->Js.String2.replace(".bs.js", "")
         ->Js.String2.split("/")
@@ -140,16 +154,14 @@ let startWatcher = () => {
         ->Belt.List.reverse
         ->Belt.List.head
 
-      let () = switch filename {
-      | None => ()
-      | Some("") => ()
+      switch moduleName {
+      | None => Log.watcher("Can't rebuild page, moduleName is None")
+      | Some("") => Log.watcher("Can't rebuild page, moduleName is empty string")
       | Some(moduleName) =>
-        Js.log2("Trying to rebuild page: ", moduleName)
-
         switch pages->Js.Dict.get(moduleName) {
-        | None => Js.Console.error2("Can't rebuild page, page data is missing: ", moduleName)
+        | None => Log.watcher2("Can't rebuild page, data is missing: ", moduleName)
         | Some(page) =>
-          Js.log2("Rebuilding page: ", moduleName)
+          Log.watcher2("Rebuilding page: ", moduleName)
           buildPage(page)
         }
       }

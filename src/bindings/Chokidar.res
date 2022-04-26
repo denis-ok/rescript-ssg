@@ -10,4 +10,6 @@ type event
 
 @send external watchFiles: (chokidar, array<string>) => watcher = "watch"
 
-@send external on: (watcher, string, (event, string) => unit) => unit = "on"
+@send external onEvent: (watcher, string, string => unit) => unit = "on"
+
+let onChange = (chokidar, callback) => chokidar->onEvent("change", callback)
