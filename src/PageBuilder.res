@@ -21,7 +21,7 @@ module String = {
   let replace = Js.String2.replace
 }
 
-let srcPath = Utils.srcPath
+let srcPath = SrcPath.srcPath
 
 module Webpack = {
   type page = {

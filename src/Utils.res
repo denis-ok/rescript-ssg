@@ -1,12 +1,15 @@
-@module("./utils.mjs") external srcPath: string = "srcPath"
-
 type jsError
 
 @new external makeError: unit => jsError = "Error"
 
 @get external getStack: jsError => string = "stack"
 
-@module("path") external dirnameFromFilepath: string => string = "dirname"
+// Commented to avoid error in webpack
+// @module("path") external dirnameFromFilepath: string => string = "dirname"
+
+let dirnameFromFilepath = filepath => {
+  filepath->Js.String2.split("/")->Js.Array2.slice(~start=0, ~end_=-1)->Js.Array2.joinWith("/")
+}
 
 // Reusable functions that can be simply called from any module instead of
 // dealing with import.meta.url etc.

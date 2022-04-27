@@ -2,15 +2,15 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 const path = require("path");
-
-const buildDir = path.join(__dirname, "build");
-const outputDir = path.join(buildDir, "bundle");
+const exampleBuildDir = path.join(__dirname, "example/build");
+const webpackOutputDir = path.join(exampleBuildDir, "bundle");
 // const publicDir = path.join(demoDir, "public");
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const pages = require("./build/pages.json");
-console.log(pages);
+const pages = require(path.join(exampleBuildDir, "pages.json"));
+
+console.log("pages: \n", pages);
 // title
 // slug
 // entryPath
@@ -44,7 +44,7 @@ module.exports = {
   mode: isProduction ? "production" : "development",
 
   output: {
-    path: outputDir,
+    path: webpackOutputDir,
     filename: "js/[name].[chunkhash].js",
     // publicPath: publicPath,
   },
