@@ -23,6 +23,15 @@ module String = {
 
 @val external import_: string => Js.Promise.t<'a> = "import"
 
+// Node caches imported modules, here is a workaround, but there is a possible memory leak:
+// https://ar.al/2021/02/22/cache-busting-in-node.js-dynamic-esm-imports/
+// Also: https://github.com/nodejs/modules/issues/307
+let freshImport = modulePath => {
+  let timestamp = Js.Date.now()->Js.Float.toString
+  let cacheBustingModulePath = `${modulePath}?update=${timestamp}`
+  import_(cacheBustingModulePath)
+}
+
 let srcPath = SrcPath.srcPath
 
 module Webpack = {
@@ -113,7 +122,7 @@ let buildPage = (page: page) => {
   }
 
   let () = {
-    import_(modulePath)
+    freshImport(modulePath)
     ->Promise.map(module_ => {
       // Js.log2("imported module: ", module_)
       let component: unit => React.element = module_["make"]
