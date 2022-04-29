@@ -21,6 +21,8 @@ module String = {
   let replace = Js.String2.replace
 }
 
+@val external import_: string => Js.Promise.t<'a> = "import"
+
 let srcPath = SrcPath.srcPath
 
 module Webpack = {
@@ -89,27 +91,45 @@ module Log = {
   let watcher2 = (msg1, msg2) => watcher(msg1 ++ msg2)
 }
 
+let indexHtmlFilename = "index.html"
+
 let buildPage = (page: page) => {
-  let {component, moduleName, slug, path} = page
+  let {component: _, moduleName, slug, path, modulePath} = page
 
   let pageOutputDir = Path.join2(getOutputDir(), path)
+
   Log.buildPage2("Output dir for page: ", pageOutputDir)
 
-  let renderedComponent = ReactDOMServer.renderToString(component)
-
-  let resultHtml =
-    htmlTemplate->String.replace(defaultRoot, makeDefaultRootWithRenderedData(renderedComponent))
-  let resultHtmlFilename = "index.html"
-  let resultHtmlPath = Path.join2(pageOutputDir, resultHtmlFilename)
+  let resultHtmlPath = Path.join2(pageOutputDir, indexHtmlFilename)
 
   let resultReactApp = reactRootTemplate->String.replace(defaultReactRootName, moduleName)
+
   let resultReactRescriptAppFilename = moduleName ++ "App.res"
+
   let resultReactCompiledAppFilename = moduleName ++ "App.bs.js"
 
   let () = {
     Fs.mkDirSync(pageOutputDir, {recursive: true})
-    Fs.writeFileSync(resultHtmlPath, resultHtml)
-    Fs.writeFileSync(Path.join2(pageOutputDir, resultReactRescriptAppFilename), resultReactApp)
+  }
+
+  let () = {
+    import_(modulePath)
+    ->Promise.map(module_ => {
+      // Js.log2("imported module: ", module_)
+      let component: unit => React.element = module_["make"]
+      let renderedComponent = ReactDOMServer.renderToString(component())
+      let resultHtml =
+        htmlTemplate->String.replace(
+          defaultRoot,
+          makeDefaultRootWithRenderedData(renderedComponent),
+        )
+
+      let () = {
+        Fs.writeFileSync(resultHtmlPath, resultHtml)
+        Fs.writeFileSync(Path.join2(pageOutputDir, resultReactRescriptAppFilename), resultReactApp)
+      }
+    })
+    ->ignore
   }
 
   let () = {

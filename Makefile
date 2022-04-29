@@ -13,6 +13,7 @@ rescript-build: rescript-clean
 	$(NODE_BINS)/rescript
 
 rescript-start:
+	mkdir $(EXAMPLE_DIR)/build; \
 	$(NODE_BINS)/rescript build -w
 
 webpack-dev:
@@ -37,6 +38,7 @@ start: clean
 
 build-example:
 	rm -rf $(EXAMPLE_DIR)/build
+	mkdir $(EXAMPLE_DIR)/build
 	node $(EXAMPLE_DIR)/src/ExampleBuild.bs.js
 
 serve-example:
