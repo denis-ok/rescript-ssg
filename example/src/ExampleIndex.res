@@ -4,5 +4,5 @@ let modulePath = Utils.getFilepath()
 
 @react.component
 let make = () => {
-  <div> {"Index page1"->React.string} </div>
+  <div> {"Index page"->React.string} <ExampleSharedModule /> </div>
 }
