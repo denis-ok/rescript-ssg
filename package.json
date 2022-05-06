@@ -17,6 +17,8 @@
   "author": "Denis Strelkov",
   "license": "MIT",
   "dependencies": {
+    "bs-css": "^15.2.0",
+    "bs-css-emotion": "^4.2.0",
     "chokidar": "^3.5.3",
     "clean-webpack-plugin": "^4.0.0",
     "html-webpack-plugin": "^5.5.0",

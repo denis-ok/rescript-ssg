@@ -1,8 +1,10 @@
+module Css = ExamplePage1_Css;
+
 let moduleName = __MODULE__;
 
 let modulePath = Utils.getFilepath();
 
 [@react.component]
 let make = () => {
-  <div> "Page 1"->React.string <ExampleSharedModule /> </div>;
+  <div className=Css.container> "Page 1"->React.string <ExampleSharedModule /> </div>;
 };

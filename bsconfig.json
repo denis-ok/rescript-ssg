@@ -26,7 +26,9 @@
     "react-jsx": 3
   },
   "bs-dependencies": [
-    "@rescript/react"
+    "@rescript/react",
+    "bs-css",
+    "bs-css-emotion"
   ],
   "warnings": {
     "number": "+A-4-9-20-102",
