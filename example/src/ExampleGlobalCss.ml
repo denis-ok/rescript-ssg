@@ -1,6 +1,6 @@
 open Css
 
-let () = global "body" [
+let injectGlobal () = global "body" [
   fontSize (`px(14));
-  backgroundColor white;
+  backgroundColor turquoise;
 ]

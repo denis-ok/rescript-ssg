@@ -1,5 +1,5 @@
 open Css
 
-let container = style [
+let content = style [
   backgroundColor violet;
 ]

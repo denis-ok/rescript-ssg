@@ -6,5 +6,9 @@ let modulePath = Utils.getFilepath();
 
 [@react.component]
 let make = () => {
-  <div className=Css.container> "Page 1"->React.string <ExampleSharedModule /> </div>;
+  <div>
+    <ExampleSharedModule.Header />
+    <div className=Css.content> <h1> "Page 1"->React.string </h1> </div>
+    <ExampleSharedModule.Footer />
+  </div>;
 };
