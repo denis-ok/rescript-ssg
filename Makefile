@@ -12,7 +12,7 @@ rescript-clean:
 rescript-build: rescript-clean
 	$(NODE_BINS)/rescript
 
-rescript-start:
+rescript-start: rescript-clean
 	mkdir $(EXAMPLE_DIR)/build; \
 	$(NODE_BINS)/rescript build -w
 
@@ -39,7 +39,7 @@ start: clean
 build-example:
 	rm -rf $(EXAMPLE_DIR)/build
 	mkdir $(EXAMPLE_DIR)/build
-	node $(EXAMPLE_DIR)/src/ExampleBuild.bs.js
+	node --experimental-loader=./src/node-loader.mjs $(EXAMPLE_DIR)/src/ExampleBuild.bs.js
 
 serve-example:
 	npx serve -l 3005 $(EXAMPLE_DIR)/build
