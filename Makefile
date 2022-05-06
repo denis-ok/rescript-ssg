@@ -43,3 +43,7 @@ build-example:
 
 serve-example:
 	npx serve -l 3005 $(EXAMPLE_DIR)/build
+
+init-dev:
+	rm -rf _opam
+	opam switch create . 4.06.1 --deps-only
