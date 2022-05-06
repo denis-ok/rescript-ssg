@@ -22,9 +22,30 @@ let page1: PageBuilder.page = {
   path: "page1",
 };
 
-let () = PageBuilder.buildPage(pageIndex);
+let buildPageWithWrapper1' =
+    (~wrapper, ~wrapperReference, ~arg, ~argReference, ~page) => {
+  let wrapper =
+    PageBuilder.Wrapper1({wrapper, wrapperReference, arg, argReference});
+  PageBuilder.buildPage(~wrapper, page);
+};
 
-let () = PageBuilder.buildPage(page1);
+let buildPageWithWrapper1 = (~arg, ~argReference, page) => {
+  let wrapper =
+    PageBuilder.Wrapper1({
+      wrapper: ExampleWrapper1.wrapper,
+      wrapperReference: ExampleWrapper1.wrapperReference,
+      arg,
+      argReference,
+    });
+
+  PageBuilder.buildPage(~wrapper, page);
+};
+
+let buildPage = buildPageWithWrapper1;
+
+let () = buildPage(pageIndex, ~arg="123", ~argReference={js|"123"|js});
+
+let () = buildPage(page1, ~arg="qwe", ~argReference={js|"qwe"|js});
 
 let () = PageBuilder.buildJsonWithWebpackPages();
 

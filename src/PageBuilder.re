@@ -111,8 +111,8 @@ let indexHtmlFilename = "index.html";
 
 type wrapper1('a) = {
   wrapper: (React.element, 'a) => React.element,
-  wrapperArg: 'a,
   wrapperReference: string,
+  arg: 'a,
   argReference: string,
 };
 
@@ -120,12 +120,12 @@ let applyWrapper1 =
     (
       ~page: page,
       ~wrapper: (React.element, 'a) => React.element,
-      ~wrapperArg: 'a,
+      ~arg: 'a,
       ~wrapperReference: string,
       ~argReference: string,
     ) => {
   let {component, moduleName} = page;
-  let reactElement = wrapper(component, wrapperArg);
+  let reactElement = wrapper(component, arg);
   let componentString = {j|$(wrapperReference)(<$(moduleName) />, $(argReference))|j};
   (reactElement, componentString);
 };
@@ -149,12 +149,12 @@ let buildPage = (~wrapper: option(wrapper('a))=?, page: page) => {
   let (element, elementString) = {
     switch (wrapper) {
     | None => (component, "<" ++ moduleName ++ " />")
-    | Some(Wrapper1({wrapper, wrapperArg, wrapperReference, argReference})) =>
+    | Some(Wrapper1({wrapper, arg, wrapperReference, argReference})) =>
       let (element, elementString) =
         applyWrapper1(
           ~page,
           ~wrapper,
-          ~wrapperArg,
+          ~arg,
           ~wrapperReference,
           ~argReference,
         );
