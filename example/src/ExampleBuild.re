@@ -1,10 +1,10 @@
 module Path = {
-  @module("path") external join2: (string, string) => string = "join"
-}
+  [@module "path"] external join2: (string, string) => string = "join";
+};
 
-let currentDir = Utils.getDirname()
+let currentDir = Utils.getDirname();
 
-let () = PageBuilder.setOutputDir(Path.join2(currentDir, "../build"))
+let () = PageBuilder.setOutputDir(Path.join2(currentDir, "../build"));
 
 let pageIndex: PageBuilder.page = {
   component: <ExampleIndex />,
@@ -12,7 +12,7 @@ let pageIndex: PageBuilder.page = {
   modulePath: ExampleIndex.modulePath,
   slug: "index",
   path: ".",
-}
+};
 
 let page1: PageBuilder.page = {
   component: <ExamplePage1 />,
@@ -20,12 +20,12 @@ let page1: PageBuilder.page = {
   modulePath: ExamplePage1.modulePath,
   slug: "page1",
   path: "page1",
-}
+};
 
-let () = PageBuilder.buildPage(pageIndex)
+let () = PageBuilder.buildPage(pageIndex);
 
-let () = PageBuilder.buildPage(page1)
+let () = PageBuilder.buildPage(page1);
 
-let () = PageBuilder.buildJsonWithWebpackPages()
+let () = PageBuilder.buildJsonWithWebpackPages();
 
-PageBuilder.startWatcher()
+PageBuilder.startWatcher();
