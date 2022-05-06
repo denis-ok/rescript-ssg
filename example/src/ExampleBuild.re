@@ -28,4 +28,4 @@ let () = PageBuilder.buildPage(page1);
 
 let () = PageBuilder.buildJsonWithWebpackPages();
 
-PageBuilder.startWatcher();
+// PageBuilder.startWatcher();

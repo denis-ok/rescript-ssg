@@ -74,14 +74,14 @@ let getOutputDir = () => {
   };
 };
 
-let defaultReactRootName = "RootComponent";
+let defaultReactRootName = "elementString";
 
-let reactRootTemplate = {j|
+let reactRootTemplate = {js|
 switch (ReactDOM.querySelector("#app")) {
-| Some(root) => ReactDOM.hydrate(<$(defaultReactRootName) />, root)
+| Some(root) => ReactDOM.hydrate(elementString, root)
 | None => ()
 };
-|j};
+|js};
 
 type page = {
   component: React.element,
@@ -109,8 +109,32 @@ module Log = {
 
 let indexHtmlFilename = "index.html";
 
-let buildPage = (page: page) => {
-  let {component: _, moduleName, slug, path, modulePath} = page;
+type wrapper1('a) = {
+  wrapper: (React.element, 'a) => React.element,
+  wrapperArg: 'a,
+  wrapperReference: string,
+  argReference: string,
+};
+
+let applyWrapper1 =
+    (
+      ~page: page,
+      ~wrapper: (React.element, 'a) => React.element,
+      ~wrapperArg: 'a,
+      ~wrapperReference: string,
+      ~argReference: string,
+    ) => {
+  let {component, moduleName} = page;
+  let reactElement = wrapper(component, wrapperArg);
+  let componentString = {j|$(wrapperReference)(<$(moduleName) />, $(argReference))|j};
+  (reactElement, componentString);
+};
+
+type wrapper('a) =
+  | Wrapper1(wrapper1('a));
+
+let buildPage = (~wrapper: option(wrapper('a))=?, page: page) => {
+  let {component, moduleName, slug, path} = page;
 
   let pageOutputDir = Path.join2(getOutputDir(), path);
 
@@ -118,39 +142,47 @@ let buildPage = (page: page) => {
 
   let resultHtmlPath = Path.join2(pageOutputDir, indexHtmlFilename);
 
+  let () = {
+    Fs.mkDirSync(pageOutputDir, {recursive: true});
+  };
+
+  let (element, elementString) = {
+    switch (wrapper) {
+    | None => (component, "<" ++ moduleName ++ " />")
+    | Some(Wrapper1({wrapper, wrapperArg, wrapperReference, argReference})) =>
+      let (element, elementString) =
+        applyWrapper1(
+          ~page,
+          ~wrapper,
+          ~wrapperArg,
+          ~wrapperReference,
+          ~argReference,
+        );
+      (element, elementString);
+    };
+  };
+
   let resultReactApp =
-    reactRootTemplate->String.replace(defaultReactRootName, moduleName);
+    reactRootTemplate->String.replace(defaultReactRootName, elementString);
 
   let resultReactRescriptAppFilename = moduleName ++ "App.re";
 
   let resultReactCompiledAppFilename = moduleName ++ "App.bs.js";
 
-  let () = {
-    Fs.mkDirSync(pageOutputDir, {recursive: true});
-  };
+  let renderedComponent = ReactDOMServer.renderToString(element);
+
+  let resultHtml =
+    htmlTemplate->String.replace(
+      defaultRoot,
+      makeDefaultRootWithRenderedData(renderedComponent),
+    );
 
   let () = {
-    freshImport(modulePath)
-    ->Promise.map(module_ => {
-        // Js.log2("imported module: ", module_)
-        let component: unit => React.element = module_##make;
-        let renderedComponent = ReactDOMServer.renderToString(component());
-        let resultHtml =
-          htmlTemplate->String.replace(
-            defaultRoot,
-            makeDefaultRootWithRenderedData(renderedComponent),
-          );
-
-        let () = {
-          Fs.writeFileSync(resultHtmlPath, resultHtml);
-          Fs.writeFileSync(
-            Path.join2(pageOutputDir, resultReactRescriptAppFilename),
-            resultReactApp,
-          );
-        };
-        ();
-      })
-    ->ignore;
+    Fs.writeFileSync(resultHtmlPath, resultHtml);
+    Fs.writeFileSync(
+      Path.join2(pageOutputDir, resultReactRescriptAppFilename),
+      resultReactApp,
+    );
   };
 
   let () = {
