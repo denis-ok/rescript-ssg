@@ -55,7 +55,7 @@ module Webpack = {
 
 let defaultRoot = {js|<div id="app"></div>|js};
 
-let makeDefaultRootWithRenderedData = data => {j|<div id="app">$(data)</div>|j};
+let makeDefaultRootWithRenderedData = (data: string) => {j|<div id="app">$(data)</div>|j};
 
 let htmlTemplate =
   Fs.readFileSync(Path.join2(srcPath, "default-template.html"), "utf8");
@@ -162,22 +162,21 @@ let buildPage = (~wrapper: option(wrapper('a))=?, page: page) => {
     };
   };
 
-  let resultReactApp =
-    reactRootTemplate->String.replace(defaultReactRootName, elementString);
+  let html = ReactDOMServer.renderToString(element);
 
-  let resultReactRescriptAppFilename = moduleName ++ "App.re";
-
-  let resultReactCompiledAppFilename = moduleName ++ "App.bs.js";
-
-  let renderedComponent = ReactDOMServer.renderToString(element);
+  let htmlWithStyles = Emotion.Server.renderStylesToString(html);
 
   let resultHtml =
     htmlTemplate->String.replace(
       defaultRoot,
-      makeDefaultRootWithRenderedData(renderedComponent),
+      makeDefaultRootWithRenderedData(htmlWithStyles),
     );
 
+  let resultReactApp =
+    reactRootTemplate->String.replace(defaultReactRootName, elementString);
+
   let () = {
+    let resultReactRescriptAppFilename = moduleName ++ "App.re";
     Fs.writeFileSync(resultHtmlPath, resultHtml);
     Fs.writeFileSync(
       Path.join2(pageOutputDir, resultReactRescriptAppFilename),
@@ -186,6 +185,7 @@ let buildPage = (~wrapper: option(wrapper('a))=?, page: page) => {
   };
 
   let () = {
+    let resultReactCompiledAppFilename = moduleName ++ "App.bs.js";
     let webpackPage: Webpack.page = {
       title: moduleName,
       slug,
