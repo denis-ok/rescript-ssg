@@ -57,8 +57,27 @@ let defaultRoot = {js|<div id="app"></div>|js};
 
 let makeDefaultRootWithRenderedData = (data: string) => {j|<div id="app">$(data)</div>|j};
 
-let htmlTemplate =
-  Fs.readFileSync(Path.join2(srcPath, "default-template.html"), "utf8");
+let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
+  let htmlAttributes = helmet.htmlAttributes.toString();
+  let title = helmet.title.toString();
+  let meta = helmet.meta.toString();
+  let link = helmet.link.toString();
+  let bodyAttributes = helmet.bodyAttributes.toString();
+  {j|
+<!doctype html>
+<html $(htmlAttributes)>
+  <head>
+    <meta charset="utf-8"/>
+    $(title)
+    $(meta)
+    $(link)
+  </head>
+  <body $(bodyAttributes)>
+    <div id="app">$(renderedHtml)</div>
+  </body>
+</html>
+|j};
+};
 
 let userOutputDir: ref(option(string)) = ref(None);
 
@@ -166,11 +185,9 @@ let buildPage = (~wrapper: option(wrapper('a))=?, page: page) => {
 
   let htmlWithStyles = Emotion.Server.renderStylesToString(html);
 
-  let resultHtml =
-    htmlTemplate->String.replace(
-      defaultRoot,
-      makeDefaultRootWithRenderedData(htmlWithStyles),
-    );
+  let helmet = ReactHelmet.renderStatic();
+
+  let resultHtml = makeHtmlTemplate(helmet, htmlWithStyles);
 
   let resultReactApp =
     reactRootTemplate->String.replace(defaultReactRootName, elementString);
