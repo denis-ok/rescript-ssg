@@ -4,7 +4,11 @@ module Path = {
 
 let currentDir = Utils.getDirname();
 
-let () = PageBuilder.setOutputDir(Path.join2(currentDir, "../build"));
+let pagesOutputDir = Path.join2(currentDir, "../build");
+
+let webpackOutputDir = Path.join2(pagesOutputDir, "bundle");
+
+let () = PageBuilder.setOutputDir(pagesOutputDir);
 
 let pageIndex: PageBuilder.page = {
   component: <ExampleIndex />,
@@ -47,4 +51,6 @@ let () = buildPage(pageIndex, ~arg="123", ~argReference={js|"123"|js});
 
 let () = buildPage(page1, ~arg="qwe", ~argReference={js|"qwe"|js});
 
-PageBuilder.start();
+PageBuilder.start(~webpackOutputDir);
+
+// PageBuilder.build(~webpackOutputDir);

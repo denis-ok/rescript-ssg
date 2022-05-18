@@ -211,40 +211,44 @@ let buildJsonWithWebpackPages = () => {
   Fs.writeFileSync(Path.join2(getOutputDir(), "pages.json"), json);
 };
 
-let startWatcher = () =>
-  if (true) {
-    let pagesPaths =
-      pages->Js.Dict.entries->Js.Array2.map(((_, page)) => page.modulePath);
+// Watcher doesn't work properly because we need to monitor changes in all dependencies of a page
+// let startWatcher = () =>
+//   if (true) {
+//     let pagesPaths =
+//       pages->Js.Dict.entries->Js.Array2.map(((_, page)) => page.modulePath);
 
-    let watcher = Chokidar.chokidar->Chokidar.watchFiles(pagesPaths);
-    watcher->Chokidar.onChange(filepath => {
-      Log.watcher2("File changed: ", filepath);
+//     let watcher = Chokidar.chokidar->Chokidar.watchFiles(pagesPaths);
+//     watcher->Chokidar.onChange(filepath => {
+//       Log.watcher2("File changed: ", filepath);
 
-      let moduleName =
-        filepath
-        ->Js.String2.replace(".bs.js", "")
-        ->Js.String2.split("/")
-        ->Belt.List.fromArray
-        ->Belt.List.reverse
-        ->Belt.List.head;
+//       let moduleName =
+//         filepath
+//         ->Js.String2.replace(".bs.js", "")
+//         ->Js.String2.split("/")
+//         ->Belt.List.fromArray
+//         ->Belt.List.reverse
+//         ->Belt.List.head;
 
-      switch (moduleName) {
-      | None => Log.watcher("Can't rebuild page, moduleName is None")
-      | Some("") =>
-        Log.watcher("Can't rebuild page, moduleName is empty string")
-      | Some(moduleName) =>
-        switch (pages->Js.Dict.get(moduleName)) {
-        | None =>
-          Log.watcher2("Can't rebuild page, data is missing: ", moduleName)
-        | Some(page) =>
-          Log.watcher2("Rebuilding page: ", moduleName);
-          buildPage(page);
-        }
-      };
-    });
-  };
+//       switch (moduleName) {
+//       | None => Log.watcher("Can't rebuild page, moduleName is None")
+//       | Some("") =>
+//         Log.watcher("Can't rebuild page, moduleName is empty string")
+//       | Some(moduleName) =>
+//         switch (pages->Js.Dict.get(moduleName)) {
+//         | None =>
+//           Log.watcher2("Can't rebuild page, data is missing: ", moduleName)
+//         | Some(page) =>
+//           Log.watcher2("Rebuilding page: ", moduleName);
+//           buildPage(page);
+//         }
+//       };
+//     });
+//   };
 
-let start = () => {
-  // startWatcher();
-  Webpack.startDevServer();
+let start = (~webpackOutputDir) => {
+  Webpack.startDevServer(~webpackOutputDir);
+};
+
+let build = (~webpackOutputDir) => {
+  Webpack.build(~webpackOutputDir);
 };

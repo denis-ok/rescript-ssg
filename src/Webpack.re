@@ -10,27 +10,29 @@ module CleanWebpackPlugin = {
   external make: unit => webpackPlugin = "CleanWebpackPlugin";
 };
 
-type webpackCompiler;
+module Webpack = {
+  type compiler;
 
-// [@module "webpack"]
-// external makeCompilerWithCallback:
-//   (Js.t({..}), ('err, 'stats) => unit) => webpackCompiler =
-//   "default";
+  [@module "webpack"]
+  external makeCompiler: Js.t({..}) => compiler = "default";
 
-[@module "webpack"]
-external makeCompiler: Js.t({..}) => webpackCompiler = "default";
+  [@send] external run: (compiler, ('err, 'stats) => unit) => unit = "run";
 
-type devServer;
+  [@send] external close: (compiler, 'closeError => unit) => unit = "close";
+};
 
-[@new] [@module "webpack-dev-server"]
-external makeWebpackDevServer: (Js.t({..}), webpackCompiler) => devServer =
-  "default";
+module WebpackDevServer = {
+  type t;
 
-[@send]
-external startCallback: (devServer, unit => unit) => unit = "startCallback";
+  [@new] [@module "webpack-dev-server"]
+  external make: (Js.t({..}), Webpack.compiler) => t = "default";
 
-[@send]
-external stopCallback: (devServer, unit => unit) => unit = "stopCallback";
+  [@send]
+  external startWithCallback: (t, unit => unit) => unit = "startCallback";
+
+  [@send]
+  external stopWithCallback: (t, unit => unit) => unit = "stopCallback";
+};
 
 type page = {
   title: string,
@@ -42,13 +44,9 @@ type page = {
 
 let pages: Js.Dict.t(page) = Js.Dict.empty();
 
-let exampleBuildDir = Path.join2(SrcPath.srcPath, "../example/build");
-
-let webpackOutputDir = Path.join2(exampleBuildDir, "bundle");
-
 let isProduction = false;
 
-let makeConfig = () => {
+let makeConfig = (~webpackOutputDir) => {
   let pages = pages->Js.Dict.values;
 
   let entries =
@@ -101,22 +99,45 @@ let makeConfig = () => {
   config;
 };
 
-let startDevServer = () => {
-  let config = makeConfig();
+let makeCompiler = (~webpackOutputDir) => {
+  let config = makeConfig(~webpackOutputDir);
+  let compiler = Webpack.makeCompiler(config);
+  (compiler, config);
+};
 
-  let compiler = makeCompiler(config);
+let build = (~webpackOutputDir) => {
+  let (compiler, _config) = makeCompiler(~webpackOutputDir);
 
+  compiler->Webpack.run((err, _stats) => {
+    switch (Js.Nullable.toOption(err)) {
+    | None => Js.log("[Webpack] Build success")
+    | Some(_error) => Js.log("[Webpack] Build error")
+    };
+
+    compiler->Webpack.close(closeError => {
+      switch (Js.Nullable.toOption(closeError)) {
+      | None => ()
+      | Some(_error) => Js.log("[Webpack] Compiler close error")
+      }
+    });
+  });
+};
+
+let startDevServer = (~webpackOutputDir) => {
+  let (compiler, config) = makeCompiler(~webpackOutputDir);
   let devServerOptions = config##devServer;
+  let devServer = WebpackDevServer.make(devServerOptions, compiler);
 
-  let devServer = makeWebpackDevServer(devServerOptions, compiler);
-
-  devServer->startCallback(() => {Js.log("Dev server started")});
-
+  devServer->WebpackDevServer.startWithCallback(() => {
+    Js.log("[Webpack] WebpackDevServer started")
+  });
+  //
   // Js.Global.setTimeout(
-  //   () => devServer->stopCallback(() => {Js.log("Dev server stopped!")}),
+  //   () =>
+  //     devServer->WebpackDevServer.stopWithCallback(() => {
+  //       Js.log("Dev server stopped!")
+  //     }),
   //   5000,
   // )
   // ->ignore;
-
-  ();
 };
