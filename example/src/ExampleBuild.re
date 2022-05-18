@@ -51,6 +51,6 @@ let () = buildPage(pageIndex, ~arg="123", ~argReference={js|"123"|js});
 
 let () = buildPage(page1, ~arg="qwe", ~argReference={js|"qwe"|js});
 
-PageBuilder.start(~webpackOutputDir);
+// PageBuilder.start(~webpackOutputDir);
 
-// PageBuilder.build(~webpackOutputDir);
+PageBuilder.build(~webpackOutputDir);

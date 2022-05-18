@@ -11,12 +11,29 @@ module CleanWebpackPlugin = {
 };
 
 module Webpack = {
+  module Stats = {
+    type t;
+
+    type toStringOptions = {
+      assets: bool,
+      hash: bool,
+      colors: bool,
+    };
+
+    [@send] external hasErrors: t => bool = "hasErrors";
+    [@send] external hasWarnings: t => bool = "hasWarnings";
+    [@send] external toString': (t, toStringOptions) => string = "toString";
+
+    let toString = stats =>
+      stats->toString'({assets: true, hash: true, colors: true});
+  };
+
   type compiler;
 
   [@module "webpack"]
   external makeCompiler: Js.t({..}) => compiler = "default";
 
-  [@send] external run: (compiler, ('err, 'stats) => unit) => unit = "run";
+  [@send] external run: (compiler, ('err, Stats.t) => unit) => unit = "run";
 
   [@send] external close: (compiler, 'closeError => unit) => unit = "close";
 };
@@ -105,13 +122,27 @@ let makeCompiler = (~webpackOutputDir) => {
   (compiler, config);
 };
 
-let build = (~webpackOutputDir) => {
+let build = (~verbose, ~webpackOutputDir) => {
   let (compiler, _config) = makeCompiler(~webpackOutputDir);
 
-  compiler->Webpack.run((err, _stats) => {
+  compiler->Webpack.run((err, stats) => {
     switch (Js.Nullable.toOption(err)) {
     | None => Js.log("[Webpack] Build success")
     | Some(_error) => Js.log("[Webpack] Build error")
+    };
+
+    switch (Webpack.Stats.hasErrors(stats)) {
+    | true => Js.log("[Webpack] Stats.hasErrors")
+    | _ => ()
+    };
+
+    switch (Webpack.Stats.hasWarnings(stats)) {
+    | true => Js.log("[Webpack] Stats.hasWarnings")
+    | _ => ()
+    };
+
+    if (verbose) {
+      Js.log(Webpack.Stats.toString(stats));
     };
 
     compiler->Webpack.close(closeError => {

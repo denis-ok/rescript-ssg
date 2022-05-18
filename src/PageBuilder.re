@@ -94,6 +94,7 @@ type page = {
 };
 
 let pages: Js.Dict.t(page) = Js.Dict.empty();
+
 module Log = {
   let log = (scope, msg) => {
     let scope = {j|[$(scope)]: |j};
@@ -250,5 +251,5 @@ let start = (~webpackOutputDir) => {
 };
 
 let build = (~webpackOutputDir) => {
-  Webpack.build(~webpackOutputDir);
+  Webpack.build(~webpackOutputDir, ~verbose=true);
 };
