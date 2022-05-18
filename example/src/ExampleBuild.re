@@ -47,6 +47,4 @@ let () = buildPage(pageIndex, ~arg="123", ~argReference={js|"123"|js});
 
 let () = buildPage(page1, ~arg="qwe", ~argReference={js|"qwe"|js});
 
-let () = PageBuilder.buildJsonWithWebpackPages();
-
-// PageBuilder.startWatcher();
+PageBuilder.start();

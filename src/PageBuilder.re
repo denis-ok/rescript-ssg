@@ -1,8 +1,3 @@
-module Path = {
-  [@module "path"] external join2: (string, string) => string = "join";
-  [@module "path"] external join3: (string, string, string) => string = "join";
-};
-
 module Fs = {
   [@module "fs"]
   external readFileSync: (string, string) => string = "readFileSync";
@@ -40,18 +35,6 @@ let freshImport = modulePath => {
 };
 
 let srcPath = SrcPath.srcPath;
-
-module Webpack = {
-  type page = {
-    title: string,
-    slug: string,
-    entryPath: string,
-    outputDir: string,
-    htmlTemplatePath: string,
-  };
-
-  let pages: Js.Dict.t(page) = Js.Dict.empty();
-};
 
 let defaultRoot = {js|<div id="app"></div>|js};
 
@@ -260,3 +243,8 @@ let startWatcher = () =>
       };
     });
   };
+
+let start = () => {
+  // startWatcher();
+  Webpack.startDevServer();
+};
