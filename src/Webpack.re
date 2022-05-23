@@ -92,11 +92,21 @@ let makeConfig = (~webpackOutputDir) => {
 
     "output": {
       "path": webpackOutputDir,
+      "publicPath": "",
       "filename": "js/[name].[chunkhash].js",
+      // Hash suffix disable.
+      // TODO Figure out how to use custom hash func to reuse in node-loader.
+      "assetModuleFilename": "assets/[name][ext]"
     },
 
     "module": {
-      "rules": [||],
+      "rules": [|
+        {
+          //
+          "test": [%bs.re "/\\.(png|jpe?g|gif)$/i"],
+          "type": "asset/resource",
+        },
+      |],
     },
 
     "plugins":
@@ -118,6 +128,7 @@ let makeConfig = (~webpackOutputDir) => {
 
 let makeCompiler = (~webpackOutputDir) => {
   let config = makeConfig(~webpackOutputDir);
+  // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
   (compiler, config);
 };

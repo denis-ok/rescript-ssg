@@ -42,7 +42,7 @@ build-example:
 	node --experimental-loader=./src/node-loader.mjs $(EXAMPLE_DIR)/src/ExampleBuild.bs.js
 
 serve-example:
-	npx serve -l 3005 $(EXAMPLE_DIR)/build
+	npx serve -l 3005 $(EXAMPLE_DIR)/build/bundle
 
 init-dev:
 	rm -rf _opam

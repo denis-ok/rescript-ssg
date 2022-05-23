@@ -7,8 +7,17 @@
 // https://nodejs.org/api/esm.html#loaders
 
 
+import path from "path"
+// import { dirname } from 'path';
+// import { fileURLToPath } from 'url';
+// const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const isBsArtifact = url => {
   return url.match(/file:.*\.bs\.js/i)
+}
+
+const isJpeg = url => {
+  return url.match(/file:.*\.jpg|jpeg/i)
 }
 
 export async function load(url, context, defaultLoad) {
@@ -20,6 +29,14 @@ export async function load(url, context, defaultLoad) {
       source,
       format,
     };
+  } else if (isJpeg(url)) {
+    const filename = path.basename(url);
+    // TODO use a constant for assets dir and reuse in webpack config and here
+    const webpackAssetPath = "assets/" + filename;
+    return Promise.resolve({
+      source: `export default "${webpackAssetPath}";`,
+      format: "module",
+    })
   }
 
   // Defer to Node.js for all other URLs.
