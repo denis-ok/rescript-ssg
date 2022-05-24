@@ -1,0 +1,1 @@
+let () = ExamplePages.start();
