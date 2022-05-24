@@ -229,10 +229,10 @@ let buildJsonWithWebpackPages = (~outputDir) => {
 //     });
 //   };
 
-let start = (~webpackOutputDir) => {
-  Webpack.startDevServer(~webpackOutputDir);
+let start = (~mode, ~webpackOutputDir) => {
+  Webpack.startDevServer(~mode, ~webpackOutputDir);
 };
 
-let build = (~webpackOutputDir) => {
-  Webpack.build(~webpackOutputDir, ~verbose=true);
+let build = (~mode, ~webpackOutputDir) => {
+  Webpack.build(~mode, ~webpackOutputDir, ~verbose=true);
 };

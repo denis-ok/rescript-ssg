@@ -51,6 +51,18 @@ module WebpackDevServer = {
   external stopWithCallback: (t, unit => unit) => unit = "stopCallback";
 };
 
+module Mode = {
+  type t =
+    | Development
+    | Production;
+
+  let toString = (mode: t) =>
+    switch (mode) {
+    | Development => "development"
+    | Production => "production"
+    };
+};
+
 type page = {
   title: string,
   slug: string,
@@ -65,7 +77,7 @@ let isProduction = false;
 
 let webpackAssetsDir = "assets";
 
-let makeConfig = (~webpackOutputDir) => {
+let makeConfig = (~mode: Mode.t, ~webpackOutputDir) => {
   let pages = pages->Js.Dict.values;
 
   let entries =
@@ -90,7 +102,7 @@ let makeConfig = (~webpackOutputDir) => {
   let config = {
     "entry": entries,
 
-    "mode": isProduction ? "production" : "development",
+    "mode": Mode.toString(mode),
 
     "output": {
       "path": webpackOutputDir,
@@ -128,15 +140,15 @@ let makeConfig = (~webpackOutputDir) => {
   config;
 };
 
-let makeCompiler = (~webpackOutputDir) => {
-  let config = makeConfig(~webpackOutputDir);
+let makeCompiler = (~mode, ~webpackOutputDir) => {
+  let config = makeConfig(~mode, ~webpackOutputDir);
   // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
   (compiler, config);
 };
 
-let build = (~verbose, ~webpackOutputDir) => {
-  let (compiler, _config) = makeCompiler(~webpackOutputDir);
+let build = (~mode, ~webpackOutputDir, ~verbose) => {
+  let (compiler, _config) = makeCompiler(~mode, ~webpackOutputDir);
 
   compiler->Webpack.run((err, stats) => {
     switch (Js.Nullable.toOption(err)) {
@@ -167,8 +179,8 @@ let build = (~verbose, ~webpackOutputDir) => {
   });
 };
 
-let startDevServer = (~webpackOutputDir) => {
-  let (compiler, config) = makeCompiler(~webpackOutputDir);
+let startDevServer = (~mode, ~webpackOutputDir) => {
+  let (compiler, config) = makeCompiler(~mode, ~webpackOutputDir);
   let devServerOptions = config##devServer;
   let devServer = WebpackDevServer.make(devServerOptions, compiler);
 

@@ -1,1 +1,1 @@
-let () = ExamplePages.build();
+let () = ExamplePages.build(~mode=Production);

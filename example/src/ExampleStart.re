@@ -1,1 +1,1 @@
-let () = ExamplePages.start();
+let () = ExamplePages.start(~mode=Development);

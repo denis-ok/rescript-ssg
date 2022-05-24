@@ -39,6 +39,6 @@ let addPages = () => {
 
 let () = addPages();
 
-let start = () => PageBuilder.start(~webpackOutputDir);
+let start = (~mode) => PageBuilder.start(~mode, ~webpackOutputDir);
 
-let build = () => PageBuilder.build(~webpackOutputDir);
+let build = (~mode) => PageBuilder.build(~mode, ~webpackOutputDir);
