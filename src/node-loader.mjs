@@ -8,6 +8,7 @@
 
 
 import path from "path"
+import {webpackAssetsDir} from "./Webpack.bs.js"
 // import { dirname } from 'path';
 // import { fileURLToPath } from 'url';
 // const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -31,8 +32,7 @@ export async function load(url, context, defaultLoad) {
     };
   } else if (isJpeg(url)) {
     const filename = path.basename(url);
-    // TODO use a constant for assets dir and reuse in webpack config and here
-    const webpackAssetPath = "assets/" + filename;
+    const webpackAssetPath = webpackAssetsDir + "/" + filename;
     return Promise.resolve({
       source: `export default "${webpackAssetPath}";`,
       format: "module",

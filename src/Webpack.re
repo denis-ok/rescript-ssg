@@ -63,6 +63,8 @@ let pages: Js.Dict.t(page) = Js.Dict.empty();
 
 let isProduction = false;
 
+let webpackAssetsDir = "assets";
+
 let makeConfig = (~webpackOutputDir) => {
   let pages = pages->Js.Dict.values;
 
@@ -94,9 +96,9 @@ let makeConfig = (~webpackOutputDir) => {
       "path": webpackOutputDir,
       "publicPath": "",
       "filename": "js/[name].[chunkhash].js",
-      // Hash suffix disable.
+      // Hash suffix disabled.
       // TODO Figure out how to use custom hash func to reuse in node-loader.
-      "assetModuleFilename": "assets/[name][ext]"
+      "assetModuleFilename": webpackAssetsDir ++ "/" ++ "[name][ext]",
     },
 
     "module": {
