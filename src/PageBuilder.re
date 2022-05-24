@@ -62,20 +62,6 @@ let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
 |j};
 };
 
-let userOutputDir: ref(option(string)) = ref(None);
-
-let setOutputDir = path => {
-  Js.log2("Output dir set to: ", path);
-  userOutputDir.contents = Some(path);
-};
-
-let getOutputDir = () => {
-  switch (userOutputDir.contents) {
-  | None => Js.Exn.raiseError("[getOutputDir] Output dir wasn't set.")
-  | Some(dir) => dir
-  };
-};
-
 let defaultReactRootName = "elementString";
 
 let reactRootTemplate = {js|
@@ -136,10 +122,10 @@ let applyWrapper1 =
 type wrapper('a) =
   | Wrapper1(wrapper1('a));
 
-let buildPage = (~wrapper: option(wrapper('a))=?, page: page) => {
-  let {component, moduleName, slug, path} = page;
+let buildPage = (~outputDir, ~wrapper: option(wrapper('a))=?, page: page) => {
+  let {component, moduleName, slug, path: pagePath} = page;
 
-  let pageOutputDir = Path.join2(getOutputDir(), path);
+  let pageOutputDir = Path.join2(outputDir, pagePath);
 
   Log.buildPage2("Output dir for page: ", pageOutputDir);
 
@@ -207,9 +193,9 @@ let buildPage = (~wrapper: option(wrapper('a))=?, page: page) => {
   Log.buildPage2("Build finished: ", moduleName);
 };
 
-let buildJsonWithWebpackPages = () => {
+let buildJsonWithWebpackPages = (~outputDir) => {
   let json = Webpack.pages->Js.Dict.values->Js.Json.serializeExn;
-  Fs.writeFileSync(Path.join2(getOutputDir(), "pages.json"), json);
+  Fs.writeFileSync(Path.join2(outputDir, "pages.json"), json);
 };
 
 // Watcher doesn't work properly because we need to monitor changes in all dependencies of a page

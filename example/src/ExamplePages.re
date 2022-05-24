@@ -4,8 +4,6 @@ let pagesOutputDir = Path.join2(currentDir, "../build");
 
 let webpackOutputDir = Path.join2(pagesOutputDir, "bundle");
 
-let () = PageBuilder.setOutputDir(pagesOutputDir);
-
 let pageIndex: PageBuilder.page = {
   component: <ExampleIndex />,
   moduleName: ExampleIndex.moduleName,
@@ -22,13 +20,6 @@ let page1: PageBuilder.page = {
   path: "page1",
 };
 
-let buildPageWithWrapper1' =
-    (~wrapper, ~wrapperReference, ~arg, ~argReference, ~page) => {
-  let wrapper =
-    PageBuilder.Wrapper1({wrapper, wrapperReference, arg, argReference});
-  PageBuilder.buildPage(~wrapper, page);
-};
-
 let buildPageWithWrapper1 = (~arg, ~argReference, page) => {
   let wrapper =
     PageBuilder.Wrapper1({
@@ -38,7 +29,7 @@ let buildPageWithWrapper1 = (~arg, ~argReference, page) => {
       argReference,
     });
 
-  PageBuilder.buildPage(~wrapper, page);
+  PageBuilder.buildPage(~outputDir=pagesOutputDir, ~wrapper, page);
 };
 
 let addPages = () => {
