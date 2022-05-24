@@ -18,23 +18,17 @@ module Fs = {
   [@module "fs"] external rmSync: (string, rmSyncOptions) => unit = "rmSync";
 };
 
-module String = {
-  let replace = Js.String2.replace;
-};
-
-[@val] external import_: string => Js.Promise.t('a) = "import";
+// [@val] external import_: string => Js.Promise.t('a) = "import";
 
 // Node caches imported modules, here is a workaround, but there is a possible memory leak:
 // https://ar.al/2021/02/22/cache-busting-in-node.js-dynamic-esm-imports/
 // Also: https://github.com/nodejs/modules/issues/307
 
-let freshImport = modulePath => {
-  let timestamp = Js.Date.now()->Js.Float.toString;
-  let cacheBustingModulePath = {j|$(modulePath)?update=$(timestamp)|j};
-  import_(cacheBustingModulePath);
-};
-
-let srcPath = SrcPath.srcPath;
+// let freshImport = modulePath => {
+//   let timestamp = Js.Date.now()->Js.Float.toString;
+//   let cacheBustingModulePath = {j|$(modulePath)?update=$(timestamp)|j};
+//   import_(cacheBustingModulePath);
+// };
 
 let defaultRoot = {js|<div id="app"></div>|js};
 
@@ -160,7 +154,10 @@ let buildPage = (~outputDir, ~wrapper: option(wrapper('a))=?, page: page) => {
   let resultHtml = makeHtmlTemplate(helmet, htmlWithStyles);
 
   let resultReactApp =
-    reactRootTemplate->String.replace(defaultReactRootName, elementString);
+    reactRootTemplate->Js.String2.replace(
+      defaultReactRootName,
+      elementString,
+    );
 
   let () = {
     let resultReactRescriptAppFilename = moduleName ++ "App.re";
