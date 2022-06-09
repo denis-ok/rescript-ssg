@@ -77,7 +77,20 @@ let isProduction = false;
 
 let webpackAssetsDir = "assets";
 
-let makeConfig = (~mode: Mode.t, ~webpackOutputDir) => {
+module DevServerOptions = {
+  type listenTo =
+    | Port(int)
+    | UnixSocket(string);
+
+  type t = {listenTo};
+};
+
+let makeConfig =
+    (
+      ~devServerOptions: option(DevServerOptions.t),
+      ~mode: Mode.t,
+      ~webpackOutputDir,
+    ) => {
   let pages = pages->Js.Dict.values;
 
   let entries =
@@ -127,28 +140,47 @@ let makeConfig = (~mode: Mode.t, ~webpackOutputDir) => {
       Js.Array2.concat([|CleanWebpackPlugin.make()|], htmlWebpackPlugins),
 
     "devServer": {
-      "historyApiFallback": true,
-      "hot": false,
-      // static: {
-      //   directory: path.join(__dirname, "public"),
-      // },
-      // compress: true,
-      "port": 9007,
+      switch (devServerOptions) {
+      | None => None
+      | Some({listenTo}) =>
+        Some({
+          "historyApiFallback": true,
+          "hot": false,
+          // static: {
+          //   directory: path.join(__dirname, "public"),
+          // },
+          // compress: true,
+          "port": {
+            switch (listenTo) {
+            | Port(port) => Some(port)
+            | UnixSocket(_) => None
+            };
+          },
+          // TODO Should we check/remove socket file before starting or on terminating dev server?
+          "ipc": {
+            switch (listenTo) {
+            | UnixSocket(path) => Some(path)
+            | Port(_) => None
+            };
+          },
+        })
+      };
     },
   };
 
   config;
 };
 
-let makeCompiler = (~mode, ~webpackOutputDir) => {
-  let config = makeConfig(~mode, ~webpackOutputDir);
+let makeCompiler = (~devServerOptions, ~mode, ~webpackOutputDir) => {
+  let config = makeConfig(~devServerOptions, ~mode, ~webpackOutputDir);
   // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
   (compiler, config);
 };
 
 let build = (~mode, ~webpackOutputDir, ~verbose) => {
-  let (compiler, _config) = makeCompiler(~mode, ~webpackOutputDir);
+  let (compiler, _config) =
+    makeCompiler(~devServerOptions=None, ~mode, ~webpackOutputDir);
 
   compiler->Webpack.run((err, stats) => {
     switch (Js.Nullable.toOption(err)) {
@@ -179,14 +211,25 @@ let build = (~mode, ~webpackOutputDir, ~verbose) => {
   });
 };
 
-let startDevServer = (~mode, ~webpackOutputDir) => {
-  let (compiler, config) = makeCompiler(~mode, ~webpackOutputDir);
-  let devServerOptions = config##devServer;
-  let devServer = WebpackDevServer.make(devServerOptions, compiler);
+let startDevServer =
+    (~devServerOptions: DevServerOptions.t, ~mode, ~webpackOutputDir) => {
+  let (compiler, config) =
+    makeCompiler(
+      ~devServerOptions=Some(devServerOptions),
+      ~mode,
+      ~webpackOutputDir,
+    );
 
-  devServer->WebpackDevServer.startWithCallback(() => {
-    Js.log("[Webpack] WebpackDevServer started")
-  });
+  let devServerOptions = config##devServer;
+  switch (devServerOptions) {
+  | None =>
+    Js.Console.error("Can't start dev server, config##devServer is None");
+    Process.exit(1);
+  | Some(devServerOptions) =>
+    let devServer = WebpackDevServer.make(devServerOptions, compiler);
+    devServer->WebpackDevServer.startWithCallback(() => {
+      Js.log("[Webpack] WebpackDevServer started")
+    });
   //
   // Js.Global.setTimeout(
   //   () =>
@@ -196,4 +239,5 @@ let startDevServer = (~mode, ~webpackOutputDir) => {
   //   5000,
   // )
   // ->ignore;
+  };
 };

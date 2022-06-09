@@ -1,1 +1,5 @@
-let () = ExamplePages.start(~mode=Development);
+let () =
+  ExamplePages.start(
+    ~devServerOptions={listenTo: Port(9007)},
+    ~mode=Development,
+  );
