@@ -13,6 +13,12 @@ import {webpackAssetsDir} from "./Webpack.bs.js"
 // import { fileURLToPath } from 'url';
 // const __dirname = dirname(fileURLToPath(import.meta.url));
 
+import crypto from 'crypto'
+
+import fs from 'fs'
+
+const makeHash = data => crypto.createHash('md4').update(data).digest("hex");
+
 const isBsArtifact = url => {
   return url.match(/file:.*\.bs\.js/i)
 }
@@ -31,8 +37,14 @@ export async function load(url, context, defaultLoad) {
       format,
     };
   } else if (isJpeg(url)) {
-    const filename = path.basename(url);
-    const webpackAssetPath = webpackAssetsDir + "/" + filename;
+    const filepath = url.replace("file://", "")
+    const filedata = fs.readFileSync(filepath)
+    const filehash = makeHash(filedata).slice(0,20)
+    const filename = path.basename(url)
+    const fileExt = path.extname(filename)
+    const filenameWithoutExt = filename.replace(fileExt, "")
+    const filenameWithHash = `${filenameWithoutExt}.${filehash}${fileExt}`
+    const webpackAssetPath = webpackAssetsDir + "/" + filenameWithHash;
     return Promise.resolve({
       source: `export default "${webpackAssetPath}";`,
       format: "module",

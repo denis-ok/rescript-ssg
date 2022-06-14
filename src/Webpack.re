@@ -63,6 +63,19 @@ module Mode = {
     };
 };
 
+module Hash = {
+  type crypto;
+
+  type hash;
+
+  [@module "crypto"] external crypto: crypto = "default";
+
+  [@send "createHash"]
+  external createHash': (crypto, string) => hash = "createHash";
+
+  let createMd5Hash = () => crypto->createHash'("md4");
+};
+
 type page = {
   title: string,
   slug: string,
@@ -123,7 +136,9 @@ let makeConfig =
       "filename": "js/[name].[chunkhash].js",
       // Hash suffix disabled.
       // TODO Figure out how to use custom hash func to reuse in node-loader.
-      "assetModuleFilename": webpackAssetsDir ++ "/" ++ "[name][ext]",
+      "assetModuleFilename": webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
+      "hashFunction": Hash.createMd5Hash,
+      "hashDigestLength": 20
     },
 
     "module": {
