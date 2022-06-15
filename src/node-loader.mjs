@@ -3,54 +3,49 @@
 // import * as Curry from "rescript/lib/es6/curry.js";
 // ^^^^^^
 
-// This loader force NodeJS to load bs-artifacts as es6 module
+// The "load" function defined in this file forces NodeJS to load bs-artifacts as es6 module
 // https://nodejs.org/api/esm.html#loaders
 
-
 import path from "path"
-import {webpackAssetsDir} from "./Webpack.bs.js"
+import * as Webpack from "./Webpack.bs.js"
+import fs from 'fs'
 // import { dirname } from 'path';
 // import { fileURLToPath } from 'url';
 // const __dirname = dirname(fileURLToPath(import.meta.url));
 
-import crypto from 'crypto'
+const dataToHash = Webpack.Hash.dataToHash
 
-import fs from 'fs'
-
-const makeHash = data => crypto.createHash('md4').update(data).digest("hex");
+const webpackAssetsDir = Webpack.webpackAssetsDir
 
 const isBsArtifact = url => {
   return url.match(/file:.*\.bs\.js/i)
 }
 
+// TODO Detect not only jpeg but any other type
 const isJpeg = url => {
   return url.match(/file:.*\.jpg|jpeg/i)
 }
 
 export async function load(url, context, defaultLoad) {
   if (isBsArtifact(url)) {
-    const format = "module";
-    const { source } = await defaultLoad(url, { format });
-
-    return {
-      source,
-      format,
-    };
+    const format = "module"
+    return defaultLoad(url, { format })
   } else if (isJpeg(url)) {
+    // TODO Move code below to Reason
     const filepath = url.replace("file://", "")
-    const filedata = fs.readFileSync(filepath)
-    const filehash = makeHash(filedata).slice(0,20)
-    const filename = path.basename(url)
-    const fileExt = path.extname(filename)
-    const filenameWithoutExt = filename.replace(fileExt, "")
-    const filenameWithHash = `${filenameWithoutExt}.${filehash}${fileExt}`
-    const webpackAssetPath = webpackAssetsDir + "/" + filenameWithHash;
+    const fileData = fs.readFileSync(filepath)
+    const fileHash = dataToHash(fileData)
+    const fileName = path.basename(url)
+    const fileExt = path.extname(fileName)
+    const filenameWithoutExt = fileName.replace(fileExt, "")
+    const filenameWithHash = `${filenameWithoutExt}.${fileHash}${fileExt}`
+    const webpackAssetPath = path.join(webpackAssetsDir, filenameWithHash)
     return Promise.resolve({
       source: `export default "${webpackAssetPath}";`,
       format: "module",
     })
+  } else {
+    // Defer to Node.js for all other URLs.
+    return defaultLoad(url, context, defaultLoad)
   }
-
-  // Defer to Node.js for all other URLs.
-  return defaultLoad(url, context, defaultLoad);
 }

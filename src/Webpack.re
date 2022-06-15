@@ -73,7 +73,20 @@ module Hash = {
   [@send "createHash"]
   external createHash': (crypto, string) => hash = "createHash";
 
-  let createMd5Hash = () => crypto->createHash'("md4");
+  [@send "update"] external update': (hash, string) => hash = "update";
+
+  [@send "digest"] external digest': (hash, string) => string = "digest";
+
+  let digestLength = 20;
+
+  let makeNew = () => crypto->createHash'("md4");
+
+  let dataToHash = data =>
+    crypto
+    ->createHash'("md4")
+    ->update'(data)
+    ->digest'("hex")
+    ->Js.String2.slice(~from=0, ~to_=digestLength);
 };
 
 type page = {
@@ -137,15 +150,15 @@ let makeConfig =
       // Hash suffix disabled.
       // TODO Figure out how to use custom hash func to reuse in node-loader.
       "assetModuleFilename": webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
-      "hashFunction": Hash.createMd5Hash,
-      "hashDigestLength": 20
+      "hashFunction": Hash.makeNew,
+      "hashDigestLength": Hash.digestLength,
     },
 
     "module": {
       "rules": [|
         {
           //
-          "test": [%bs.re "/\\.(png|jpe?g|gif)$/i"],
+          "test": [%re "/\\.(png|jpe?g|gif)$/i"],
           "type": "asset/resource",
         },
       |],
