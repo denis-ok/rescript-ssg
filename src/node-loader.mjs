@@ -18,19 +18,30 @@ const dataToHash = Webpack.Hash.dataToHash
 const webpackAssetsDir = Webpack.webpackAssetsDir
 
 const isBsArtifact = url => {
-  return url.match(/file:.*\.bs\.js/i)
+  return url.match(/file:.*\.bs\.js$/i)
 }
 
-// TODO Detect not only jpeg but any other type
-const isJpeg = url => {
-  return url.match(/file:.*\.jpg|jpeg/i)
+const isImage = url => {
+  return url.match(/file:.*\.(jpg|jpeg|png|gif|svg|ico|avif|webp)$/i)
 }
+
+const isFont = url => {
+  return url.match(/file:.*\.(woff|woff2)$/i)
+}
+
+const isJson = url => {
+  return url.match(/file:.*\.json$/i)
+}
+
+const isAsset = url => isImage(url) || isFont(url) || isJson(url)
 
 export async function load(url, context, defaultLoad) {
   if (isBsArtifact(url)) {
     const format = "module"
     return defaultLoad(url, { format })
-  } else if (isJpeg(url)) {
+  } else if (isAsset(url)) {
+    // Any other file can't be loaded by Node as is so we need to handle them.
+    // We get a hash from file's data and export path where this file will be located after webpack build.
     // TODO Move code below to Reason
     const filepath = url.replace("file://", "")
     const fileData = fs.readFileSync(filepath)
