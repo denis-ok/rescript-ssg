@@ -111,6 +111,8 @@ module DevServerOptions = {
   type t = {listenTo};
 };
 
+let assetRegex = [%re "/\\.(jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json)$/i"];
+
 let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
@@ -158,7 +160,7 @@ let makeConfig =
       "rules": [|
         {
           //
-          "test": [%re "/\\.(png|jpe?g|gif)$/i"],
+          "test": assetRegex,
           "type": "asset/resource",
         },
       |],

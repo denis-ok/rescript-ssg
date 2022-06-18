@@ -17,23 +17,25 @@ const dataToHash = Webpack.Hash.dataToHash
 
 const webpackAssetsDir = Webpack.webpackAssetsDir
 
+const assetRegex = Webpack.assetRegex
+
 const isBsArtifact = url => {
   return url.match(/file:.*\.bs\.js$/i)
 }
 
-const isImage = url => {
-  return url.match(/file:.*\.(jpg|jpeg|png|gif|svg|ico|avif|webp)$/i)
-}
+// const isImage = url => {
+//   return url.match(/file:.*\.(jpg|jpeg|png|gif|svg|ico|avif|webp)$/i)
+// }
 
-const isFont = url => {
-  return url.match(/file:.*\.(woff|woff2)$/i)
-}
+// const isFont = url => {
+//   return url.match(/file:.*\.(woff|woff2)$/i)
+// }
 
-const isJson = url => {
-  return url.match(/file:.*\.json$/i)
-}
+// const isJson = url => {
+//   return url.match(/file:.*\.json$/i)
+// }
 
-const isAsset = url => isImage(url) || isFont(url) || isJson(url)
+const isAsset = url => url.match(assetRegex)
 
 export async function load(url, context, defaultLoad) {
   if (isBsArtifact(url)) {
