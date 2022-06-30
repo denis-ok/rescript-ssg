@@ -29,15 +29,19 @@ let buildPageWithWrapper1 = (~arg, ~argReference, page) => {
       argReference,
     });
 
-  PageBuilder.buildPage(~outputDir=pagesOutputDir, ~wrapper, page);
+  PageBuilder.buildPageHtmlAndReactApp(
+    ~outputDir=pagesOutputDir,
+    ~wrapper,
+    page,
+  );
 };
 
-let addPages = () => {
+let buildPageFiles = () => {
   buildPageWithWrapper1(pageIndex, ~arg="123", ~argReference={js|"123"|js});
   buildPageWithWrapper1(page1, ~arg="qwe", ~argReference={js|"qwe"|js});
 };
 
-let () = addPages();
+let () = buildPageFiles();
 
 let start = (~mode) => PageBuilder.start(~mode, ~webpackOutputDir);
 

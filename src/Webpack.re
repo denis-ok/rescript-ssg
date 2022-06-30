@@ -111,7 +111,9 @@ module DevServerOptions = {
   type t = {listenTo};
 };
 
-let assetRegex = [%re "/\\.(jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json)$/i"];
+let assetRegex = [%re
+  "/\\.(jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json)$/i"
+];
 
 let makeConfig =
     (

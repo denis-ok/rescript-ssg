@@ -116,7 +116,8 @@ let applyWrapper1 =
 type wrapper('a) =
   | Wrapper1(wrapper1('a));
 
-let buildPage = (~outputDir, ~wrapper: option(wrapper('a))=?, page: page) => {
+let buildPageHtmlAndReactApp =
+    (~outputDir, ~wrapper: option(wrapper('a))=?, page: page) => {
   let {component, moduleName, slug, path: pagePath} = page;
 
   let pageOutputDir = Path.join2(outputDir, pagePath);

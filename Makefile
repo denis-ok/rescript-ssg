@@ -52,3 +52,7 @@ serve-example:
 init-dev:
 	rm -rf _opam
 	opam switch create . 4.06.1 --deps-only
+
+fmt:
+	@$(NODE_BINS)/bsrefmt --in-place -w 80 \
+	$(shell find ./src ./example -type f \( -name *.re -o -name *.rei \))

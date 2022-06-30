@@ -44,7 +44,6 @@ module Server = {
 
   [@module "@emotion/server"]
   external renderStylesToString: string => string = "renderStylesToString";
-
   // Below is a function to build emotion server manually with a custom cache.
   // [@module
   //   "@emotion/server/create-instance/dist/emotion-server-create-instance.cjs.js"
