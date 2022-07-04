@@ -119,7 +119,7 @@ let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
       ~mode: Mode.t,
-      ~webpackOutputDir,
+      ~webpackOutputDir: string,
     ) => {
   let pages = pages->Js.Dict.values;
 

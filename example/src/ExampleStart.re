@@ -1,3 +1,5 @@
+let () = ExamplePages.buildPageFiles();
+
 let () =
   ExamplePages.start(
     ~devServerOptions={listenTo: Port(9007)},

@@ -18,6 +18,15 @@ module Fs = {
   [@module "fs"] external rmSync: (string, rmSyncOptions) => unit = "rmSync";
 };
 
+module ChildProcess = {
+  [@module "child_process"]
+  external execSync: (. string, Js.t('a)) => int = "execSync";
+
+  module Error = {
+    [@get] external stdout: Js.Exn.t => string = "stdout";
+  };
+};
+
 // [@val] external import_: string => Js.Promise.t('a) = "import";
 
 // Node caches imported modules, here is a workaround, but there is a possible memory leak:
@@ -234,6 +243,18 @@ let start = (~mode, ~webpackOutputDir) => {
   Webpack.startDevServer(~mode, ~webpackOutputDir);
 };
 
-let build = (~mode, ~webpackOutputDir) => {
+let build = (~mode, ~webpackOutputDir, ~rescriptBinaryPath) => {
+  Js.log("Compiling React app files...");
+
+  switch (ChildProcess.execSync(. rescriptBinaryPath, {"encoding": "utf8"})) {
+  | exception (Js.Exn.Error(error)) =>
+    Js.log2("Rescript build failed:\n", error->Js.Exn.message);
+    Js.log2("Rescript build failed:\n", error->ChildProcess.Error.stdout);
+    Process.exit(1);
+  | stdout => Js.log2("Rescript build success:\n", stdout)
+  };
+
+  Js.log("Building webpack bundle...");
+
   Webpack.build(~mode, ~webpackOutputDir, ~verbose=true);
 };

@@ -41,8 +41,12 @@ let buildPageFiles = () => {
   buildPageWithWrapper1(page1, ~arg="qwe", ~argReference={js|"qwe"|js});
 };
 
-let () = buildPageFiles();
-
 let start = (~mode) => PageBuilder.start(~mode, ~webpackOutputDir);
 
-let build = (~mode) => PageBuilder.build(~mode, ~webpackOutputDir);
+let build = (~mode) =>
+  PageBuilder.build(
+    ~mode,
+    ~webpackOutputDir,
+    ~rescriptBinaryPath=
+      Path.join2(pagesOutputDir, "../../node_modules/.bin/rescript"),
+  );
