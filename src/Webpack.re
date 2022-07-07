@@ -125,11 +125,11 @@ let makeConfig =
 
   let entries =
     pages
-    ->Js.Array2.map(({path, entryPath}) => (path, entryPath))
+    ->Js.Array2.map(({path, entryPath, _}) => (path, entryPath))
     ->Js.Dict.fromArray;
 
   let htmlWebpackPlugins =
-    pages->Js.Array2.map(({title, path, htmlTemplatePath}) =>
+    pages->Js.Array2.map(({title, path, htmlTemplatePath, _}) =>
       HtmlWebpackPlugin.make({
         "title": title,
         "lang": "en",

@@ -100,7 +100,7 @@ let applyWrapper1 =
       ~wrapperReference: string,
       ~argReference: string,
     ) => {
-  let {component, moduleName} = page;
+  let {component, moduleName, _} = page;
   let reactElement = wrapper(component, arg);
   let componentString = {j|$(wrapperReference)(<$(moduleName) />, $(argReference))|j};
   (reactElement, componentString);
@@ -111,7 +111,7 @@ type wrapper('a) =
 
 let buildPageHtmlAndReactApp =
     (~outputDir, ~wrapper: option(wrapper('a))=?, page: page) => {
-  let {component, moduleName, path: pagePath} = page;
+  let {component, moduleName, path: pagePath, _} = page;
 
   let pageOutputDir = Path.join2(outputDir, pagePath);
 
