@@ -84,21 +84,6 @@ type page = {
 
 let pages: Js.Dict.t(page) = Js.Dict.empty();
 
-module Log = {
-  let log = (scope, msg) => {
-    let scope = {j|[$(scope)]: |j};
-    Js.log(scope ++ msg);
-  };
-
-  let buildPage = log("buildPage");
-
-  let buildPage2 = (msg1, msg2) => log("buildPage", msg1 ++ msg2);
-
-  let watcher = log("watcher");
-
-  let watcher2 = (msg1, msg2) => watcher(msg1 ++ msg2);
-};
-
 let indexHtmlFilename = "index.html";
 
 type wrapper1('a) = {
@@ -131,7 +116,10 @@ let buildPageHtmlAndReactApp =
 
   let pageOutputDir = Path.join2(outputDir, pagePath);
 
-  Log.buildPage2("Output dir for page: ", pageOutputDir);
+  Js.log2(
+    "[PageBuilder.buildPageHtmlAndReactApp] Output dir for page: ",
+    pageOutputDir,
+  );
 
   let resultHtmlPath = Path.join2(pageOutputDir, indexHtmlFilename);
 
@@ -197,7 +185,10 @@ let buildPageHtmlAndReactApp =
     };
   };
 
-  Log.buildPage2("Build finished: ", moduleName);
+  Js.log2(
+    "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
+    moduleName,
+  );
 };
 
 // Watcher doesn't work properly because we need to monitor changes in all dependencies of a page
@@ -239,17 +230,23 @@ let start = (~mode, ~webpackOutputDir) => {
 };
 
 let build = (~mode, ~webpackOutputDir, ~rescriptBinaryPath) => {
-  Js.log("Compiling React app files...");
+  Js.log("[PageBuilder.build] Compiling React app files...");
 
   switch (ChildProcess.execSync(. rescriptBinaryPath, {"encoding": "utf8"})) {
   | exception (Js.Exn.Error(error)) =>
-    Js.log2("Rescript build failed:\n", error->Js.Exn.message);
-    Js.log2("Rescript build failed:\n", error->ChildProcess.Error.stdout);
+    Js.log2(
+      "[PageBuilder.build] Rescript build failed:\n",
+      error->Js.Exn.message,
+    );
+    Js.log2(
+      "[PageBuilder.build] Rescript build failed:\n",
+      error->ChildProcess.Error.stdout,
+    );
     Process.exit(1);
-  | stdout => Js.log2("Rescript build success:\n", stdout)
+  | stdout => Js.log2("[PageBuilder.build] Rescript build success:\n", stdout)
   };
 
-  Js.log("Building webpack bundle...");
+  Js.log("[PageBuilder.build] Building webpack bundle...");
 
   Webpack.build(~mode, ~webpackOutputDir, ~verbose=true);
 };

@@ -255,7 +255,9 @@ let startDevServer =
   let devServerOptions = config##devServer;
   switch (devServerOptions) {
   | None =>
-    Js.Console.error("Can't start dev server, config##devServer is None");
+    Js.Console.error(
+      "[Webpack] Can't start dev server, config##devServer is None",
+    );
     Process.exit(1);
   | Some(devServerOptions) =>
     let devServer = WebpackDevServer.make(devServerOptions, compiler);
