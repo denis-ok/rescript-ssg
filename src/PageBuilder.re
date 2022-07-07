@@ -78,7 +78,6 @@ type page = {
   component: React.element,
   moduleName: string,
   modulePath: string,
-  slug: string,
   path: string,
 };
 
@@ -112,7 +111,7 @@ type wrapper('a) =
 
 let buildPageHtmlAndReactApp =
     (~outputDir, ~wrapper: option(wrapper('a))=?, page: page) => {
-  let {component, moduleName, slug, path: pagePath} = page;
+  let {component, moduleName, path: pagePath} = page;
 
   let pageOutputDir = Path.join2(outputDir, pagePath);
 
@@ -170,7 +169,7 @@ let buildPageHtmlAndReactApp =
     let resultReactCompiledAppFilename = moduleName ++ "App.bs.js";
     let webpackPage: Webpack.page = {
       title: moduleName,
-      slug,
+      path: pagePath,
       entryPath: Path.join2(pageOutputDir, resultReactCompiledAppFilename),
       outputDir: pageOutputDir,
       htmlTemplatePath: resultHtmlPath,

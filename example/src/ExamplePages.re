@@ -8,7 +8,6 @@ let pageIndex: PageBuilder.page = {
   component: <ExampleIndex />,
   moduleName: ExampleIndex.moduleName,
   modulePath: ExampleIndex.modulePath,
-  slug: "index",
   path: ".",
 };
 
@@ -16,7 +15,6 @@ let page1: PageBuilder.page = {
   component: <ExamplePage1 />,
   moduleName: ExamplePage1.moduleName,
   modulePath: ExamplePage1.modulePath,
-  slug: "page1",
   path: "page1",
 };
 

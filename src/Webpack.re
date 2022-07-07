@@ -91,7 +91,7 @@ module Hash = {
 
 type page = {
   title: string,
-  slug: string,
+  path: string,
   entryPath: string,
   outputDir: string,
   htmlTemplatePath: string,
@@ -125,18 +125,18 @@ let makeConfig =
 
   let entries =
     pages
-    ->Js.Array2.map(({slug, entryPath}) => (slug, entryPath))
+    ->Js.Array2.map(({path, entryPath}) => (path, entryPath))
     ->Js.Dict.fromArray;
 
   let htmlWebpackPlugins =
-    pages->Js.Array2.map(({title, slug, htmlTemplatePath}) =>
+    pages->Js.Array2.map(({title, path, htmlTemplatePath}) =>
       HtmlWebpackPlugin.make({
         "title": title,
         "lang": "en",
         "template": htmlTemplatePath,
-        "filename":
-          slug == "index" ? "./index.html" : {j|$(slug)/index.html|j},
-        "chunks": [|slug|],
+        "filename": path == "." ? "./index.html" : {j|$(path)/index.html|j},
+        // TODO take a look at chunks field. Is it needed?
+        "chunks": [|path|],
         "inject": true,
         "minify": false,
       })

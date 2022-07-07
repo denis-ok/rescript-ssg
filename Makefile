@@ -22,6 +22,9 @@ build-example:
 start-example:
 	node --experimental-loader=./src/node-loader.mjs $(EXAMPLE_DIR)/src/ExampleStart.bs.js
 
+serve-example:
+	npx serve -l 3005 $(EXAMPLE_DIR)/build/bundle
+
 clean:
 	rm -rf $(EXAMPLE_DIR)/build
 	mkdir $(EXAMPLE_DIR)/build
@@ -33,9 +36,6 @@ build: clean
 
 start: clean rescript-build
 	make -j 2 rescript-start start-example
-
-serve-example:
-	npx serve -l 3005 $(EXAMPLE_DIR)/build/bundle
 
 init-dev:
 	rm -rf _opam
