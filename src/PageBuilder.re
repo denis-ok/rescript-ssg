@@ -74,17 +74,6 @@ switch (ReactDOM.querySelector("#app")) {
 };
 |js};
 
-type page = {
-  component: React.element,
-  moduleName: string,
-  modulePath: string,
-  path: string,
-};
-
-let pages: Js.Dict.t(page) = Js.Dict.empty();
-
-let indexHtmlFilename = "index.html";
-
 type wrapper1('a) = {
   wrapper: (React.element, 'a) => React.element,
   wrapperReference: string,
@@ -92,9 +81,24 @@ type wrapper1('a) = {
   argReference: string,
 };
 
+type wrapper('a) =
+  | Wrapper1(wrapper1('a));
+
+type page('a) = {
+  wrapper: option(wrapper('a)),
+  component: React.element,
+  moduleName: string,
+  modulePath: string,
+  path: string,
+};
+
+// let pages: Js.Dict.t(page) = Js.Dict.empty();
+
+let indexHtmlFilename = "index.html";
+
 let applyWrapper1 =
     (
-      ~page: page,
+      ~page: page('a),
       ~wrapper: (React.element, 'a) => React.element,
       ~arg: 'a,
       ~wrapperReference: string,
@@ -106,12 +110,8 @@ let applyWrapper1 =
   (reactElement, componentString);
 };
 
-type wrapper('a) =
-  | Wrapper1(wrapper1('a));
-
-let buildPageHtmlAndReactApp =
-    (~outputDir, ~wrapper: option(wrapper('a))=?, page: page) => {
-  let {component, moduleName, path: pagePath, _} = page;
+let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
+  let {component, moduleName, path: pagePath, wrapper, _} = page;
 
   let pageOutputDir = Path.join2(outputDir, pagePath);
 
@@ -177,12 +177,12 @@ let buildPageHtmlAndReactApp =
     Webpack.pages->Js.Dict.set(moduleName, webpackPage);
   };
 
-  let () = {
-    switch (pages->Js.Dict.get(moduleName)) {
-    | None => pages->Js.Dict.set(moduleName, page)
-    | Some(_) => ()
-    };
-  };
+  // let () = {
+  //   switch (pages->Js.Dict.get(moduleName)) {
+  //   | None => pages->Js.Dict.set(moduleName, page)
+  //   | Some(_) => ()
+  //   };
+  // };
 
   Js.log2(
     "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
@@ -224,11 +224,21 @@ let buildPageHtmlAndReactApp =
 //     });
 //   };
 
-let start = (~mode, ~webpackOutputDir) => {
+let buildPages = (~outputDir, pages) =>
+  pages->Belt.List.forEach(page =>
+    buildPageHtmlAndReactApp(~outputDir, page)
+  );
+
+let start = (~pages: list(page('a)), ~outputDir, ~webpackOutputDir, ~mode) => {
+  buildPages(~outputDir, pages);
+
   Webpack.startDevServer(~mode, ~webpackOutputDir);
 };
 
-let build = (~mode, ~webpackOutputDir, ~rescriptBinaryPath) => {
+let build =
+    (~pages, ~outputDir, ~webpackOutputDir, ~rescriptBinaryPath, ~mode) => {
+  buildPages(~outputDir, pages);
+
   Js.log("[PageBuilder.build] Compiling React app files...");
 
   switch (ChildProcess.execSync(. rescriptBinaryPath, {"encoding": "utf8"})) {
