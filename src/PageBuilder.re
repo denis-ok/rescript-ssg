@@ -92,8 +92,6 @@ type page('a) = {
   path: string,
 };
 
-// let pages: Js.Dict.t(page) = Js.Dict.empty();
-
 let indexHtmlFilename = "index.html";
 
 let applyWrapper1 =
@@ -177,13 +175,6 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
     Webpack.pages->Js.Dict.set(moduleName, webpackPage);
   };
 
-  // let () = {
-  //   switch (pages->Js.Dict.get(moduleName)) {
-  //   | None => pages->Js.Dict.set(moduleName, page)
-  //   | Some(_) => ()
-  //   };
-  // };
-
   Js.log2(
     "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
     moduleName,
@@ -224,20 +215,40 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
 //     });
 //   };
 
-let buildPages = (~outputDir, pages) =>
-  pages->Belt.List.forEach(page =>
-    buildPageHtmlAndReactApp(~outputDir, page)
-  );
+let buildPages = (~outputDir, pages) => {
+  Js.log("[PageBuilder.buildPages] Building pages...");
+
+  let pagesDict = Js.Dict.empty();
+
+  let () =
+    pages->Belt.List.forEach(page => {
+      switch (pagesDict->Js.Dict.get(page.path)) {
+      | None => pagesDict->Js.Dict.set(page.path, page)
+      | Some(_) =>
+        Js.log3(
+          "[PageBuilder.buildPages] List of pages contains pages with the same paths. Page with path: ",
+          page.path,
+          " has already been built.",
+        );
+
+        Process.exit(1);
+      };
+
+      buildPageHtmlAndReactApp(~outputDir, page);
+    });
+
+  pagesDict;
+};
 
 let start = (~pages: list(page('a)), ~outputDir, ~webpackOutputDir, ~mode) => {
-  buildPages(~outputDir, pages);
+  let _pagesDict = buildPages(~outputDir, pages);
 
   Webpack.startDevServer(~mode, ~webpackOutputDir);
 };
 
 let build =
     (~pages, ~outputDir, ~webpackOutputDir, ~rescriptBinaryPath, ~mode) => {
-  buildPages(~outputDir, pages);
+  let _pagesDict = buildPages(~outputDir, pages);
 
   Js.log("[PageBuilder.build] Compiling React app files...");
 

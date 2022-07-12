@@ -30,7 +30,15 @@ let page1 = {
   path: "page1",
 };
 
-let pages = [pageIndex, page1];
+let page1DuplicatePath = {
+  PageBuilder.wrapper: None,
+  component: <ExamplePage1 />,
+  moduleName: ExamplePage1.moduleName,
+  modulePath: ExamplePage1.modulePath,
+  path: "page1",
+};
+
+let pages = [pageIndex, page1, page1DuplicatePath];
 
 let start = (~mode) =>
   PageBuilder.start(
