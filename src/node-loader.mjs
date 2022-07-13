@@ -54,7 +54,7 @@ export async function load(url, context, defaultLoad) {
     const filenameWithHash = `${filenameWithoutExt}.${fileHash}${fileExt}`
     const webpackAssetPath = path.join(webpackAssetsDir, filenameWithHash)
     return Promise.resolve({
-      source: `export default "${webpackAssetPath}";`,
+      source: `export default "/${webpackAssetPath}";`,
       format: "module",
     })
   } else {

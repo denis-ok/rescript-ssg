@@ -115,6 +115,8 @@ let assetRegex = [%re
   "/\\.(jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json)$/i"
 ];
 
+let dynamicPathPart = "@@@";
+
 let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
@@ -149,7 +151,7 @@ let makeConfig =
 
     "output": {
       "path": webpackOutputDir,
-      "publicPath": "",
+      "publicPath": "/",
       "filename": "js/[name].[chunkhash].js",
       // Hash suffix disabled.
       // TODO Figure out how to use custom hash func to reuse in node-loader.
@@ -176,7 +178,27 @@ let makeConfig =
       | None => None
       | Some({listenTo}) =>
         Some({
-          "historyApiFallback": true,
+          "historyApiFallback": {
+            "verbose": true,
+            "rewrites": {
+              // Here we add support for serving pages with dynamic path parts, like "users/:id"
+              // "page1/@@@"
+              // from: "/^\/page1\/.*/"
+              // to: "/page1/@@@/index.html"
+              pages
+              ->Js.Array2.filter(page =>
+                  page.path->Js.String2.includes(dynamicPathPart)
+                )
+              ->Js.Array2.map(page => {
+                  let pathRefined =
+                    page.path->Js.String2.replace(dynamicPathPart, ".*");
+                  let regexString = "^/" ++ pathRefined;
+                  let from = Js.Re.fromString(regexString);
+                  let to_ = Path.join3("/", page.path, "index.html");
+                  {"from": from, "to": to_};
+                });
+            },
+          },
           "hot": false,
           // static: {
           //   directory: path.join(__dirname, "public"),

@@ -30,15 +30,15 @@ let page1 = {
   path: "page1",
 };
 
-let page1DuplicatePath = {
+let pageDynamic = {
   PageBuilder.wrapper: None,
-  component: <ExamplePage1 />,
-  moduleName: ExamplePage1.moduleName,
-  modulePath: ExamplePage1.modulePath,
-  path: "page1",
+  component: <ExamplePageDynamic />,
+  moduleName: ExamplePageDynamic.moduleName,
+  modulePath: ExamplePageDynamic.modulePath,
+  path: "page1/@@@",
 };
 
-let pages = [pageIndex, page1, page1DuplicatePath];
+let pages = [pageIndex, page1, pageDynamic];
 
 let start = (~mode) =>
   PageBuilder.start(
