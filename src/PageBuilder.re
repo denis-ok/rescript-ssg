@@ -181,41 +181,134 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
   );
 };
 
-// Watcher doesn't work properly because we need to monitor changes in all dependencies of a page
-// let startWatcher = () =>
-//   if (true) {
-//     let pagesPaths =
-//       pages->Js.Dict.entries->Js.Array2.map(((_, page)) => page.modulePath);
+// To make watcher work properly we need to:
+// Monitor changes in a module itself and monitor changes in all dependencies of a module (except node modules?)
+// After a module changed! We should refresh dependencies of a module?
+// Finally we should have dependency -> list(pageModule) dict?
 
-//     let watcher = Chokidar.chokidar->Chokidar.watchFiles(pagesPaths);
-//     watcher->Chokidar.onChange(filepath => {
-//       Log.watcher2("File changed: ", filepath);
+module Set = {
+  type t('a);
+  [@new] external fromArray: array('a) => t('a) = "Set";
 
-//       let moduleName =
-//         filepath
-//         ->Js.String2.replace(".bs.js", "")
-//         ->Js.String2.split("/")
-//         ->Belt.List.fromArray
-//         ->Belt.List.reverse
-//         ->Belt.List.head;
+  type arrayModule;
 
-//       switch (moduleName) {
-//       | None => Log.watcher("Can't rebuild page, moduleName is None")
-//       | Some("") =>
-//         Log.watcher("Can't rebuild page, moduleName is empty string")
-//       | Some(moduleName) =>
-//         switch (pages->Js.Dict.get(moduleName)) {
-//         | None =>
-//           Log.watcher2("Can't rebuild page, data is missing: ", moduleName)
-//         | Some(page) =>
-//           Log.watcher2("Rebuilding page: ", moduleName);
-//           buildPage(page);
-//         }
-//       };
-//     });
-//   };
+  [@val] external arrayModule: arrayModule = "Array";
+  [@send] external arrayFrom: (arrayModule, t('a)) => array('a) = "from";
 
-let buildPages = (~outputDir, pages) => {
+  let toArray = set => arrayModule->arrayFrom(set);
+};
+
+let makeUniqueArray = array => Set.fromArray(array)->Set.toArray;
+
+let startWatcher = (pages: list(page('a))) => {
+  let modulePathToPageDict: Js.Dict.t(page('a)) = Js.Dict.empty();
+  pages->Belt.List.forEach(page => {
+    switch (modulePathToPageDict->Js.Dict.get(page.modulePath)) {
+    | None => modulePathToPageDict->Js.Dict.set(page.modulePath, page)
+    | Some(_) => ()
+    }
+  });
+
+  let pagesPaths =
+    modulePathToPageDict
+    ->Js.Dict.entries
+    ->Js.Array2.map(((_, page)) => page.modulePath);
+
+  let modulesAndDependencies =
+    pagesPaths->Js.Array2.map(modulePath => {
+      let dependencies =
+        DependencyTree.makeList({
+          filename: modulePath,
+          directory: "/Users/denis/projects/builder/",
+          filter: path => path->Js.String2.indexOf("node_modules") == (-1),
+        });
+
+      (modulePath, dependencies);
+    });
+
+  let dependencyToPageModuleDict = Js.Dict.empty();
+  modulesAndDependencies->Js.Array2.forEach(((modulePath, dependencies)) => {
+    dependencies->Js.Array2.forEach(dep => {
+      switch (dependencyToPageModuleDict->Js.Dict.get(dep)) {
+      | None => dependencyToPageModuleDict->Js.Dict.set(dep, [|modulePath|])
+      | Some(pageModules) =>
+        dependencyToPageModuleDict->Js.Dict.set(
+          dep,
+          Js.Array.concat([|modulePath|], pageModules),
+        )
+      }
+    })
+  });
+
+  let allDependencies = {
+    let dependencies =
+      dependencyToPageModuleDict
+      ->Js.Dict.entries
+      ->Js.Array2.map(((dependency, _pageModules)) => dependency);
+
+    Js.Array.concat(pagesPaths, dependencies);
+  };
+
+  let watcher = Chokidar.chokidar->Chokidar.watchFiles(allDependencies);
+
+  let rebuildQueueRef: ref(array(string)) = ref([||]);
+
+  watcher->Chokidar.onChange(filepath => {
+    Js.log2("[Watcher] File changed: ", filepath);
+
+    switch (modulePathToPageDict->Js.Dict.get(filepath)) {
+    | Some(_) =>
+      // Exact page module changed
+      Js.log2("[Watcher] Exact page module changed:", filepath);
+      let queue =
+        Js.Array2.concat([|filepath|], rebuildQueueRef^)->makeUniqueArray;
+      rebuildQueueRef := queue;
+    | None =>
+      switch (dependencyToPageModuleDict->Js.Dict.get(filepath)) {
+      | None =>
+        // Nothing depends on changed file. Should remove it from watcher.
+        Js.log2("[Watcher] No pages depend on file:", filepath)
+      | Some(pageModules) =>
+        // Page dependency changed. Should rebuild pages that depend on it.
+        Js.log2("[Watcher] Should rebuild these pages:", pageModules);
+        let queue =
+          Js.Array2.concat(pageModules, rebuildQueueRef^)->makeUniqueArray;
+        rebuildQueueRef := queue;
+      }
+    };
+  });
+
+  let _intervalId =
+    Js.Global.setInterval(
+      () => {
+        let rebuildQueue = rebuildQueueRef^;
+        if (Js.Array2.length(rebuildQueue) != 0) {
+          Js.log2("[Watcher] Pages to rebuild queue: ", rebuildQueue);
+
+          // rebuilding pages
+          rebuildQueue->Js.Array2.forEach(modulePath => {
+            switch (modulePathToPageDict->Js.Dict.get(modulePath)) {
+            | Some(_page) =>
+              Js.log2("[Watcher] Trying to rebuild page: ", modulePath)
+            | None =>
+              Js.log2(
+                "[Watcher] Can't rebuild page, page module is missing in dict: ",
+                modulePath,
+              )
+            }
+          });
+
+          // cleanup queue
+          rebuildQueueRef := [||];
+        };
+      },
+      1000,
+    );
+
+  ();
+};
+
+let buildPages = (~outputDir, pages: list(page('a))) => {
   Js.log("[PageBuilder.buildPages] Building pages...");
 
   let pagesDict = Js.Dict.empty();
@@ -242,6 +335,8 @@ let buildPages = (~outputDir, pages) => {
 
 let start = (~pages: list(page('a)), ~outputDir, ~webpackOutputDir, ~mode) => {
   let _pagesDict = buildPages(~outputDir, pages);
+
+  startWatcher(pages);
 
   Webpack.startDevServer(~mode, ~webpackOutputDir);
 };
