@@ -27,17 +27,17 @@ module ChildProcess = {
   };
 };
 
-// [@val] external import_: string => Js.Promise.t('a) = "import";
+[@val] external import_: string => Js.Promise.t('a) = "import";
 
 // Node caches imported modules, here is a workaround, but there is a possible memory leak:
 // https://ar.al/2021/02/22/cache-busting-in-node.js-dynamic-esm-imports/
 // Also: https://github.com/nodejs/modules/issues/307
 
-// let freshImport = modulePath => {
-//   let timestamp = Js.Date.now()->Js.Float.toString;
-//   let cacheBustingModulePath = {j|$(modulePath)?update=$(timestamp)|j};
-//   import_(cacheBustingModulePath);
-// };
+let freshImport = modulePath => {
+  let timestamp = Js.Date.now()->Js.Float.toString;
+  let cacheBustingModulePath = {j|$(modulePath)?update=$(timestamp)|j};
+  import_(cacheBustingModulePath);
+};
 
 let defaultRoot = {js|<div id="app"></div>|js};
 
@@ -183,8 +183,7 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
 
 // To make watcher work properly we need to:
 // Monitor changes in a module itself and monitor changes in all dependencies of a module (except node modules?)
-// After a module changed! We should refresh dependencies of a module?
-// Finally we should have dependency -> list(pageModule) dict?
+// After a module changed should we refresh dependencies and remove stale?
 
 module Set = {
   type t('a);
@@ -200,7 +199,26 @@ module Set = {
 
 let makeUniqueArray = array => Set.fromArray(array)->Set.toArray;
 
-let startWatcher = (pages: list(page('a))) => {
+let rebuildPage = (~outputDir, page: page('a)) => {
+  let modulePath = page.modulePath;
+  Js.log2("[rebuildPage] Trying to do fresh import: ", modulePath);
+
+  freshImport(modulePath)
+  ->Promise.map(module_ => {
+      Js.log2("[rebuildPage] Fresh import success: ", modulePath);
+
+      let newPage = {
+        ...page,
+        component: React.createElement(module_##make, Js.Obj.empty()),
+      };
+
+      buildPageHtmlAndReactApp(~outputDir, newPage);
+
+      Js.log2("[rebuildPage] Page rebuild success: ", modulePath);
+    });
+};
+
+let startWatcher = (~outputDir, pages: list(page('a))) => {
   let modulePathToPageDict: Js.Dict.t(page('a)) = Js.Dict.empty();
   pages->Belt.List.forEach(page => {
     switch (modulePathToPageDict->Js.Dict.get(page.modulePath)) {
@@ -219,6 +237,7 @@ let startWatcher = (pages: list(page('a))) => {
       let dependencies =
         DependencyTree.makeList({
           filename: modulePath,
+          // TODO Fix me, should it be watcher func argument?
           directory: "/Users/denis/projects/builder/",
           filter: path => path->Js.String2.indexOf("node_modules") == (-1),
         });
@@ -288,8 +307,9 @@ let startWatcher = (pages: list(page('a))) => {
           // rebuilding pages
           rebuildQueue->Js.Array2.forEach(modulePath => {
             switch (modulePathToPageDict->Js.Dict.get(modulePath)) {
-            | Some(_page) =>
-              Js.log2("[Watcher] Trying to rebuild page: ", modulePath)
+            | Some(page) =>
+              Js.log2("[Watcher] Trying to rebuild page: ", modulePath);
+              rebuildPage(~outputDir, page)->ignore;
             | None =>
               Js.log2(
                 "[Watcher] Can't rebuild page, page module is missing in dict: ",
@@ -336,7 +356,7 @@ let buildPages = (~outputDir, pages: list(page('a))) => {
 let start = (~pages: list(page('a)), ~outputDir, ~webpackOutputDir, ~mode) => {
   let _pagesDict = buildPages(~outputDir, pages);
 
-  startWatcher(pages);
+  startWatcher(~outputDir, pages);
 
   Webpack.startDevServer(~mode, ~webpackOutputDir);
 };
