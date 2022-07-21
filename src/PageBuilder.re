@@ -253,7 +253,7 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
       | Some(pageModules) =>
         dependencyToPageModuleDict->Js.Dict.set(
           dep,
-          Js.Array.concat([|modulePath|], pageModules),
+          Js.Array2.concat([|modulePath|], pageModules),
         )
       }
     })
@@ -265,7 +265,7 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
       ->Js.Dict.entries
       ->Js.Array2.map(((dependency, _pageModules)) => dependency);
 
-    Js.Array.concat(pagesPaths, dependencies);
+    Js.Array2.concat(pagesPaths, dependencies);
   };
 
   let watcher = Chokidar.chokidar->Chokidar.watchFiles(allDependencies);
@@ -277,22 +277,21 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
 
     switch (modulePathToPageDict->Js.Dict.get(filepath)) {
     | Some(_) =>
-      // Exact page module changed
       Js.log2("[Watcher] Exact page module changed:", filepath);
-      let queue =
+      let newQueue =
         Js.Array2.concat([|filepath|], rebuildQueueRef^)->makeUniqueArray;
-      rebuildQueueRef := queue;
+      rebuildQueueRef := newQueue;
     | None =>
       switch (dependencyToPageModuleDict->Js.Dict.get(filepath)) {
       | None =>
-        // Nothing depends on changed file. Should remove it from watcher.
+        // Nothing depends on changed file. Should we remove it from watcher?
         Js.log2("[Watcher] No pages depend on file:", filepath)
       | Some(pageModules) =>
         // Page dependency changed. Should rebuild pages that depend on it.
         Js.log2("[Watcher] Should rebuild these pages:", pageModules);
-        let queue =
+        let newQueue =
           Js.Array2.concat(pageModules, rebuildQueueRef^)->makeUniqueArray;
-        rebuildQueueRef := queue;
+        rebuildQueueRef := newQueue;
       }
     };
   });
@@ -300,11 +299,11 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
   let _intervalId =
     Js.Global.setInterval(
       () => {
-        let rebuildQueue = rebuildQueueRef^;
-        if (Js.Array2.length(rebuildQueue) != 0) {
+        switch (rebuildQueueRef^) {
+        | [||] => ()
+        | rebuildQueue =>
           Js.log2("[Watcher] Pages to rebuild queue: ", rebuildQueue);
 
-          // rebuilding pages
           rebuildQueue->Js.Array2.forEach(modulePath => {
             switch (modulePathToPageDict->Js.Dict.get(modulePath)) {
             | Some(page) =>
@@ -318,11 +317,10 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
             }
           });
 
-          // cleanup queue
           rebuildQueueRef := [||];
-        };
+        }
       },
-      1000,
+      1500,
     );
 
   ();
