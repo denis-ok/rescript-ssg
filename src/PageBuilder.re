@@ -218,6 +218,14 @@ let rebuildPage = (~outputDir, page: page('a)) => {
     });
 };
 
+let getModuleDependencies = modulePath =>
+  DependencyTree.makeList({
+    filename: modulePath,
+    // TODO Fix me. Is it really needed? Should it be func argument?
+    directory: "/Users/denis/projects/builder/.vscode",
+    filter: path => path->Js.String2.indexOf("node_modules") == (-1),
+  });
+
 let startWatcher = (~outputDir, pages: list(page('a))) => {
   let modulePathToPageDict: Js.Dict.t(page('a)) = Js.Dict.empty();
   pages->Belt.List.forEach(page => {
@@ -234,29 +242,29 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
 
   let modulesAndDependencies =
     pagesPaths->Js.Array2.map(modulePath => {
-      let dependencies =
-        DependencyTree.makeList({
-          filename: modulePath,
-          // TODO Fix me, should it be watcher func argument?
-          directory: "/Users/denis/projects/builder/",
-          filter: path => path->Js.String2.indexOf("node_modules") == (-1),
-        });
+      let dependencies = getModuleDependencies(modulePath);
 
       (modulePath, dependencies);
     });
 
   let dependencyToPageModuleDict = Js.Dict.empty();
+
+  let updateDependencyToPageModuleDict = (~dependency, ~modulePath) => {
+    switch (dependencyToPageModuleDict->Js.Dict.get(dependency)) {
+    | None =>
+      dependencyToPageModuleDict->Js.Dict.set(dependency, [|modulePath|])
+    | Some(pageModules) =>
+      dependencyToPageModuleDict->Js.Dict.set(
+        dependency,
+        Js.Array2.concat([|modulePath|], pageModules)->makeUniqueArray,
+      )
+    };
+  };
+
   modulesAndDependencies->Js.Array2.forEach(((modulePath, dependencies)) => {
-    dependencies->Js.Array2.forEach(dep => {
-      switch (dependencyToPageModuleDict->Js.Dict.get(dep)) {
-      | None => dependencyToPageModuleDict->Js.Dict.set(dep, [|modulePath|])
-      | Some(pageModules) =>
-        dependencyToPageModuleDict->Js.Dict.set(
-          dep,
-          Js.Array2.concat([|modulePath|], pageModules),
-        )
-      }
-    })
+    dependencies->Js.Array2.forEach(dependency =>
+      updateDependencyToPageModuleDict(~dependency, ~modulePath)
+    )
   });
 
   let allDependencies = {
@@ -267,6 +275,8 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
 
     Js.Array2.concat(pagesPaths, dependencies);
   };
+
+  Js.log2("[Watcher] Initial watcher dependencies: ", allDependencies);
 
   let watcher = Chokidar.chokidar->Chokidar.watchFiles(allDependencies);
 
@@ -308,7 +318,29 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
             switch (modulePathToPageDict->Js.Dict.get(modulePath)) {
             | Some(page) =>
               Js.log2("[Watcher] Trying to rebuild page: ", modulePath);
-              rebuildPage(~outputDir, page)->ignore;
+              rebuildPage(~outputDir, page)
+              ->Promise.map(() => {
+                  // We should update dicts and add new dependencies to watcher
+                  let newDependencies = getModuleDependencies(modulePath);
+
+                  Js.log3(
+                    "[Watcher] New dependencies of the module ",
+                    modulePath,
+                    newDependencies,
+                  );
+
+                  newDependencies->Js.Array2.forEach(dependency =>
+                    updateDependencyToPageModuleDict(~dependency, ~modulePath)
+                  );
+
+                  watcher->Chokidar.add(newDependencies);
+
+                  Js.log2(
+                    "[Watcher] !!! dependencyToPageModuleDict",
+                    dependencyToPageModuleDict,
+                  );
+                })
+              ->ignore;
             | None =>
               Js.log2(
                 "[Watcher] Can't rebuild page, page module is missing in dict: ",
