@@ -199,11 +199,13 @@ module Set = {
 
 let makeUniqueArray = array => Set.fromArray(array)->Set.toArray;
 
-let rebuildPage = (~outputDir, page: page('a)) => {
+let _rebuildPage = (~outputDir, page: page('a)) => {
   let modulePath = page.modulePath;
   Js.log2("[rebuildPage] Trying to do fresh import: ", modulePath);
-
-  freshImport(modulePath)
+  freshImport(
+    "/Users/denis/projects/builder/example/src/ExampleSharedModule.bs.js",
+  )
+  ->Promise.bind(_ => freshImport(modulePath))
   ->Promise.map(module_ => {
       Js.log2("[rebuildPage] Fresh import success: ", modulePath);
 
@@ -216,6 +218,20 @@ let rebuildPage = (~outputDir, page: page('a)) => {
 
       Js.log2("[rebuildPage] Page rebuild success: ", modulePath);
     });
+};
+
+let rebuildPageWithWorker = (~outputDir, page: page('a)) => {
+  let modulePath = page.modulePath;
+
+  WorkingThreads.runWorker(
+    ~workerModulePath="./src/RebuildPageWorker.bs.js",
+    ~workerData={
+      "modulePath": modulePath,
+      "outputDir": outputDir,
+      "path": page.path,
+    },
+  )
+  ->Promise.map(result => Js.log2("WORKER RESULT: ", result));
 };
 
 let getModuleDependencies = modulePath =>
@@ -318,7 +334,7 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
             switch (modulePathToPageDict->Js.Dict.get(modulePath)) {
             | Some(page) =>
               Js.log2("[Watcher] Trying to rebuild page: ", modulePath);
-              rebuildPage(~outputDir, page)
+              rebuildPageWithWorker(~outputDir, page)
               ->Promise.map(() => {
                   // We should update dicts and add new dependencies to watcher
                   let newDependencies = getModuleDependencies(modulePath);
