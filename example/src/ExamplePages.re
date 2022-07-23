@@ -30,15 +30,30 @@ let page1 = {
   path: "page1",
 };
 
-let pageDynamic = {
-  PageBuilder.wrapper: None,
-  component: <ExamplePageDynamic />,
-  moduleName: ExamplePageDynamic.moduleName,
-  modulePath: ExamplePageDynamic.modulePath,
-  path: "page1/@@@",
-};
+// TODO Fix localized dynamic path (issue with "@@@")
 
-let pages = [pageIndex, page1, pageDynamic];
+// let pageDynamic = {
+//   PageBuilder.wrapper: None,
+//   component: <ExamplePageDynamic />,
+//   moduleName: ExamplePageDynamic.moduleName,
+//   modulePath: ExamplePageDynamic.modulePath,
+//   path: "page1/@@@",
+// };
+
+let languages = ["en", "ru"];
+
+let pages = [pageIndex, page1];
+
+let localizedPages =
+  languages
+  ->Belt.List.map(language => {
+      pages->Belt.List.map(page =>
+        {...page, path: Path.join2(language, page.path)}
+      )
+    })
+  ->Belt.List.flatten;
+
+let pages = Belt.List.concat(pages, localizedPages);
 
 let start = (~mode) =>
   PageBuilder.start(

@@ -108,6 +108,16 @@ let applyWrapper1 =
   (reactElement, componentString);
 };
 
+let makeReactAppModuleName = (~pagePath, ~moduleName) => {
+  let modulePrefix =
+    pagePath
+    ->Js.String2.replace("/", "")
+    ->Js.String2.replace("-", "")
+    ->Js.String2.replace(".", "");
+
+  modulePrefix ++ moduleName ++ "App";
+};
+
 let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
   let {component, moduleName, path: pagePath, wrapper, _} = page;
 
@@ -154,8 +164,10 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
       elementString,
     );
 
+  let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
+
   let () = {
-    let resultReactRescriptAppFilename = moduleName ++ "App.re";
+    let resultReactRescriptAppFilename = pageAppModuleName ++ ".re";
     Fs.writeFileSync(resultHtmlPath, resultHtml);
     Fs.writeFileSync(
       Path.join2(pageOutputDir, resultReactRescriptAppFilename),
@@ -164,15 +176,15 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
   };
 
   let () = {
-    let resultReactCompiledAppFilename = moduleName ++ "App.bs.js";
+    let resultReactCompiledAppFilename = pageAppModuleName ++ ".bs.js";
     let webpackPage: Webpack.page = {
-      title: moduleName,
+      title: pageAppModuleName,
       path: pagePath,
       entryPath: Path.join2(pageOutputDir, resultReactCompiledAppFilename),
       outputDir: pageOutputDir,
       htmlTemplatePath: resultHtmlPath,
     };
-    Webpack.pages->Js.Dict.set(moduleName, webpackPage);
+    Webpack.pages->Js.Dict.set(pageAppModuleName, webpackPage);
   };
 
   Js.log2(
