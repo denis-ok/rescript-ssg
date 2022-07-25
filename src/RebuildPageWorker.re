@@ -20,10 +20,11 @@ pages
         Js.log2("[Worker] Fresh import success: ", modulePath);
 
         let newPage = {
-          wrapper: None,
           path: page.path,
           PageBuilder.component:
-            React.createElement(module_##make, Js.Obj.empty()),
+            ComponentWithoutProps(
+              React.createElement(module_##make, Js.Obj.empty()),
+            ),
           moduleName: module_##moduleName,
           modulePath: module_##modulePath,
         };

@@ -84,9 +84,18 @@ type wrapper1('a) = {
 type wrapper('a) =
   | Wrapper1(wrapper1('a));
 
+type component('a) =
+  | ComponentWithoutProps(React.element)
+  | ComponentWithOneProp(oneProp('a))
+and oneProp('a) = {
+  component: 'a => React.element,
+  propName: string,
+  propValue: 'a,
+};
+
 type page('a) = {
-  wrapper: option(wrapper('a)),
-  component: React.element,
+  // wrapper: option(wrapper('a)),
+  component: component('a),
   moduleName: string,
   modulePath: string,
   path: string,
@@ -94,19 +103,19 @@ type page('a) = {
 
 let indexHtmlFilename = "index.html";
 
-let applyWrapper1 =
-    (
-      ~page: page('a),
-      ~wrapper: (React.element, 'a) => React.element,
-      ~arg: 'a,
-      ~wrapperReference: string,
-      ~argReference: string,
-    ) => {
-  let {component, moduleName, _} = page;
-  let reactElement = wrapper(component, arg);
-  let componentString = {j|$(wrapperReference)(<$(moduleName) />, $(argReference))|j};
-  (reactElement, componentString);
-};
+// let applyWrapper1 =
+//     (
+//       ~page: page('a, 'b),
+//       ~wrapper: (React.element, 'a) => React.element,
+//       ~arg: 'a,
+//       ~wrapperReference: string,
+//       ~argReference: string,
+//     ) => {
+//   let {component, moduleName, _} = page;
+//   let reactElement = wrapper(component, arg);
+//   let componentString = {j|$(wrapperReference)(<$(moduleName) />, $(argReference))|j};
+//   (reactElement, componentString);
+// };
 
 let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   let modulePrefix =
@@ -119,7 +128,7 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
 };
 
 let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
-  let {component, moduleName, path: pagePath, wrapper, _} = page;
+  let {component, moduleName, path: pagePath, _} = page;
 
   let pageOutputDir = Path.join2(outputDir, pagePath);
 
@@ -135,17 +144,13 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
   };
 
   let (element, elementString) = {
-    switch (wrapper) {
-    | None => (component, "<" ++ moduleName ++ " />")
-    | Some(Wrapper1({wrapper, arg, wrapperReference, argReference})) =>
-      let (element, elementString) =
-        applyWrapper1(
-          ~page,
-          ~wrapper,
-          ~arg,
-          ~wrapperReference,
-          ~argReference,
-        );
+    switch (component) {
+    | ComponentWithoutProps(element) => (element, "<" ++ moduleName ++ " />")
+    | ComponentWithOneProp({component, propName, propValue}) =>
+      let element = component(propValue);
+      let elementString =
+        "<" ++ moduleName ++ propName ++ "=" ++ propValue ++ " />";
+
       (element, elementString);
     };
   };
