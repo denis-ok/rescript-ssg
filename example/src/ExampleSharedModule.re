@@ -13,6 +13,6 @@ module Header = {
 module Footer = {
   [@react.component]
   let make = () => {
-    <p> "202233"->React.string </p>;
+    <p> "2022"->React.string </p>;
   };
 };
