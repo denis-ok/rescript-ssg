@@ -232,16 +232,22 @@ let _rebuildPage = (~outputDir, page: page('a)) => {
     });
 };
 
-let rebuildPageWithWorker = (~outputDir, page: page('a)) => {
-  let modulePath = page.modulePath;
+let rebuildPagesWithWorker = (~outputDir, pages: array(page('a))) => {
+  let rebuildPages =
+    pages->Js.Array2.map(page => {
+      let rebuildPage: RebuildPageWorkerT.rebuildPage = {
+        modulePath: page.modulePath,
+        outputDir,
+        path: page.path,
+      };
 
-  WorkingThreads.runRebuildPageWorker(
-    ~workerData={modulePath, outputDir, path: page.path},
-  )
-  ->Promise.map(result => Js.log2("WORKER RESULT: ", result));
+      rebuildPage;
+    });
+
+  WorkingThreads.runRebuildPageWorker(~workerData=rebuildPages);
 };
 
-let getModuleDependencies = modulePath =>
+let getModuleDependencies = (~modulePath) =>
   DependencyTree.makeList({
     filename: modulePath,
     // TODO Fix me. Is it really needed? Should it be func argument?
@@ -265,7 +271,7 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
 
   let modulesAndDependencies =
     pagesPaths->Js.Array2.map(modulePath => {
-      let dependencies = getModuleDependencies(modulePath);
+      let dependencies = getModuleDependencies(~modulePath);
 
       (modulePath, dependencies);
     });
@@ -337,40 +343,48 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
         | rebuildQueue =>
           Js.log2("[Watcher] Pages to rebuild queue: ", rebuildQueue);
 
-          rebuildQueue->Js.Array2.forEach(modulePath => {
-            switch (modulePathToPageDict->Js.Dict.get(modulePath)) {
-            | Some(page) =>
-              Js.log2("[Watcher] Trying to rebuild page: ", modulePath);
-              rebuildPageWithWorker(~outputDir, page)
-              ->Promise.map(() => {
-                  // We should update dicts and add new dependencies to watcher
-                  let newDependencies = getModuleDependencies(modulePath);
-
-                  Js.log3(
-                    "[Watcher] New dependencies of the module ",
-                    modulePath,
-                    newDependencies,
-                  );
-
-                  newDependencies->Js.Array2.forEach(dependency =>
-                    updateDependencyToPageModuleDict(~dependency, ~modulePath)
-                  );
-
-                  watcher->Chokidar.add(newDependencies);
-
+          let pagesToRebuild =
+            rebuildQueue
+            ->Js.Array2.map(modulePath => {
+                switch (modulePathToPageDict->Js.Dict.get(modulePath)) {
+                | None =>
                   Js.log2(
-                    "[Watcher] !!! dependencyToPageModuleDict",
-                    dependencyToPageModuleDict,
+                    "[Watcher] Can't rebuild page, page module is missing in dict: ",
+                    modulePath,
                   );
-                })
-              ->ignore;
-            | None =>
-              Js.log2(
-                "[Watcher] Can't rebuild page, page module is missing in dict: ",
-                modulePath,
-              )
-            }
-          });
+                  None;
+                | Some(page) => Some(page)
+                }
+              })
+            ->Belt.Array.keepMap(v => v);
+
+          rebuildPagesWithWorker(~outputDir, pagesToRebuild)
+          ->Promise.map(_ => {
+              Js.log("[Watcher] Updating dependencies to watch");
+
+              pagesToRebuild->Js.Array2.forEach(page => {
+                let modulePath = page.modulePath;
+                let newDependencies = getModuleDependencies(~modulePath);
+
+                Js.log3(
+                  "[Watcher] New dependencies of the module ",
+                  modulePath,
+                  newDependencies,
+                );
+
+                newDependencies->Js.Array2.forEach(dependency =>
+                  updateDependencyToPageModuleDict(~dependency, ~modulePath)
+                );
+
+                watcher->Chokidar.add(newDependencies);
+
+                Js.log2(
+                  "[Watcher] !!! dependencyToPageModuleDict",
+                  dependencyToPageModuleDict,
+                );
+              });
+            })
+          ->ignore;
 
           rebuildQueueRef := [||];
         }
