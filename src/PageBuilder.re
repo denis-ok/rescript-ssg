@@ -235,13 +235,8 @@ let _rebuildPage = (~outputDir, page: page('a)) => {
 let rebuildPageWithWorker = (~outputDir, page: page('a)) => {
   let modulePath = page.modulePath;
 
-  WorkingThreads.runWorker(
-    ~workerModulePath="./src/RebuildPageWorker.bs.js",
-    ~workerData={
-      "modulePath": modulePath,
-      "outputDir": outputDir,
-      "path": page.path,
-    },
+  WorkingThreads.runRebuildPageWorker(
+    ~workerData={modulePath, outputDir, path: page.path},
   )
   ->Promise.map(result => Js.log2("WORKER RESULT: ", result));
 };

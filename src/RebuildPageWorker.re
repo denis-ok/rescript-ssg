@@ -1,14 +1,10 @@
-type data = {
-  modulePath: string,
-  outputDir: string,
-  path: string,
-};
+type workerData = RebuildPageWorkerT.workerData;
 
-let workerData: data = WorkingThreads.workerData;
+let workerData: workerData = WorkingThreads.workerData;
 
 let parentPort = WorkingThreads.parentPort;
 
-let {modulePath, outputDir, path} = workerData;
+let {modulePath, outputDir, path}: workerData = workerData;
 
 Js.log2("[rebuildPage] Trying to do fresh import: ", modulePath);
 
