@@ -4,16 +4,6 @@ let pagesOutputDir = Path.join2(currentDir, "../build");
 
 let webpackOutputDir = Path.join2(pagesOutputDir, "bundle");
 
-// let makeWrapper = (~arg, ~argReference) =>
-//   Some(
-//     PageBuilder.Wrapper1({
-//       wrapper: ExampleWrapper1.wrapper,
-//       wrapperReference: ExampleWrapper1.wrapperReference,
-//       arg,
-//       argReference,
-//     }),
-//   );
-
 let pageIndex: PageBuilder.page('a) = {
   component: ComponentWithoutProps(<ExampleIndex />),
   moduleName: ExampleIndex.moduleName,
@@ -22,10 +12,40 @@ let pageIndex: PageBuilder.page('a) = {
 };
 
 let page1: PageBuilder.page('a) = {
-  component: ComponentWithoutProps(<ExamplePage1 />),
+  component:
+    ComponentWithOneProp({
+      component: pageContext => <ExamplePage1 pageContext />,
+      prop: {
+        name: "pageContext",
+        value:
+          Some({
+            string: "lala",
+            int: 1,
+            float: 1.23,
+            variant: One,
+            polyVariant: `hello,
+            option: Some("lalala"),
+            bool: true,
+          }),
+      },
+    }),
   moduleName: ExamplePage1.moduleName,
   modulePath: ExamplePage1.modulePath,
   path: "page1",
+};
+
+let page2: PageBuilder.page('a) = {
+  component:
+    ComponentWithOneProp({
+      component: pageContext => <ExamplePage1 pageContext />,
+      prop: {
+        name: "pageContext",
+        value: None,
+      },
+    }),
+  moduleName: ExamplePage1.moduleName,
+  modulePath: ExamplePage1.modulePath,
+  path: "page2",
 };
 
 // TODO Fix localized dynamic path (issue with "@@@")
@@ -40,7 +60,7 @@ let page1: PageBuilder.page('a) = {
 
 let languages = ["en", "ru"];
 
-let pages = [pageIndex, page1];
+let pages = [pageIndex, page1, page2];
 
 let localizedPages =
   languages
