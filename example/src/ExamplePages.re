@@ -71,19 +71,16 @@ let page2: PageBuilder.page = {
   path: Path([|"page2"|]),
 };
 
-// TODO Fix localized dynamic path (issue with "@@@")
-
-// let pageDynamic = {
-//   PageBuilder.wrapper: None,
-//   component: <ExamplePageDynamic />,
-//   moduleName: ExamplePageDynamic.moduleName,
-//   modulePath: ExamplePageDynamic.modulePath,
-//   path: "page1/@@@",
-// };
+let page1Dynamic: PageBuilder.page = {
+  component: ComponentWithoutProps(<ExamplePageDynamic />),
+  moduleName: ExamplePageDynamic.moduleName,
+  modulePath: ExamplePageDynamic.modulePath,
+  path: Path([|"page1", "_id"|]),
+};
 
 let languages = ["en", "ru"];
 
-let pages = [pageIndex, page1, page2];
+let pages = [pageIndex, page1, page2, page1Dynamic,];
 
 let localizedPages =
   languages

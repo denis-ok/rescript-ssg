@@ -91,7 +91,7 @@ module Hash = {
 
 type page = {
   title: string,
-  path: string,
+  path: PageBuilderT.PagePath.t,
   entryPath: string,
   outputDir: string,
   htmlTemplatePath: string,
@@ -127,7 +127,9 @@ let makeConfig =
 
   let entries =
     pages
-    ->Js.Array2.map(({path, entryPath, _}) => (path, entryPath))
+    ->Js.Array2.map(({path, entryPath, _}) =>
+        (PageBuilderT.PagePath.toString(path), entryPath)
+      )
     ->Js.Dict.fromArray;
 
   let htmlWebpackPlugins =
@@ -136,7 +138,9 @@ let makeConfig =
         "title": title,
         "lang": "en",
         "template": htmlTemplatePath,
-        "filename": path == "." ? "./index.html" : {j|$(path)/index.html|j},
+        "filename": {
+          Path.join2(PageBuilderT.PagePath.toString(path), "index.html");
+        },
         // TODO take a look at chunks field. Is it needed?
         "chunks": [|path|],
         "inject": true,
@@ -185,18 +189,46 @@ let makeConfig =
               // "page1/@@@"
               // from: "/^\/page1\/.*/"
               // to: "/page1/@@@/index.html"
-              pages
-              ->Js.Array2.filter(page =>
-                  page.path->Js.String2.includes(dynamicPathPart)
-                )
-              ->Js.Array2.map(page => {
-                  let pathRefined =
-                    page.path->Js.String2.replace(dynamicPathPart, ".*");
-                  let regexString = "^/" ++ pathRefined;
-                  let from = Js.Re.fromString(regexString);
-                  let to_ = Path.join3("/", page.path, "index.html");
-                  {"from": from, "to": to_};
-                });
+              let rewrites =
+                pages->Belt.Array.keepMap(page =>
+                  switch (page.path) {
+                  | Root => None
+                  | Path(parts) =>
+                    let hasDynamicPart =
+                      parts
+                      ->Js.Array2.find(part =>
+                          part->Js.String2.startsWith("_")
+                        )
+                      ->Belt.Option.isSome;
+
+                    switch (hasDynamicPart) {
+                    | false => None
+                    | _true =>
+                      let pathWithAsterisks =
+                        parts
+                        ->Js.Array2.map(part =>
+                            part->Js.String2.startsWith("_") ? ".*" : part
+                          )
+                        ->Js.Array2.joinWith("/");
+
+                      let regexString = "^/" ++ pathWithAsterisks;
+
+                      let from = Js.Re.fromString(regexString);
+
+                      let to_ =
+                        Path.join3(
+                          "/",
+                          PageBuilderT.PagePath.toString(page.path),
+                          "index.html",
+                        );
+
+                      Some({"from": from, "to": to_});
+                    };
+                  }
+                );
+
+              Js.log2("rewrites", rewrites);
+              rewrites;
             },
           },
           "hot": false,
