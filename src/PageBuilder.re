@@ -89,10 +89,10 @@ type component =
   | ComponentWithOneProp(componentWithOneProp('a)): component;
 
 type page = {
-  component: component,
+  component,
   moduleName: string,
   modulePath: string,
-  path: string,
+  path: PageBuilderT.PagePath.t,
 };
 
 let indexHtmlFilename = "index.html";
@@ -100,15 +100,17 @@ let indexHtmlFilename = "index.html";
 let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
-    ->Js.String2.replace("/", "")
-    ->Js.String2.replace("-", "")
-    ->Js.String2.replace(".", "");
+    ->Js.String2.replaceByRe([%re "/\\//g"], "")
+    ->Js.String2.replaceByRe([%re "/-/g"], "")
+    ->Js.String2.replaceByRe([%re "/\\./g"], "");
 
   modulePrefix ++ moduleName ++ "App";
 };
 
 let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
   let {component, moduleName, path: pagePath, _} = page;
+
+  let pagePath = pagePath->PageBuilderT.PagePath.toString;
 
   let pageOutputDir = Path.join2(outputDir, pagePath);
 
@@ -118,6 +120,8 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
   );
 
   let resultHtmlPath = Path.join2(pageOutputDir, indexHtmlFilename);
+
+  Js.log2("resultHtmlPath: ", resultHtmlPath);
 
   let () = {
     Fs.mkDirSync(pageOutputDir, {recursive: true});
@@ -376,8 +380,9 @@ let buildPages = (~outputDir, pages: list(page)) => {
 
   let () =
     pages->Belt.List.forEach(page => {
-      switch (pagesDict->Js.Dict.get(page.path)) {
-      | None => pagesDict->Js.Dict.set(page.path, page)
+      let pagePath = PageBuilderT.PagePath.toString(page.path);
+      switch (pagesDict->Js.Dict.get(pagePath)) {
+      | None => pagesDict->Js.Dict.set(pagePath, page)
       | Some(_) =>
         Js.log3(
           "[PageBuilder.buildPages] List of pages contains pages with the same paths. Page with path: ",

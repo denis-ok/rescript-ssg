@@ -8,7 +8,7 @@ let pageIndex: PageBuilder.page = {
   component: ComponentWithoutProps(<ExampleIndex />),
   moduleName: ExampleIndex.moduleName,
   modulePath: ExampleIndex.modulePath,
-  path: ".",
+  path: Root,
 };
 
 let page1: PageBuilder.page = {
@@ -31,7 +31,7 @@ let page1: PageBuilder.page = {
     }),
   moduleName: ExamplePage1.moduleName,
   modulePath: ExamplePage1.modulePath,
-  path: "page1",
+  path: Path([|"page1"|]),
 };
 
 let page11: PageBuilder.page = {
@@ -54,7 +54,7 @@ let page11: PageBuilder.page = {
     }),
   moduleName: ExamplePage1.moduleName,
   modulePath: ExamplePage1.modulePath,
-  path: "page11",
+  path: Path([|"page11"|]),
 };
 
 let page2: PageBuilder.page = {
@@ -68,7 +68,7 @@ let page2: PageBuilder.page = {
     }),
   moduleName: ExamplePage2.moduleName,
   modulePath: ExamplePage2.modulePath,
-  path: "page2",
+  path: Path([|"page2"|]),
 };
 
 // TODO Fix localized dynamic path (issue with "@@@")
@@ -89,7 +89,14 @@ let localizedPages =
   languages
   ->Belt.List.map(language => {
       pages->Belt.List.map(page =>
-        {...page, path: Path.join2(language, page.path)}
+        {
+          ...page,
+          path:
+            switch (page.path) {
+            | Root => Path([|language|])
+            | Path(parts) => Path(Js.Array2.concat([|language|], parts))
+            },
+        }
       )
     })
   ->Belt.List.flatten;
