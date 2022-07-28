@@ -79,16 +79,17 @@ type prop('a) = {
   value: 'a,
 };
 
-type component('a) =
-  | ComponentWithoutProps(React.element)
-  | ComponentWithOneProp(oneProp('a))
-and oneProp('a) = {
+type componentWithOneProp('a) = {
   component: 'a => React.element,
   prop: prop('a),
 };
 
-type page('a) = {
-  component: component('a),
+type component =
+  | ComponentWithoutProps(React.element)
+  | ComponentWithOneProp(componentWithOneProp('a)): component;
+
+type page = {
+  component: component,
   moduleName: string,
   modulePath: string,
   path: string,
@@ -106,7 +107,7 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   modulePrefix ++ moduleName ++ "App";
 };
 
-let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
+let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
   let {component, moduleName, path: pagePath, _} = page;
 
   let pageOutputDir = Path.join2(outputDir, pagePath);
@@ -194,7 +195,7 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page('a)) => {
 
 let makeUniqueArray = array => Set.fromArray(array)->Set.toArray;
 
-let rebuildPagesWithWorker = (~outputDir, pages: array(page('a))) => {
+let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
   let rebuildPages =
     pages->Js.Array2.map(page => {
       let rebuildPage: RebuildPageWorkerT.rebuildPage = {
@@ -221,7 +222,7 @@ let getModuleDependencies = (~modulePath) =>
 // Monitor changes in a module itself and monitor changes in all dependencies of a module (except node modules?)
 // After a module changed should we refresh dependencies and remove stale?
 
-let startWatcher = (~outputDir, pages: list(page('a))) => {
+let startWatcher = (~outputDir, pages: list(page)) => {
   let modulePathToPagesDict = Js.Dict.empty();
   pages->Belt.List.forEach(page => {
     switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
@@ -368,7 +369,7 @@ let startWatcher = (~outputDir, pages: list(page('a))) => {
   ();
 };
 
-let buildPages = (~outputDir, pages: list(page('a))) => {
+let buildPages = (~outputDir, pages: list(page)) => {
   Js.log("[PageBuilder.buildPages] Building pages...");
 
   let pagesDict = Js.Dict.empty();
@@ -393,7 +394,7 @@ let buildPages = (~outputDir, pages: list(page('a))) => {
   pagesDict;
 };
 
-let start = (~pages: list(page('a)), ~outputDir, ~webpackOutputDir, ~mode) => {
+let start = (~pages: list(page), ~outputDir, ~webpackOutputDir, ~mode) => {
   let _pagesDict = buildPages(~outputDir, pages);
 
   startWatcher(~outputDir, pages);
