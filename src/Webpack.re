@@ -157,8 +157,6 @@ let makeConfig =
       "path": webpackOutputDir,
       "publicPath": "/",
       "filename": "js/[name].[chunkhash].js",
-      // Hash suffix disabled.
-      // TODO Figure out how to use custom hash func to reuse in node-loader.
       "assetModuleFilename": webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
       "hashFunction": Hash.makeNew,
       "hashDigestLength": Hash.digestLength,
@@ -227,7 +225,7 @@ let makeConfig =
                   }
                 );
 
-              Js.log2("rewrites", rewrites);
+              Js.log2("[Webpack dev server] Path rewrites: ", rewrites);
               rewrites;
             },
           },

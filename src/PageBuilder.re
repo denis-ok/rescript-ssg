@@ -95,8 +95,6 @@ type page = {
   path: PageBuilderT.PagePath.t,
 };
 
-let indexHtmlFilename = "index.html";
-
 let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
@@ -108,9 +106,9 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
 };
 
 let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
-  let {component, moduleName, path: pagePath, _} = page;
+  let {moduleName, _} = page;
 
-  let pagePath = pagePath->PageBuilderT.PagePath.toString;
+  let pagePath = page.path->PageBuilderT.PagePath.toString;
 
   let pageOutputDir = Path.join2(outputDir, pagePath);
 
@@ -119,19 +117,18 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
     pageOutputDir,
   );
 
-  let resultHtmlPath = Path.join2(pageOutputDir, indexHtmlFilename);
-
-  Js.log2("resultHtmlPath: ", resultHtmlPath);
-
   let () = {
     Fs.mkDirSync(pageOutputDir, {recursive: true});
   };
 
   let (element, elementString) = {
-    switch (component) {
+    switch (page.component) {
     | ComponentWithoutProps(element) => (element, "<" ++ moduleName ++ " />")
     | ComponentWithOneProp({component, prop}) =>
-      // We need to inject prop value to react app template. This is pretty unsafe part, but should work.
+      // We need a way to take a prop value of any type and inject it to generated React app template.
+      // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
+      // This is unsafe part. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
+      // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
       let unsafeStringifiedPropValue =
         switch (prop.value->Js.Json.stringifyAny) {
         | Some(propValueString) => {j|{{js|$(propValueString)|js}->Js.Json.parseExn->Obj.magic}|j}
@@ -170,21 +167,23 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
 
   let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
 
+  let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
+
   let () = {
-    let resultReactRescriptAppFilename = pageAppModuleName ++ ".re";
+    let reactAppFilename = pageAppModuleName ++ ".re";
     Fs.writeFileSync(resultHtmlPath, resultHtml);
     Fs.writeFileSync(
-      Path.join2(pageOutputDir, resultReactRescriptAppFilename),
+      Path.join2(pageOutputDir, reactAppFilename),
       resultReactApp,
     );
   };
 
   let () = {
-    let resultReactCompiledAppFilename = pageAppModuleName ++ ".bs.js";
+    let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
     let webpackPage: Webpack.page = {
       title: pageAppModuleName,
       path: page.path,
-      entryPath: Path.join2(pageOutputDir, resultReactCompiledAppFilename),
+      entryPath: Path.join2(pageOutputDir, compiledReactAppFilename),
       outputDir: pageOutputDir,
       htmlTemplatePath: resultHtmlPath,
     };
