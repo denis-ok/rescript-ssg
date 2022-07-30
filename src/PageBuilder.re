@@ -220,7 +220,7 @@ let getModuleDependencies = (~modulePath) =>
   DependencyTree.makeList({
     filename: modulePath,
     // TODO Fix me. Is it really needed? Should it be func argument?
-    directory: "/Users/denis/projects/builder/.vscode",
+    directory: ".",
     filter: path => path->Js.String2.indexOf("node_modules") == (-1),
   });
 

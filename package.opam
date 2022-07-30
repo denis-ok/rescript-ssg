@@ -1,6 +1,6 @@
 opam-version: "2.0"
-name: "builder"
-synopsis: "static pages generator"
+name: "rescript-ssg"
+synopsis: "Rescript React static site generator"
 maintainer: "Denis Strelkov <strelkov.d.d@gmail.com>"
 authors: "Denis Strelkov <strelkov.d.d@gmail.com>"
 depends: [

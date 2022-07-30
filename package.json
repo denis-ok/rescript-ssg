@@ -1,7 +1,7 @@
 {
-  "name": "builder",
-  "description": "static pages generator",
-  "homepage": "https://github.com/denis-ok/builder",
+  "name": "rescript-ssg",
+  "description": "Rescript React static site generator",
+  "homepage": "https://github.com/denis-ok/rescript-ssg",
   "version": "0.0.1",
   "scripts": {},
   "type": "module",
@@ -12,7 +12,7 @@
   "files": [],
   "repository": {
     "type": "git",
-    "url": "https://github.com/denis-ok/builder.git"
+    "url": "https://github.com/denis-ok/rescript-ssg.git"
   },
   "author": "Denis Strelkov",
   "license": "MIT",
