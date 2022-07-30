@@ -202,6 +202,18 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
   let rebuildPages =
     pages->Js.Array2.map(page => {
       let rebuildPage: RebuildPageWorkerT.rebuildPage = {
+        component: {
+          switch (page.component) {
+          | ComponentWithoutProps(_) => ComponentWithoutProps
+          | ComponentWithOneProp({prop, _}) =>
+            ComponentWithOneProp({
+              prop: {
+                name: prop.name,
+                value: prop.value,
+              },
+            })
+          };
+        },
         modulePath: page.modulePath,
         outputDir,
         path: page.path,

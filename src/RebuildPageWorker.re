@@ -19,14 +19,32 @@ pages
     ->Promise.map(module_ => {
         Js.log2("[Worker] Fresh import success: ", modulePath);
 
-        let newPage = {
-          path: page.path,
-          PageBuilder.component:
-            ComponentWithoutProps(
-              React.createElement(module_##make, Js.Obj.empty()),
-            ),
+        let newPage: PageBuilder.page = {
+          component: {
+            switch (page.component) {
+            | RebuildPageWorkerT.ComponentWithoutProps =>
+              ComponentWithoutProps(
+                React.createElement(module_##make, Js.Obj.empty()),
+              )
+            | RebuildPageWorkerT.ComponentWithOneProp({prop}) =>
+              ComponentWithOneProp({
+                component: _propValue => {
+                  // TODO FIX ME. Use predefined prop name
+                  React.createElement(
+                    module_##make,
+                    Js.Obj.empty(),
+                  );
+                },
+                prop: {
+                  name: prop.name,
+                  value: prop.value,
+                },
+              })
+            };
+          },
           moduleName: module_##moduleName,
           modulePath: module_##modulePath,
+          path: page.path,
         };
 
         PageBuilder.buildPageHtmlAndReactApp(~outputDir, newPage);

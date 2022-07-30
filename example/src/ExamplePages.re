@@ -80,7 +80,7 @@ let page1Dynamic: PageBuilder.page = {
 
 let languages = ["en", "ru"];
 
-let pages = [pageIndex, page1, page2, page1Dynamic,];
+let pages = [pageIndex, page1, page2, page1Dynamic];
 
 let localizedPages =
   languages
