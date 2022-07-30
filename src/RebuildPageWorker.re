@@ -22,12 +22,12 @@ pages
         let newPage: PageBuilder.page = {
           component: {
             switch (page.component) {
-            | RebuildPageWorkerT.ComponentWithoutProps =>
-              ComponentWithoutProps(
+            | RebuildPageWorkerT.ComponentWithoutData =>
+              ComponentWithoutData(
                 React.createElement(module_##make, Js.Obj.empty()),
               )
-            | RebuildPageWorkerT.ComponentWithOneProp({prop}) =>
-              ComponentWithOneProp({
+            | RebuildPageWorkerT.ComponentWithData({data}) =>
+              ComponentWithData({
                 component: _propValue => {
                   // TODO FIX ME. Use predefined prop name
                   React.createElement(
@@ -35,10 +35,7 @@ pages
                     Js.Obj.empty(),
                   );
                 },
-                prop: {
-                  name: prop.name,
-                  value: prop.value,
-                },
+                data,
               })
             };
           },

@@ -74,19 +74,14 @@ switch (ReactDOM.querySelector("#app")) {
 };
 |js};
 
-type prop('a) = {
-  name: string,
-  value: 'a,
-};
-
-type componentWithOneProp('a) = {
+type componentWithData('a) = {
   component: 'a => React.element,
-  prop: prop('a),
+  data: 'a,
 };
 
 type component =
-  | ComponentWithoutProps(React.element)
-  | ComponentWithOneProp(componentWithOneProp('a)): component;
+  | ComponentWithoutData(React.element)
+  | ComponentWithData(componentWithData('a)): component;
 
 type page = {
   component,
@@ -94,6 +89,8 @@ type page = {
   modulePath: string,
   path: PageBuilderT.PagePath.t,
 };
+
+let dataPropName = "data";
 
 let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   let modulePrefix =
@@ -123,26 +120,26 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
 
   let (element, elementString) = {
     switch (page.component) {
-    | ComponentWithoutProps(element) => (element, "<" ++ moduleName ++ " />")
-    | ComponentWithOneProp({component, prop}) =>
+    | ComponentWithoutData(element) => (element, "<" ++ moduleName ++ " />")
+    | ComponentWithData({component, data}) =>
       // We need a way to take a prop value of any type and inject it to generated React app template.
       // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
       // This is unsafe part. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
       // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
       let unsafeStringifiedPropValue =
-        switch (prop.value->Js.Json.stringifyAny) {
+        switch (data->Js.Json.stringifyAny) {
         | Some(propValueString) => {j|{{js|$(propValueString)|js}->Js.Json.parseExn->Obj.magic}|j}
         | None =>
           // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
           "None"
         };
 
-      let element = component(prop.value);
+      let element = component(data);
       let elementString =
         "<"
         ++ moduleName
         ++ " "
-        ++ prop.name
+        ++ dataPropName
         ++ "="
         ++ unsafeStringifiedPropValue
         ++ " />";
@@ -204,14 +201,8 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
       let rebuildPage: RebuildPageWorkerT.rebuildPage = {
         component: {
           switch (page.component) {
-          | ComponentWithoutProps(_) => ComponentWithoutProps
-          | ComponentWithOneProp({prop, _}) =>
-            ComponentWithOneProp({
-              prop: {
-                name: prop.name,
-                value: prop.value,
-              },
-            })
+          | ComponentWithoutData(_) => ComponentWithoutData
+          | ComponentWithData({data, _}) => ComponentWithData({data: data})
           };
         },
         modulePath: page.modulePath,

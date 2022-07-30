@@ -5,7 +5,7 @@ let pagesOutputDir = Path.join2(currentDir, "../build");
 let webpackOutputDir = Path.join2(pagesOutputDir, "bundle");
 
 let pageIndex: PageBuilder.page = {
-  component: ComponentWithoutProps(<ExampleIndex />),
+  component: ComponentWithoutData(<ExampleIndex />),
   moduleName: ExampleIndex.moduleName,
   modulePath: ExampleIndex.modulePath,
   path: Root,
@@ -13,21 +13,18 @@ let pageIndex: PageBuilder.page = {
 
 let page1: PageBuilder.page = {
   component:
-    ComponentWithOneProp({
-      component: pageContext => <ExamplePage1 pageContext />,
-      prop: {
-        name: "pageContext",
-        value:
-          Some({
-            string: "lala",
-            int: 1,
-            float: 1.23,
-            variant: One,
-            polyVariant: `hello,
-            option: Some("lalala"),
-            bool: true,
-          }),
-      },
+    ComponentWithData({
+      component: data => <ExamplePage1 data />,
+      data:
+        Some({
+          string: "lala",
+          int: 1,
+          float: 1.23,
+          variant: One,
+          polyVariant: `hello,
+          option: Some("lalala"),
+          bool: true,
+        }),
     }),
   moduleName: ExamplePage1.moduleName,
   modulePath: ExamplePage1.modulePath,
@@ -36,21 +33,18 @@ let page1: PageBuilder.page = {
 
 let page11: PageBuilder.page = {
   component:
-    ComponentWithOneProp({
-      component: pageContext => <ExamplePage1 pageContext />,
-      prop: {
-        name: "pageContext",
-        value:
-          Some({
-            string: "lala",
-            int: 1,
-            float: 1.23,
-            variant: One,
-            polyVariant: `hello,
-            option: Some("lalala"),
-            bool: true,
-          }),
-      },
+    ComponentWithData({
+      component: data => <ExamplePage1 data />,
+      data:
+        Some({
+          string: "lala",
+          int: 1,
+          float: 1.23,
+          variant: One,
+          polyVariant: `hello,
+          option: Some("lalala"),
+          bool: true,
+        }),
     }),
   moduleName: ExamplePage1.moduleName,
   modulePath: ExamplePage1.modulePath,
@@ -59,12 +53,9 @@ let page11: PageBuilder.page = {
 
 let page2: PageBuilder.page = {
   component:
-    ComponentWithOneProp({
-      component: boolProp => <ExamplePage2 boolProp />,
-      prop: {
-        name: "boolProp",
-        value: true,
-      },
+    ComponentWithData({
+      component: data => <ExamplePage2 data />,
+      data: true,
     }),
   moduleName: ExamplePage2.moduleName,
   modulePath: ExamplePage2.modulePath,
@@ -72,7 +63,7 @@ let page2: PageBuilder.page = {
 };
 
 let page1Dynamic: PageBuilder.page = {
-  component: ComponentWithoutProps(<ExamplePageDynamic />),
+  component: ComponentWithoutData(<ExamplePageDynamic />),
   moduleName: ExamplePageDynamic.moduleName,
   modulePath: ExamplePageDynamic.modulePath,
   path: Path([|"page1", "_id"|]),

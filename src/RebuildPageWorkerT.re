@@ -1,19 +1,14 @@
-type prop('a) = {
-  name: string,
-  value: 'a,
-};
-
-type componentWithOneProp('a) = {
+type componentWithData('a) = {
   //
-  prop: prop('a),
+  data: 'a,
 };
 
 // This is almost the same type as in PageBuilder module but without component itself,
 // because we can't pass functions to workers.
 
 type component =
-  | ComponentWithoutProps
-  | ComponentWithOneProp(componentWithOneProp('a)): component;
+  | ComponentWithoutData
+  | ComponentWithData(componentWithData('a)): component;
 
 type rebuildPage = {
   component,

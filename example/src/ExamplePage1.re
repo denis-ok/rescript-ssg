@@ -5,9 +5,9 @@ let moduleName = __MODULE__;
 let modulePath = Utils.getFilepath();
 
 [@react.component]
-let make = (~pageContext: option(ExamplePageContext.t)) => {
+let make = (~data: option(ExamplePageContext.t)) => {
   <div>
-    {switch (pageContext) {
+    {switch (data) {
      | None => React.null
      | Some({string, int, float, variant, polyVariant, option, bool}) =>
        <ul>
