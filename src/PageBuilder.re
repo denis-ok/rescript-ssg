@@ -178,7 +178,6 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
   let () = {
     let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
     let webpackPage: Webpack.page = {
-      title: pageAppModuleName,
       path: page.path,
       entryPath: Path.join2(pageOutputDir, compiledReactAppFilename),
       outputDir: pageOutputDir,

@@ -90,7 +90,6 @@ module Hash = {
 };
 
 type page = {
-  title: string,
   path: PageBuilderT.PagePath.t,
   entryPath: string,
   outputDir: string,
@@ -126,22 +125,20 @@ let makeConfig =
   let entries =
     pages
     ->Js.Array2.map(({path, entryPath, _}) =>
-        (PageBuilderT.PagePath.toString(path), entryPath)
+        (PageBuilderT.PagePath.toWebpackEntryName(path), entryPath)
       )
     ->Js.Dict.fromArray;
 
   let htmlWebpackPlugins =
-    pages->Js.Array2.map(({title, path, htmlTemplatePath, _}) => {
-      let pagePath = PageBuilderT.PagePath.toString(path);
+    pages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
       HtmlWebpackPlugin.make({
-        "title": title,
-        "lang": "en",
         "template": htmlTemplatePath,
-        "filename": Path.join2(pagePath, "index.html"),
-        "chunks": [|pagePath|],
+        "filename":
+          Path.join2(PageBuilderT.PagePath.toString(path), "index.html"),
+        "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
         "inject": true,
         "minify": false,
-      });
+      })
     });
 
   let config = {
@@ -152,7 +149,7 @@ let makeConfig =
     "output": {
       "path": webpackOutputDir,
       "publicPath": "/",
-      "filename": "js/[name].[chunkhash].js",
+      "filename": "js/[name]_[chunkhash].js",
       "assetModuleFilename": webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
       "hashFunction": Hash.makeNew,
       "hashDigestLength": Hash.digestLength,
@@ -179,10 +176,11 @@ let makeConfig =
           "historyApiFallback": {
             "verbose": true,
             "rewrites": {
-              // Here we add support for serving pages with dynamic path parts, like "users/:id"
-              // "page1/@@@"
-              // from: "/^\/page1\/.*/"
-              // to: "/page1/@@@/index.html"
+              // Here we add support for serving pages with dynamic path parts
+              // We use underscore prefix in this library to mark this kind of paths: users/_id
+              // Be build rewrite setting below like this:
+              // from: "/^\/users\/.*/"
+              // to: "/users/_id/index.html"
               let rewrites =
                 pages->Belt.Array.keepMap(page =>
                   switch (page.path) {
