@@ -115,8 +115,6 @@ let assetRegex = [%re
   "/\\.(jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json)$/i"
 ];
 
-let dynamicPathPart = "@@@";
-
 let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
@@ -133,20 +131,18 @@ let makeConfig =
     ->Js.Dict.fromArray;
 
   let htmlWebpackPlugins =
-    pages->Js.Array2.map(({title, path, htmlTemplatePath, _}) =>
+    pages->Js.Array2.map(({title, path, htmlTemplatePath, _}) => {
+      let pagePath = PageBuilderT.PagePath.toString(path);
       HtmlWebpackPlugin.make({
         "title": title,
         "lang": "en",
         "template": htmlTemplatePath,
-        "filename": {
-          Path.join2(PageBuilderT.PagePath.toString(path), "index.html");
-        },
-        // TODO take a look at chunks field. Is it needed?
-        "chunks": [|path|],
+        "filename": Path.join2(pagePath, "index.html"),
+        "chunks": [|pagePath|],
         "inject": true,
         "minify": false,
-      })
-    );
+      });
+    });
 
   let config = {
     "entry": entries,

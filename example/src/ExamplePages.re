@@ -53,10 +53,7 @@ let page11: PageBuilder.page = {
 
 let page2: PageBuilder.page = {
   component:
-    ComponentWithData({
-      component: data => <ExamplePage2 data />,
-      data: true,
-    }),
+    ComponentWithData({component: data => <ExamplePage2 data />, data: true}),
   moduleName: ExamplePage2.moduleName,
   modulePath: ExamplePage2.modulePath,
   path: Path([|"page2"|]),
