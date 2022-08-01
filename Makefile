@@ -23,7 +23,7 @@ start-example:
 	node --experimental-loader=./src/node-loader.mjs $(EXAMPLE_DIR)/src/ExampleStart.bs.js
 
 serve-example:
-	npx serve -l 3005 $(EXAMPLE_DIR)/build/bundle
+	$(NODE_BINS)/serve -l 3005 $(EXAMPLE_DIR)/build/bundle
 
 clean:
 	rm -rf $(EXAMPLE_DIR)/build
