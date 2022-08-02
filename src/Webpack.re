@@ -98,16 +98,59 @@ type page = {
 
 let pages: Js.Dict.t(page) = Js.Dict.empty();
 
-let isProduction = false;
-
 let webpackAssetsDir = "assets";
 
 module DevServerOptions = {
+  module Proxy = {
+    // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/eefa7b7fce1443e2b6ee5e34d84e142880418208/types/http-proxy/index.d.ts#L25
+    type devServerTarget = {
+      host: option(string),
+      socketPath: option(string),
+    };
+
+    type devServerPathRewrite = Js.Dict.t(string);
+
+    type devServerProxyTo = {
+      target: devServerTarget,
+      pathRewrite: option(devServerPathRewrite),
+      secure: bool,
+      changeOrigin: bool,
+      logLevel: string,
+    };
+
+    // https://webpack.js.org/configuration/dev-server/#devserverproxy
+    type devServerProxy = Js.Dict.t(devServerProxyTo);
+
+    type target =
+      | Host(string)
+      | UnixSocket(string);
+
+    type pathRewrite = {
+      from: string,
+      to_: string,
+    };
+
+    type proxyTo = {
+      target,
+      pathRewrite: option(pathRewrite),
+      secure: bool,
+      changeOrigin: bool,
+    };
+
+    type t = {
+      from: string,
+      to_: proxyTo,
+    };
+  };
+
   type listenTo =
     | Port(int)
     | UnixSocket(string);
 
-  type t = {listenTo};
+  type t = {
+    listenTo,
+    proxy: option(array(Proxy.t)),
+  };
 };
 
 let assetRegex = [%re
@@ -171,7 +214,7 @@ let makeConfig =
     "devServer": {
       switch (devServerOptions) {
       | None => None
-      | Some({listenTo}) =>
+      | Some({listenTo, proxy}) =>
         Some({
           "historyApiFallback": {
             "verbose": true,
@@ -239,6 +282,38 @@ let makeConfig =
             switch (listenTo) {
             | UnixSocket(path) => Some(path)
             | Port(_) => None
+            };
+          },
+          "proxy": {
+            switch (proxy) {
+            | None => None
+            | Some(proxySettings) =>
+              let proxyDict:
+                Js.Dict.t(DevServerOptions.Proxy.devServerProxyTo) =
+                proxySettings
+                ->Js.Array2.map(proxy => {
+                    let proxyTo: DevServerOptions.Proxy.devServerProxyTo = {
+                      target:
+                        switch (proxy.to_.target) {
+                        | Host(host) => {host: Some(host), socketPath: None}
+                        | UnixSocket(socketPath) => {
+                            host: None,
+                            socketPath: Some(socketPath),
+                          }
+                        },
+                      pathRewrite: None,
+                      secure: proxy.to_.secure,
+                      changeOrigin: proxy.to_.changeOrigin,
+                      logLevel: "debug",
+                    };
+
+                    (proxy.from, proxyTo);
+                  })
+                ->Js.Dict.fromArray;
+
+              Js.log2("[Webpack dev server] proxyDict: ", proxyDict);
+
+              Some(proxyDict);
             };
           },
         })
