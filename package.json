@@ -19,6 +19,7 @@
   "dependencies": {
     "@emotion/css": "^11.10.0",
     "@emotion/server": "^11.10.0",
+    "@rescript/react": "^0.10.3",
     "bs-css": "^15.3.0",
     "bs-css-emotion": "^4.3.0",
     "chokidar": "^3.5.3",
@@ -31,12 +32,10 @@
     "webpack-dev-server": "^4.9.3"
   },
   "peerDependencies": {
-    "@rescript/react": "^0.10.3",
     "react": ">=16.8.1",
     "react-dom": ">=16.8.1"
   },
   "devDependencies": {
-    "@rescript/react": "^0.10.3",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "rescript": "^9.1.4",
