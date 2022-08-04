@@ -2,14 +2,13 @@
   "name": "rescript-ssg",
   "description": "Rescript React static site generator",
   "homepage": "https://github.com/denis-ok/rescript-ssg",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "scripts": {},
   "type": "module",
   "keywords": [
     "rescript",
     "react"
   ],
-  "files": [],
   "repository": {
     "type": "git",
     "url": "https://github.com/denis-ok/rescript-ssg.git"
