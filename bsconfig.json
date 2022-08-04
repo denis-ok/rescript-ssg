@@ -1,6 +1,7 @@
 {
   "name": "rescript-ssg",
-  "version": "0.0.1",
+  "namespace": true,
+  "version": "0.0.4",
   "sources": [
     {
       "dir": "src",
