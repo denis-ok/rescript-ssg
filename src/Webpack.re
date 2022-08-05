@@ -154,7 +154,7 @@ module DevServerOptions = {
 };
 
 let assetRegex = [%re
-  "/\\.(jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json)$/i"
+  "/\\.(jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json|mp4)$/i"
 ];
 
 let makeConfig =
