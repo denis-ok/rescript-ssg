@@ -6,7 +6,6 @@ let webpackOutputDir = Path.join2(pagesOutputDir, "bundle");
 
 let pageIndex: PageBuilder.page = {
   component: ComponentWithoutData(<ExampleIndex />),
-  moduleName: ExampleIndex.moduleName,
   modulePath: ExampleIndex.modulePath,
   path: Root,
 };
@@ -26,7 +25,6 @@ let page1: PageBuilder.page = {
           bool: true,
         }),
     }),
-  moduleName: ExamplePage1.moduleName,
   modulePath: ExamplePage1.modulePath,
   path: Path([|"page1"|]),
 };
@@ -46,7 +44,6 @@ let page11: PageBuilder.page = {
           bool: true,
         }),
     }),
-  moduleName: ExamplePage1.moduleName,
   modulePath: ExamplePage1.modulePath,
   path: Path([|"page11"|]),
 };
@@ -54,14 +51,12 @@ let page11: PageBuilder.page = {
 let page2: PageBuilder.page = {
   component:
     ComponentWithData({component: data => <ExamplePage2 data />, data: true}),
-  moduleName: ExamplePage2.moduleName,
   modulePath: ExamplePage2.modulePath,
   path: Path([|"page2"|]),
 };
 
 let page1Dynamic: PageBuilder.page = {
   component: ComponentWithoutData(<ExamplePageDynamic />),
-  moduleName: ExamplePageDynamic.moduleName,
   modulePath: ExamplePageDynamic.modulePath,
   path: Path([|"page1", "_id"|]),
 };

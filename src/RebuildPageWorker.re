@@ -39,7 +39,6 @@ pages
               })
             };
           },
-          moduleName: module_##moduleName,
           modulePath: module_##modulePath,
           path: page.path,
         };

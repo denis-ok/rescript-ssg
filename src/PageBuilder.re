@@ -85,7 +85,6 @@ type component =
 
 type page = {
   component,
-  moduleName: string,
   modulePath: string,
   path: PageBuilderT.PagePath.t,
 };
@@ -103,7 +102,7 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
 };
 
 let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
-  let {moduleName, _} = page;
+  let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
 
   let pagePath = page.path->PageBuilderT.PagePath.toString;
 
