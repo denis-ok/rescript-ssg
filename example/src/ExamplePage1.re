@@ -1,8 +1,8 @@
 module Css = ExamplePage1_Css;
 
-let moduleName = __MODULE__;
-
 let modulePath = Utils.getFilepath();
+
+let moduleName = Utils.getModuleNameFromModulePath(modulePath);
 
 [@react.component]
 let make = (~data: option(ExamplePageContext.t)) => {

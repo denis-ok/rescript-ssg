@@ -1,8 +1,8 @@
 module Css = ExampleIndex_Css;
 
-let moduleName = __MODULE__;
-
 let modulePath = Utils.getFilepath();
+
+let moduleName = Utils.getModuleNameFromModulePath(modulePath);
 
 [@module "./images/cat.jpeg"] external catImage: string = "default";
 

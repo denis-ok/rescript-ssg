@@ -38,3 +38,18 @@ let getFilepathFromError = jsError => {
 let getFilepath = () => makeError()->getFilepathFromError;
 
 let getDirname = () => makeError()->getFilepathFromError->dirnameFromFilepath;
+
+let getModuleNameFromModulePath = modulePath => {
+  let parts = modulePath->Js.String2.split("/");
+
+  let filename =
+    parts->Js.Array2.copy->Js.Array2.reverseInPlace->Belt.Array.get(0);
+
+  switch (filename) {
+  | None
+  | Some("") =>
+    Js.log("[Utils.getModuleNameFromModulePath] Filename is empty or None");
+    Process.exit(1);
+  | Some(filename) => filename->Js.String2.replace(".bs.js", "")
+  };
+};
