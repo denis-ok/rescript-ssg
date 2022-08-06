@@ -2,7 +2,7 @@
   "name": "rescript-ssg",
   "description": "Rescript React static site generator",
   "homepage": "https://github.com/denis-ok/rescript-ssg",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "scripts": {},
   "type": "module",
   "keywords": [
@@ -30,12 +30,10 @@
     "webpack-dev-server": "^4.9.3"
   },
   "peerDependencies": {
-    "react": ">=16.8.1",
-    "react-dom": ">=16.8.1"
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
   },
   "devDependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
     "rescript": "^9.1.4",
     "serve": "^14.0.1"
   }
