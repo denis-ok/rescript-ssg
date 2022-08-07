@@ -193,6 +193,8 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
 
 let makeUniqueArray = array => Set.fromArray(array)->Set.toArray;
 
+let dirname = Utils.getDirname();
+
 let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
   let rebuildPages =
     pages->Js.Array2.map(page => {
@@ -211,7 +213,10 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
       rebuildPage;
     });
 
-  WorkingThreads.runRebuildPageWorker(~workerData=rebuildPages);
+  WorkingThreads.runWorker(
+    ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
+    ~workerData=rebuildPages,
+  );
 };
 
 let getModuleDependencies = (~modulePath) =>

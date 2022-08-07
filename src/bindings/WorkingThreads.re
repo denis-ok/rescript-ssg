@@ -26,6 +26,3 @@ let runWorker = (~workerModulePath, ~workerData: 'a) => {
     worker->Worker.on("exit", code => Js.log2("[Worker] Exit code:", code));
   });
 };
-
-let runRebuildPageWorker = (~workerData: RebuildPageWorkerT.workerData) =>
-  runWorker(~workerModulePath="./src/RebuildPageWorker.bs.js", ~workerData);
