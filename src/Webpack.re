@@ -23,9 +23,12 @@ module Webpack = {
     [@send] external hasErrors: t => bool = "hasErrors";
     [@send] external hasWarnings: t => bool = "hasWarnings";
     [@send] external toString': (t, toStringOptions) => string = "toString";
+    [@send] external toJson': (t, string) => Js.Json.t = "toJson";
 
     let toString = stats =>
       stats->toString'({assets: true, hash: true, colors: true});
+
+    let toJson = stats => stats->toJson'("normal");
   };
 
   type compiler;
@@ -353,6 +356,14 @@ let build = (~mode, ~webpackOutputDir, ~verbose) => {
 
     if (verbose) {
       Js.log(Webpack.Stats.toString(stats));
+    };
+
+    let () = {
+      let statsJson = Webpack.Stats.toJson(stats);
+      Fs.writeFileSync(
+        Path.join2(webpackOutputDir, "stats.json"),
+        statsJson->Js.Json.stringifyAny->Belt.Option.getWithDefault(""),
+      );
     };
 
     compiler->Webpack.close(closeError => {
