@@ -1,23 +1,3 @@
-module Fs = {
-  [@module "fs"]
-  external readFileSync: (string, string) => string = "readFileSync";
-
-  [@module "fs"]
-  external writeFileSync: (string, string) => unit = "writeFileSync";
-
-  type makeDirSyncOptions = {recursive: bool};
-
-  [@module "fs"]
-  external mkDirSync: (string, makeDirSyncOptions) => unit = "mkdirSync";
-
-  type rmSyncOptions = {
-    force: bool,
-    recursive: bool,
-  };
-
-  [@module "fs"] external rmSync: (string, rmSyncOptions) => unit = "rmSync";
-};
-
 module ChildProcess = {
   [@module "child_process"]
   external execSync: (. string, Js.t('a)) => int = "execSync";
@@ -83,7 +63,16 @@ type component =
   | ComponentWithoutData(React.element)
   | ComponentWithData(componentWithData('a)): component;
 
+type wrapperComponent =
+  | ComponentWithChildrenOnly(React.element => React.element);
+
+type pageWrapper = {
+  component: wrapperComponent,
+  modulePath: string,
+};
+
 type page = {
+  pageWrapper: option(pageWrapper),
   component,
   modulePath: string,
   path: PageBuilderT.PagePath.t,
@@ -147,6 +136,22 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
     };
   };
 
+  let (element, elementString) = {
+    switch (page.pageWrapper) {
+    | None => (element, elementString)
+    | Some({component, modulePath}) =>
+      let moduleName = Utils.getModuleNameFromModulePath(modulePath);
+      switch (component) {
+      | ComponentWithChildrenOnly(f) =>
+        let wrapperOpenTag = "<" ++ moduleName ++ ">";
+        let wrapperCloseTag = "</" ++ moduleName ++ ">";
+        let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+        let wrappedElement = f(element);
+        (wrappedElement, elementString);
+      };
+    };
+  };
+
   let html = ReactDOMServer.renderToString(element);
 
   let htmlWithStyles = Emotion.Server.renderStylesToString(html);
@@ -199,6 +204,13 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
   let rebuildPages =
     pages->Js.Array2.map(page => {
       let rebuildPage: RebuildPageWorkerT.rebuildPage = {
+        pageWrapper: {
+          switch (page.pageWrapper) {
+          | None => None
+          | Some({component: ComponentWithChildrenOnly(_), modulePath}) =>
+            Some({component: ComponentWithChildrenOnly, modulePath})
+          };
+        },
         component: {
           switch (page.component) {
           | ComponentWithoutData(_) => ComponentWithoutData
