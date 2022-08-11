@@ -266,7 +266,6 @@ let startWatcher = (~outputDir, pages: list(page)) => {
   let modulesAndDependencies =
     pageModulePaths->Js.Array2.map(modulePath => {
       let dependencies = getModuleDependencies(~modulePath);
-
       (modulePath, dependencies);
     });
 
@@ -290,13 +289,30 @@ let startWatcher = (~outputDir, pages: list(page)) => {
     )
   });
 
+  let pageWrapperModuleDependencies =
+    pages
+    ->Belt.List.keepMap(page => {
+        switch (page.pageWrapper) {
+        | None => None
+        | Some(wrapper) =>
+          let () =
+            updateDependencyToPageModuleDict(
+              ~dependency=wrapper.modulePath,
+              ~modulePath=page.modulePath,
+            );
+          Some(wrapper.modulePath);
+        }
+      })
+    ->Belt.List.toArray;
+
   let allDependencies = {
     let dependencies =
       dependencyToPageModuleDict
       ->Js.Dict.entries
       ->Js.Array2.map(((dependency, _pageModules)) => dependency);
 
-    Js.Array2.concat(pageModulePaths, dependencies);
+    Js.Array2.concat(pageModulePaths, dependencies)
+    ->Js.Array2.concat(pageWrapperModuleDependencies);
   };
 
   Js.log2("[Watcher] Initial watcher dependencies: ", allDependencies);
