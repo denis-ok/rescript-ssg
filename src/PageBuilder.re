@@ -63,8 +63,14 @@ type component =
   | ComponentWithoutData(React.element)
   | ComponentWithData(componentWithData('a)): component;
 
+type wrapperComponentWithData('a) = {
+  component: ('a, React.element) => React.element,
+  data: 'a,
+};
+
 type wrapperComponent =
-  | ComponentWithChildrenOnly(React.element => React.element);
+  | ComponentWithChildrenOnly(React.element => React.element)
+  | WrapperComponentWithData(wrapperComponentWithData('a)): wrapperComponent;
 
 type pageWrapper = {
   component: wrapperComponent,
@@ -148,6 +154,25 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
         let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
         let wrappedElement = f(element);
         (wrappedElement, elementString);
+      | WrapperComponentWithData({component, data}) =>
+        let wrappedElement = component(data, element);
+
+        let unsafeStringifiedPropValue =
+          switch (data->Js.Json.stringifyAny) {
+          | Some(propValueString) => {j|{{js|$(propValueString)|js}->Js.Json.parseExn->Obj.magic}|j}
+          | None =>
+            // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
+            "None"
+          };
+
+        let wrapperOpenTag =
+          "<" ++ moduleName ++ " data=" ++ unsafeStringifiedPropValue ++ " >";
+
+        let wrapperCloseTag = "</" ++ moduleName ++ ">";
+
+        let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+
+        (wrappedElement, elementString);
       };
     };
   };
@@ -209,6 +234,8 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
           | None => None
           | Some({component: ComponentWithChildrenOnly(_), modulePath}) =>
             Some({component: ComponentWithChildrenOnly, modulePath})
+          | Some({component: WrapperComponentWithData(_), modulePath: _}) =>
+            None
           };
         },
         component: {

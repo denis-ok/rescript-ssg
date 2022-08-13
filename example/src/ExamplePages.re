@@ -19,7 +19,16 @@ let pageIndex: PageBuilder.page = {
 };
 
 let page1: PageBuilder.page = {
-  pageWrapper: None,
+  pageWrapper:
+    Some({
+      component:
+        WrapperComponentWithData({
+          component: (data, children) =>
+            <ExampleWrapperWithData data> children </ExampleWrapperWithData>,
+          data: "LALA",
+        }),
+      modulePath: ExampleWrapperWithData.modulePath,
+    }),
   component:
     ComponentWithData({
       component: data => <ExamplePage1 data />,
