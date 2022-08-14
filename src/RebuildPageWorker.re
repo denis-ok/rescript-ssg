@@ -70,10 +70,9 @@ pages
           | RebuildPageWorkerT.ComponentWithData({data}) =>
             ComponentWithData({
               component: _propValue => {
-                // TODO FIX ME. Use predefined prop name
                 React.createElement(
                   module_##make,
-                  Js.Obj.empty(),
+                  {"data": data}->Obj.magic,
                 );
               },
               data,
