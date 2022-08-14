@@ -8,7 +8,7 @@ let pageIndex: PageBuilder.page = {
   pageWrapper:
     Some({
       component:
-        ComponentWithChildrenOnly(
+        WrapperWithChildren(
           children => <ExampleWrapper> children </ExampleWrapper>,
         ),
       modulePath: ExampleWrapper.modulePath,
@@ -22,7 +22,7 @@ let page1: PageBuilder.page = {
   pageWrapper:
     Some({
       component:
-        WrapperComponentWithData({
+        WrapperWithDataAndChildren({
           component: (data, children) =>
             <ExampleWrapperWithData data> children </ExampleWrapperWithData>,
           data: "LALA",

@@ -63,14 +63,14 @@ type component =
   | ComponentWithoutData(React.element)
   | ComponentWithData(componentWithData('a)): component;
 
-type wrapperComponentWithData('a) = {
-  component: ('a, React.element) => React.element,
-  data: 'a,
+type wrapperComponentWithData('data) = {
+  component: ('data, React.element) => React.element,
+  data: 'data,
 };
 
 type wrapperComponent =
-  | ComponentWithChildrenOnly(React.element => React.element)
-  | WrapperComponentWithData(wrapperComponentWithData('a)): wrapperComponent;
+  | WrapperWithChildren(React.element => React.element)
+  | WrapperWithDataAndChildren(wrapperComponentWithData('a)): wrapperComponent;
 
 type pageWrapper = {
   component: wrapperComponent,
@@ -148,13 +148,13 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
     | Some({component, modulePath}) =>
       let moduleName = Utils.getModuleNameFromModulePath(modulePath);
       switch (component) {
-      | ComponentWithChildrenOnly(f) =>
+      | WrapperWithChildren(f) =>
         let wrapperOpenTag = "<" ++ moduleName ++ ">";
         let wrapperCloseTag = "</" ++ moduleName ++ ">";
         let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
         let wrappedElement = f(element);
         (wrappedElement, elementString);
-      | WrapperComponentWithData({component, data}) =>
+      | WrapperWithDataAndChildren({component, data}) =>
         let wrappedElement = component(data, element);
 
         let unsafeStringifiedPropValue =
@@ -232,9 +232,9 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
         pageWrapper: {
           switch (page.pageWrapper) {
           | None => None
-          | Some({component: ComponentWithChildrenOnly(_), modulePath}) =>
-            Some({component: ComponentWithChildrenOnly, modulePath})
-          | Some({component: WrapperComponentWithData(_), modulePath: _}) =>
+          | Some({component: WrapperWithChildren(_), modulePath}) =>
+            Some({component: WrapperWithChildren, modulePath})
+          | Some({component: WrapperWithDataAndChildren(_), modulePath: _}) =>
             None
           };
         },

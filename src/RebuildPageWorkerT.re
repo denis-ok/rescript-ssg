@@ -4,7 +4,7 @@
 type componentWithData('a) = {data: 'a};
 
 type wrapperComponent =
-  | ComponentWithChildrenOnly;
+  | WrapperWithChildren;
 
 type pageWrapper = {
   component: wrapperComponent,

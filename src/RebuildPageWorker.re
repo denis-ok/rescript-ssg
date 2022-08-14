@@ -32,10 +32,10 @@ pages
           switch (page.pageWrapper, wrapperModule) {
           | (Some({component, modulePath}), Some(wrapperModule)) =>
             switch (component) {
-            | ComponentWithChildrenOnly =>
+            | WrapperWithChildren =>
               Some({
                 component:
-                  ComponentWithChildrenOnly(
+                  WrapperWithChildren(
                     children =>
                       React.createElement(
                         wrapperModule##make,
