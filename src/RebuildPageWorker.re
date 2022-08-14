@@ -13,38 +13,78 @@ pages
     let modulePath = page.modulePath;
     let outputDir = page.outputDir;
 
-    Js.log2("[Worker] Trying to do fresh import: ", modulePath);
+    Js.log2("[Worker] Trying to import module: ", modulePath);
+    let importedModule = PageBuilder.import_(modulePath);
 
-    PageBuilder.import_(modulePath)
-    ->Promise.map(module_ => {
-        Js.log2("[Worker] Fresh import success: ", modulePath);
+    let importedWrapperModule =
+      switch (page.pageWrapper) {
+      | None => Js.Promise.resolve(None)
+      | Some({modulePath, _}) =>
+        Js.log2("[Worker] Trying to import wrapper module: ", modulePath);
+        PageBuilder.import_(modulePath)
+        ->Promise.map(module_ => Some(module_));
+      };
 
-        let newPage: PageBuilder.page = {
-          component: {
-            switch (page.component) {
-            | RebuildPageWorkerT.ComponentWithoutData =>
-              ComponentWithoutData(
-                React.createElement(module_##make, Js.Obj.empty()),
-              )
-            | RebuildPageWorkerT.ComponentWithData({data}) =>
-              ComponentWithData({
-                component: _propValue => {
-                  // TODO FIX ME. Use predefined prop name
-                  React.createElement(
-                    module_##make,
-                    Js.Obj.empty(),
-                  );
-                },
-                data,
+    let modules = Js.Promise.all2((importedModule, importedWrapperModule));
+    modules->Promise.map(((module_, wrapperModule)) => {
+      let newPage: PageBuilder.page = {
+        pageWrapper: {
+          switch (page.pageWrapper, wrapperModule) {
+          | (Some({component, modulePath}), Some(wrapperModule)) =>
+            switch (component) {
+            | WrapperWithChildren =>
+              Some({
+                component:
+                  WrapperWithChildren(
+                    children =>
+                      React.createElement(
+                        wrapperModule##make,
+                        {"children": children},
+                      ),
+                  ),
+                modulePath,
               })
-            };
-          },
-          modulePath: module_##modulePath,
-          path: page.path,
-        };
+            | RebuildPageWorkerT.WrapperWithDataAndChildren({data}) =>
+              Some({
+                component:
+                  WrapperWithDataAndChildren({
+                    component: (data, children) =>
+                      React.createElement(
+                        wrapperModule##make,
+                        {"data": data, "children": children}->Obj.magic,
+                      ),
+                    data,
+                  }),
+                modulePath,
+              })
+            }
+          | _ => None
+          };
+        },
+        component: {
+          switch (page.component) {
+          | RebuildPageWorkerT.ComponentWithoutData =>
+            ComponentWithoutData(
+              React.createElement(module_##make, Js.Obj.empty()),
+            )
+          | RebuildPageWorkerT.ComponentWithData({data}) =>
+            ComponentWithData({
+              component: _propValue => {
+                React.createElement(
+                  module_##make,
+                  {"data": data}->Obj.magic,
+                );
+              },
+              data,
+            })
+          };
+        },
+        modulePath: module_##modulePath,
+        path: page.path,
+      };
 
-        PageBuilder.buildPageHtmlAndReactApp(~outputDir, newPage);
-      });
+      PageBuilder.buildPageHtmlAndReactApp(~outputDir, newPage);
+    });
   })
 ->Js.Promise.all
 ->Promise.map((_: array(unit)) => {

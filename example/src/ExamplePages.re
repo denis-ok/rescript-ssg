@@ -5,12 +5,30 @@ let pagesOutputDir = Path.join2(currentDir, "../build");
 let webpackOutputDir = Path.join2(pagesOutputDir, "bundle");
 
 let pageIndex: PageBuilder.page = {
+  pageWrapper:
+    Some({
+      component:
+        WrapperWithChildren(
+          children => <ExampleWrapper> children </ExampleWrapper>,
+        ),
+      modulePath: ExampleWrapper.modulePath,
+    }),
   component: ComponentWithoutData(<ExampleIndex />),
   modulePath: ExampleIndex.modulePath,
   path: Root,
 };
 
 let page1: PageBuilder.page = {
+  pageWrapper:
+    Some({
+      component:
+        WrapperWithDataAndChildren({
+          component: (data, children) =>
+            <ExampleWrapperWithData data> children </ExampleWrapperWithData>,
+          data: "LALA",
+        }),
+      modulePath: ExampleWrapperWithData.modulePath,
+    }),
   component:
     ComponentWithData({
       component: data => <ExamplePage1 data />,
@@ -30,6 +48,7 @@ let page1: PageBuilder.page = {
 };
 
 let page11: PageBuilder.page = {
+  pageWrapper: None,
   component:
     ComponentWithData({
       component: data => <ExamplePage1 data />,
@@ -49,6 +68,7 @@ let page11: PageBuilder.page = {
 };
 
 let page2: PageBuilder.page = {
+  pageWrapper: None,
   component:
     ComponentWithData({component: data => <ExamplePage2 data />, data: true}),
   modulePath: ExamplePage2.modulePath,
@@ -56,6 +76,7 @@ let page2: PageBuilder.page = {
 };
 
 let page1Dynamic: PageBuilder.page = {
+  pageWrapper: None,
   component: ComponentWithoutData(<ExamplePageDynamic />),
   modulePath: ExamplePageDynamic.modulePath,
   path: Path([|"page1", "_id"|]),

@@ -1,23 +1,3 @@
-module Fs = {
-  [@module "fs"]
-  external readFileSync: (string, string) => string = "readFileSync";
-
-  [@module "fs"]
-  external writeFileSync: (string, string) => unit = "writeFileSync";
-
-  type makeDirSyncOptions = {recursive: bool};
-
-  [@module "fs"]
-  external mkDirSync: (string, makeDirSyncOptions) => unit = "mkdirSync";
-
-  type rmSyncOptions = {
-    force: bool,
-    recursive: bool,
-  };
-
-  [@module "fs"] external rmSync: (string, rmSyncOptions) => unit = "rmSync";
-};
-
 module ChildProcess = {
   [@module "child_process"]
   external execSync: (. string, Js.t('a)) => int = "execSync";
@@ -83,7 +63,23 @@ type component =
   | ComponentWithoutData(React.element)
   | ComponentWithData(componentWithData('a)): component;
 
+type wrapperComponentWithData('data) = {
+  component: ('data, React.element) => React.element,
+  data: 'data,
+};
+
+type wrapperComponent =
+  | WrapperWithChildren(React.element => React.element)
+  | WrapperWithDataAndChildren(wrapperComponentWithData('a))
+    : wrapperComponent;
+
+type pageWrapper = {
+  component: wrapperComponent,
+  modulePath: string,
+};
+
 type page = {
+  pageWrapper: option(pageWrapper),
   component,
   modulePath: string,
   path: PageBuilderT.PagePath.t,
@@ -147,6 +143,41 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
     };
   };
 
+  let (element, elementString) = {
+    switch (page.pageWrapper) {
+    | None => (element, elementString)
+    | Some({component, modulePath}) =>
+      let moduleName = Utils.getModuleNameFromModulePath(modulePath);
+      switch (component) {
+      | WrapperWithChildren(f) =>
+        let wrapperOpenTag = "<" ++ moduleName ++ ">";
+        let wrapperCloseTag = "</" ++ moduleName ++ ">";
+        let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+        let wrappedElement = f(element);
+        (wrappedElement, elementString);
+      | WrapperWithDataAndChildren({component, data}) =>
+        let wrappedElement = component(data, element);
+
+        let unsafeStringifiedPropValue =
+          switch (data->Js.Json.stringifyAny) {
+          | Some(propValueString) => {j|{{js|$(propValueString)|js}->Js.Json.parseExn->Obj.magic}|j}
+          | None =>
+            // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
+            "None"
+          };
+
+        let wrapperOpenTag =
+          "<" ++ moduleName ++ " data=" ++ unsafeStringifiedPropValue ++ " >";
+
+        let wrapperCloseTag = "</" ++ moduleName ++ ">";
+
+        let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+
+        (wrappedElement, elementString);
+      };
+    };
+  };
+
   let html = ReactDOMServer.renderToString(element);
 
   let htmlWithStyles = Emotion.Server.renderStylesToString(html);
@@ -199,6 +230,21 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
   let rebuildPages =
     pages->Js.Array2.map(page => {
       let rebuildPage: RebuildPageWorkerT.rebuildPage = {
+        pageWrapper: {
+          switch (page.pageWrapper) {
+          | None => None
+          | Some({component: WrapperWithChildren(_), modulePath}) =>
+            Some({component: WrapperWithChildren, modulePath})
+          | Some({
+              component: WrapperWithDataAndChildren({data, _}),
+              modulePath,
+            }) =>
+            Some({
+              component: WrapperWithDataAndChildren({data: data}),
+              modulePath,
+            })
+          };
+        },
         component: {
           switch (page.component) {
           | ComponentWithoutData(_) => ComponentWithoutData
@@ -254,7 +300,6 @@ let startWatcher = (~outputDir, pages: list(page)) => {
   let modulesAndDependencies =
     pageModulePaths->Js.Array2.map(modulePath => {
       let dependencies = getModuleDependencies(~modulePath);
-
       (modulePath, dependencies);
     });
 
@@ -278,13 +323,30 @@ let startWatcher = (~outputDir, pages: list(page)) => {
     )
   });
 
+  let pageWrapperModuleDependencies =
+    pages
+    ->Belt.List.keepMap(page => {
+        switch (page.pageWrapper) {
+        | None => None
+        | Some(wrapper) =>
+          let () =
+            updateDependencyToPageModuleDict(
+              ~dependency=wrapper.modulePath,
+              ~modulePath=page.modulePath,
+            );
+          Some(wrapper.modulePath);
+        }
+      })
+    ->Belt.List.toArray;
+
   let allDependencies = {
     let dependencies =
       dependencyToPageModuleDict
       ->Js.Dict.entries
       ->Js.Array2.map(((dependency, _pageModules)) => dependency);
 
-    Js.Array2.concat(pageModulePaths, dependencies);
+    Js.Array2.concat(pageModulePaths, dependencies)
+    ->Js.Array2.concat(pageWrapperModuleDependencies);
   };
 
   Js.log2("[Watcher] Initial watcher dependencies: ", allDependencies);
