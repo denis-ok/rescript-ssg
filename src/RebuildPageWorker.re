@@ -44,6 +44,19 @@ pages
                   ),
                 modulePath,
               })
+            | RebuildPageWorkerT.WrapperWithDataAndChildren({data}) =>
+              Some({
+                component:
+                  WrapperWithDataAndChildren({
+                    component: (data, children) =>
+                      React.createElement(
+                        wrapperModule##make,
+                        {"data": data, "children": children}->Obj.magic,
+                      ),
+                    data,
+                  }),
+                modulePath,
+              })
             }
           | _ => None
           };

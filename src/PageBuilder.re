@@ -70,7 +70,8 @@ type wrapperComponentWithData('data) = {
 
 type wrapperComponent =
   | WrapperWithChildren(React.element => React.element)
-  | WrapperWithDataAndChildren(wrapperComponentWithData('a)): wrapperComponent;
+  | WrapperWithDataAndChildren(wrapperComponentWithData('a))
+    : wrapperComponent;
 
 type pageWrapper = {
   component: wrapperComponent,
@@ -234,8 +235,14 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(page)) => {
           | None => None
           | Some({component: WrapperWithChildren(_), modulePath}) =>
             Some({component: WrapperWithChildren, modulePath})
-          | Some({component: WrapperWithDataAndChildren(_), modulePath: _}) =>
-            None
+          | Some({
+              component: WrapperWithDataAndChildren({data, _}),
+              modulePath,
+            }) =>
+            Some({
+              component: WrapperWithDataAndChildren({data: data}),
+              modulePath,
+            })
           };
         },
         component: {

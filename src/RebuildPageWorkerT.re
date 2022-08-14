@@ -4,7 +4,8 @@
 type componentWithData('a) = {data: 'a};
 
 type wrapperComponent =
-  | WrapperWithChildren;
+  | WrapperWithChildren
+  | WrapperWithDataAndChildren(componentWithData('a)): wrapperComponent;
 
 type pageWrapper = {
   component: wrapperComponent,
