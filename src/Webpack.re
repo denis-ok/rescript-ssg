@@ -10,6 +10,9 @@ module CleanWebpackPlugin = {
   external make: unit => webpackPlugin = "CleanWebpackPlugin";
 };
 
+[@new] [@module "webpack"] [@scope "default"]
+external definePlugin: {..} => webpackPlugin = "DefinePlugin";
+
 module Webpack = {
   module Stats = {
     type t;
@@ -175,18 +178,6 @@ let makeConfig =
       )
     ->Js.Dict.fromArray;
 
-  let htmlWebpackPlugins =
-    pages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
-      HtmlWebpackPlugin.make({
-        "template": htmlTemplatePath,
-        "filename":
-          Path.join2(PageBuilderT.PagePath.toString(path), "index.html"),
-        "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
-        "inject": true,
-        "minify": false,
-      })
-    });
-
   let config = {
     "entry": entries,
 
@@ -211,8 +202,28 @@ let makeConfig =
       |],
     },
 
-    "plugins":
-      Js.Array2.concat([|CleanWebpackPlugin.make()|], htmlWebpackPlugins),
+    "plugins": {
+      let htmlWebpackPlugins =
+        pages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
+          HtmlWebpackPlugin.make({
+            "template": htmlTemplatePath,
+            "filename":
+              Path.join2(PageBuilderT.PagePath.toString(path), "index.html"),
+            "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
+            "inject": true,
+            "minify": false,
+          })
+        });
+
+      let definePlugin = definePlugin({"process.env": "({})"});
+
+      let cleanWebpackPlugin = CleanWebpackPlugin.make();
+
+      Js.Array2.concat(
+        [|definePlugin, cleanWebpackPlugin|],
+        htmlWebpackPlugins,
+      );
+    },
 
     "devServer": {
       switch (devServerOptions) {
