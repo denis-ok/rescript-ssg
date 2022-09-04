@@ -10,6 +10,9 @@ module CleanWebpackPlugin = {
   external make: unit => webpackPlugin = "CleanWebpackPlugin";
 };
 
+[@new] [@module "webpack"] [@scope "default"]
+external definePlugin: {..} => webpackPlugin = "DefinePlugin";
+
 module Webpack = {
   module Stats = {
     type t;
@@ -175,18 +178,6 @@ let makeConfig =
       )
     ->Js.Dict.fromArray;
 
-  let htmlWebpackPlugins =
-    pages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
-      HtmlWebpackPlugin.make({
-        "template": htmlTemplatePath,
-        "filename":
-          Path.join2(PageBuilderT.PagePath.toString(path), "index.html"),
-        "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
-        "inject": true,
-        "minify": false,
-      })
-    });
-
   let config = {
     "entry": entries,
 
@@ -211,9 +202,103 @@ let makeConfig =
       |],
     },
 
-    "plugins":
-      Js.Array2.concat([|CleanWebpackPlugin.make()|], htmlWebpackPlugins),
+    "plugins": {
+      let htmlWebpackPlugins =
+        pages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
+          HtmlWebpackPlugin.make({
+            "template": htmlTemplatePath,
+            "filename":
+              Path.join2(PageBuilderT.PagePath.toString(path), "index.html"),
+            "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
+            "inject": true,
+            "minify": false,
+          })
+        });
 
+      let definePlugin = definePlugin({"process.env": "({})"});
+
+      let cleanWebpackPlugin = CleanWebpackPlugin.make();
+
+      Js.Array2.concat(
+        [|definePlugin, cleanWebpackPlugin|],
+        htmlWebpackPlugins,
+      );
+    },
+    "optimization": {
+      "splitChunks": {
+        "chunks": "all",
+        "cacheGroups": {
+          "default": false,
+          "defaultVendors": false,
+          "framework": {
+            "priority": 40,
+            "name": "framework",
+            "test": {
+              let frameworkPackages =
+                [|"react", "react-dom", "scheduler", "prop-types"|]
+                ->Js.Array2.joinWith("|");
+              let regexStr = {j|(?<!node_modules.*)[\\\\/]node_modules[\\\\/]($(frameworkPackages))[\\\\/]|j};
+              let regex = Js.Re.fromString(regexStr);
+              regex;
+            },
+            "enforce": true,
+          },
+          "bs-css": {
+            "priority": 30,
+            "name": "bs-css",
+            "test": {
+              let packages =
+                [|"bs-css", "bs-css-emotion"|]->Js.Array2.joinWith("|");
+
+              let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
+              let regex = Js.Re.fromString(regexStr);
+              regex;
+            },
+            "enforce": true,
+          },
+          "rescript": {
+            "priority": 30,
+            "name": "rescript",
+            "test": {
+              let packages =
+                [|
+                  "rescript",
+                  "@rescript/react",
+                  "bs-platform",
+                  "reason-react",
+                |]
+                ->Js.Array2.joinWith("|");
+              let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
+              let regex = Js.Re.fromString(regexStr);
+              regex;
+            },
+            "enforce": true,
+          },
+          "react-helmet": {
+            "priority": 30,
+            "name": "react-helmet",
+            "test": {
+              let packages = [|"react-helmet"|]->Js.Array2.joinWith("|");
+              let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
+              let regex = Js.Re.fromString(regexStr);
+              regex;
+            },
+            "enforce": true,
+          },
+          "shared-node-modules": {
+            "priority": 20,
+            "name": "shared-node-modules",
+            "test": {
+              let regexStr = {j|[\\\\/]node_modules[\\\\/]|j};
+              let regex = Js.Re.fromString(regexStr);
+              regex;
+            },
+            "minChunks": 2,
+            "enforce": true,
+          },
+        },
+      },
+    },
     "devServer": {
       switch (devServerOptions) {
       | None => None

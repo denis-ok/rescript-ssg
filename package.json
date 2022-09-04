@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "rescript": "^9.1.4",
-    "serve": "^14.0.1"
+    "serve": "^14.0.1",
+    "webpack-bundle-analyzer": "^4.6.1"
   }
 }
