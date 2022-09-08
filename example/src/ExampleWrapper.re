@@ -4,5 +4,3 @@ let make = (~children) => {
 };
 
 let modulePath = Utils.getFilepath();
-
-let moduleName = Utils.getModuleNameFromModulePath(modulePath);

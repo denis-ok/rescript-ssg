@@ -103,21 +103,3 @@ let localizedPages =
   ->Belt.List.flatten;
 
 let pages = Belt.List.concat(pages, localizedPages);
-
-let start = (~mode) =>
-  PageBuilder.start(
-    ~pages,
-    ~outputDir=pagesOutputDir,
-    ~webpackOutputDir,
-    ~mode,
-  );
-
-let build = (~mode) =>
-  PageBuilder.build(
-    ~pages,
-    ~mode,
-    ~outputDir=pagesOutputDir,
-    ~webpackOutputDir,
-    ~rescriptBinaryPath=
-      Path.join2(pagesOutputDir, "../../node_modules/.bin/rescript"),
-  );

@@ -2,8 +2,6 @@ module Css = ExampleIndex_Css;
 
 let modulePath = Utils.getFilepath();
 
-let moduleName = Utils.getModuleNameFromModulePath(modulePath);
-
 [@module "./images/cat.jpeg"] external catImage: string = "default";
 
 [@react.component]

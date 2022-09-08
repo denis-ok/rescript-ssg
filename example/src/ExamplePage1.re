@@ -2,8 +2,6 @@ module Css = ExamplePage1_Css;
 
 let modulePath = Utils.getFilepath();
 
-let moduleName = Utils.getModuleNameFromModulePath(modulePath);
-
 [@react.component]
 let make = (~data: option(ExamplePageContext.t)) => {
   <div>

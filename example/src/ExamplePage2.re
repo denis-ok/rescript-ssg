@@ -1,7 +1,5 @@
 let modulePath = Utils.getFilepath();
 
-let moduleName = Utils.getModuleNameFromModulePath(modulePath);
-
 [@react.component]
 let make = (~data: bool) => {
   <>
