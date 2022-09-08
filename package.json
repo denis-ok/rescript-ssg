@@ -3,6 +3,9 @@
   "description": "Rescript React static site generator",
   "homepage": "https://github.com/denis-ok/rescript-ssg",
   "version": "0.0.12",
+  "engines": {
+    "node": "^16.17.0"
+  },
   "scripts": {},
   "type": "module",
   "keywords": [
