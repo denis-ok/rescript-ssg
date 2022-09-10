@@ -1,4 +1,4 @@
-let build = () =>
+let () =
   PageBuilder.build(
     ~pages=ExamplePages.pages,
     ~mode=Production,
