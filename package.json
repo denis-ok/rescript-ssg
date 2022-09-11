@@ -6,6 +6,9 @@
   "engines": {
     "node": "^16.17.0"
   },
+  "bin": {
+    "rescript-ssg": "./src/bin.mjs"
+  },
   "scripts": {},
   "type": "module",
   "keywords": [
