@@ -1,18 +1,19 @@
-.PHONY: rescript-clean rescript-build rescript-start
-.PHONY: webpack webpack-prod webpack-dev-server
+.PHONY: clean-rescript build-rescript start-rescript
+.PHONY: build-example start-example serve-example
 .PHONY: clean build start
+.PHONY: init-dev fmt webpack-bundle-analyzer
 
 NODE_BINS = node_modules/.bin
 
 EXAMPLE_DIR = example
 
-rescript-clean:
+clean-rescript:
 	$(NODE_BINS)/rescript clean -with-deps
 
-rescript-build:
+build-rescript:
 	$(NODE_BINS)/rescript
 
-rescript-start:
+start-rescript:
 	mkdir $(EXAMPLE_DIR)/build; \
 	$(NODE_BINS)/rescript build -w
 
@@ -28,14 +29,14 @@ serve-example:
 clean:
 	rm -rf $(EXAMPLE_DIR)/build
 	mkdir $(EXAMPLE_DIR)/build
-	make rescript-clean
+	make clean-rescript
 
 build: clean
-	make rescript-build
+	make build-rescript
 	make build-example
 
-start: clean rescript-build
-	make -j 2 rescript-start start-example
+start: clean build-rescript
+	make -j 2 start-rescript start-example
 
 init-dev:
 	rm -rf _opam
