@@ -1,4 +1,4 @@
-ExampleGlobalCss.injectGlobal();
+GlobalCss.injectGlobal();
 
 module Header = {
   [@react.component]

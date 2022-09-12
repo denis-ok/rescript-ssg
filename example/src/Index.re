@@ -1,4 +1,4 @@
-module Css = ExampleIndex_Css;
+module Css = Index_Css;
 
 let modulePath = Utils.getFilepath();
 
@@ -7,13 +7,13 @@ let modulePath = Utils.getFilepath();
 [@react.component]
 let make = () => {
   <div>
-    <ExampleHelmet
-      title="ExampleIndex"
-      description="ExampleIndex description"
+    <Helmet
+      title="Index"
+      description="Index description"
     />
-    <ExampleSharedModule.Header />
+    <SharedModule.Header />
     <div className=Css.content> <h1> "Index page"->React.string </h1> </div>
     <img src=catImage />
-    <ExampleSharedModule.Footer />
+    <SharedModule.Footer />
   </div>;
 };

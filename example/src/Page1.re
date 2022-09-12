@@ -1,9 +1,9 @@
-module Css = ExamplePage1_Css;
+module Css = Page1_Css;
 
 let modulePath = Utils.getFilepath();
 
 [@react.component]
-let make = (~data: option(ExamplePageContext.t)) => {
+let make = (~data: option(PageContext.t)) => {
   <div>
     {switch (data) {
      | None => React.null
@@ -15,13 +15,13 @@ let make = (~data: option(ExamplePageContext.t)) => {
          <li> {int->Belt.Int.toString->React.string} </li>
          <li> {float->Belt.Float.toString->React.string} </li>
          <li>
-           {switch ((variant: ExamplePageContext.variant)) {
+           {switch ((variant: PageContext.variant)) {
             | One => "One"->React.string
             | Two(_) => "Two"->React.string
             }}
          </li>
          <li>
-           {switch ((polyVariant: ExamplePageContext.polyVariant)) {
+           {switch ((polyVariant: PageContext.polyVariant)) {
             | `hello => "hello"->React.string
             | `world => "world"->React.string
             }}
@@ -34,12 +34,12 @@ let make = (~data: option(ExamplePageContext.t)) => {
          </li>
        </ul>
      }}
-    <ExampleHelmet
-      title="ExamplePage1"
-      description="ExamplePage1 description"
+    <Helmet
+      title="Page1"
+      description="Page1 description"
     />
-    <ExampleSharedModule.Header />
+    <SharedModule.Header />
     <div className=Css.content> <h1> "Page 1"->React.string </h1> </div>
-    <ExampleSharedModule.Footer />
+    <SharedModule.Footer />
   </div>;
 };

@@ -1,4 +1,4 @@
-module Css = ExamplePage1_Css;
+module Css = Page1_Css;
 
 let modulePath = Utils.getFilepath();
 
@@ -13,15 +13,15 @@ let make = () => {
   let path = url.path->Belt.List.toArray->Js.Array2.joinWith("/");
 
   <div>
-    <ExampleHelmet
-      title="ExamplePageDynamic"
-      description="ExamplePageDynamic description"
+    <Helmet
+      title="PageDynamic"
+      description="PageDynamic description"
     />
-    <ExampleSharedModule.Header />
+    <SharedModule.Header />
     <div className=Css.content>
-      <h1> "ExamplePageDynamic"->React.string </h1>
+      <h1> "PageDynamic"->React.string </h1>
       <h2> path->React.string </h2>
     </div>
-    <ExampleSharedModule.Footer />
+    <SharedModule.Footer />
   </div>;
 };

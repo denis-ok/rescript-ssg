@@ -9,12 +9,12 @@ let pageIndex: PageBuilder.page = {
     Some({
       component:
         WrapperWithChildren(
-          children => <ExampleWrapper> children </ExampleWrapper>,
+          children => <Wrapper> children </Wrapper>,
         ),
-      modulePath: ExampleWrapper.modulePath,
+      modulePath: Wrapper.modulePath,
     }),
-  component: ComponentWithoutData(<ExampleIndex />),
-  modulePath: ExampleIndex.modulePath,
+  component: ComponentWithoutData(<Index />),
+  modulePath: Index.modulePath,
   path: Root,
 };
 
@@ -24,14 +24,14 @@ let page1: PageBuilder.page = {
       component:
         WrapperWithDataAndChildren({
           component: (data, children) =>
-            <ExampleWrapperWithData data> children </ExampleWrapperWithData>,
+            <WrapperWithData data> children </WrapperWithData>,
           data: "LALA",
         }),
-      modulePath: ExampleWrapperWithData.modulePath,
+      modulePath: WrapperWithData.modulePath,
     }),
   component:
     ComponentWithData({
-      component: data => <ExamplePage1 data />,
+      component: data => <Page1 data />,
       data:
         Some({
           string: "lala",
@@ -43,7 +43,7 @@ let page1: PageBuilder.page = {
           bool: true,
         }),
     }),
-  modulePath: ExamplePage1.modulePath,
+  modulePath: Page1.modulePath,
   path: Path([|"page1"|]),
 };
 
@@ -51,7 +51,7 @@ let page11: PageBuilder.page = {
   pageWrapper: None,
   component:
     ComponentWithData({
-      component: data => <ExamplePage1 data />,
+      component: data => <Page1 data />,
       data:
         Some({
           string: "lala",
@@ -63,22 +63,22 @@ let page11: PageBuilder.page = {
           bool: true,
         }),
     }),
-  modulePath: ExamplePage1.modulePath,
+  modulePath: Page1.modulePath,
   path: Path([|"page11"|]),
 };
 
 let page2: PageBuilder.page = {
   pageWrapper: None,
   component:
-    ComponentWithData({component: data => <ExamplePage2 data />, data: true}),
-  modulePath: ExamplePage2.modulePath,
+    ComponentWithData({component: data => <Page2 data />, data: true}),
+  modulePath: Page2.modulePath,
   path: Path([|"page2"|]),
 };
 
 let page1Dynamic: PageBuilder.page = {
   pageWrapper: None,
-  component: ComponentWithoutData(<ExamplePageDynamic />),
-  modulePath: ExamplePageDynamic.modulePath,
+  component: ComponentWithoutData(<PageDynamic />),
+  modulePath: PageDynamic.modulePath,
   path: Path([|"page1", "_id"|]),
 };
 
