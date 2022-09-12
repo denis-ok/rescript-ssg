@@ -1,2 +1,2 @@
-# builder
+# rescript-ssg
 static site generator
