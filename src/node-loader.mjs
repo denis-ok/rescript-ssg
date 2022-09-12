@@ -9,7 +9,15 @@ const isAsset = url => url.match(Webpack.assetRegex)
 
 const dataToHash = Webpack.Hash.dataToHash
 
-export async function load(url, _context, nextLoad) {
+// 'v16.15.0' => 16150
+const nodeVersionToInt = s => {
+  const refinedNodeVersion = s.replaceAll("v", "").replaceAll(".", "")
+  return parseInt(refinedNodeVersion, 10)
+}
+
+const nodeVersion = nodeVersionToInt(process.version)
+
+export async function load(url, context, nextLoad) {
   if (isBsArtifact(url)) {
     // We need to fix the error that appeared after bs-css added:
     // /Users/denis/projects/builder/node_modules/bs-css-emotion/src/Css.bs.js:3
@@ -42,10 +50,15 @@ export async function load(url, _context, nextLoad) {
     return Promise.resolve({
       format: "module",
       source: `export default "${webpackAssetPath_}";`,
+      // shortCircuit is needed since node v16.17.0
       shortCircuit: true,
     })
   } else {
     // Defer to Node.js for all other URLs.
-    return nextLoad(url)
+    if (nodeVersion >= 16170) {
+      return nextLoad(url)
+    } else {
+      return nextLoad(url, context, nextLoad)
+    }
   }
 }
