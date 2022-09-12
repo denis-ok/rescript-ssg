@@ -7,18 +7,6 @@ module ChildProcess = {
   };
 };
 
-[@val] external import_: string => Js.Promise.t('a) = "import";
-
-// Node caches imported modules, here is a workaround, but there is a possible memory leak:
-// https://ar.al/2021/02/22/cache-busting-in-node.js-dynamic-esm-imports/
-// Also: https://github.com/nodejs/modules/issues/307
-
-let freshImport = modulePath => {
-  let timestamp = Js.Date.now()->Js.Float.toString;
-  let cacheBustingModulePath = {j|$(modulePath)?update=$(timestamp)|j};
-  import_(cacheBustingModulePath);
-};
-
 let defaultRoot = {js|<div id="app"></div>|js};
 
 let makeDefaultRootWithRenderedData = (data: string) => {j|<div id="app">$(data)</div>|j};

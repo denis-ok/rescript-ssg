@@ -1,3 +1,5 @@
+[@val] external import_: string => Js.Promise.t('a) = "import";
+
 type workerData = RebuildPageWorkerT.workerData;
 
 let workerData: workerData = WorkingThreads.workerData;
@@ -14,15 +16,14 @@ pages
     let outputDir = page.outputDir;
 
     Js.log2("[Worker] Trying to import module: ", modulePath);
-    let importedModule = PageBuilder.import_(modulePath);
+    let importedModule = import_(modulePath);
 
     let importedWrapperModule =
       switch (page.pageWrapper) {
       | None => Js.Promise.resolve(None)
       | Some({modulePath, _}) =>
         Js.log2("[Worker] Trying to import wrapper module: ", modulePath);
-        PageBuilder.import_(modulePath)
-        ->Promise.map(module_ => Some(module_));
+        import_(modulePath)->Promise.map(module_ => Some(module_));
       };
 
     let modules = Js.Promise.all2((importedModule, importedWrapperModule));
