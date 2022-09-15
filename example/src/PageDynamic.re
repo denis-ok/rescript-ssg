@@ -13,10 +13,7 @@ let make = () => {
   let path = url.path->Belt.List.toArray->Js.Array2.joinWith("/");
 
   <div>
-    <Helmet
-      title="PageDynamic"
-      description="PageDynamic description"
-    />
+    <Helmet title="PageDynamic" description="PageDynamic description" />
     <SharedModule.Header />
     <div className=Css.content>
       <h1> "PageDynamic"->React.string </h1>

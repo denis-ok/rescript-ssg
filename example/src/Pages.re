@@ -8,9 +8,7 @@ let pageIndex: PageBuilder.page = {
   pageWrapper:
     Some({
       component:
-        WrapperWithChildren(
-          children => <Wrapper> children </Wrapper>,
-        ),
+        WrapperWithChildren(children => <Wrapper> children </Wrapper>),
       modulePath: Wrapper.modulePath,
     }),
   component: ComponentWithoutData(<Index />),

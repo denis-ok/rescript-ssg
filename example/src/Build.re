@@ -5,8 +5,5 @@ let () =
     ~outputDir=Pages.pagesOutputDir,
     ~webpackOutputDir=Pages.webpackOutputDir,
     ~rescriptBinaryPath=
-      Path.join2(
-        Pages.pagesOutputDir,
-        "../../node_modules/.bin/rescript",
-      ),
+      Path.join2(Pages.pagesOutputDir, "../../node_modules/.bin/rescript"),
   );
