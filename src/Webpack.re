@@ -11,7 +11,7 @@ module CleanWebpackPlugin = {
 };
 
 [@new] [@module "webpack"] [@scope "default"]
-external definePlugin: {..} => webpackPlugin = "DefinePlugin";
+external definePlugin: 'a => webpackPlugin = "DefinePlugin";
 
 module Webpack = {
   module Stats = {

@@ -8,14 +8,14 @@ NODE_BINS = node_modules/.bin
 EXAMPLE_DIR = example
 
 clean-rescript:
-	$(NODE_BINS)/rescript clean -with-deps
+	$(NODE_BINS)/bsb -clean-world
 
 build-rescript:
-	$(NODE_BINS)/rescript
+	$(NODE_BINS)/bsb -make-world
 
 start-rescript:
 	mkdir $(EXAMPLE_DIR)/build; \
-	$(NODE_BINS)/rescript build -w
+	$(NODE_BINS)/bsb -make-world -w
 
 build-example:
 	./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js

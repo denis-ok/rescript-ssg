@@ -4,7 +4,7 @@
   "homepage": "https://github.com/denis-ok/rescript-ssg",
   "version": "1.8.0",
   "engines": {
-    "node": "^16.17.0"
+    "node": ">=16.17.0"
   },
   "bin": {
     "rescript-ssg": "./src/js/bin.mjs"
@@ -32,15 +32,15 @@
   "peerDependencies": {
     "@emotion/css": "^11.10.0",
     "@emotion/server": "^11.10.0",
-    "@rescript/react": "^0.10.3",
     "bs-css-emotion": "^4.3.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-helmet": "^6.1.0"
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "react-helmet": "^6.1.0",
+    "reason-react": "^0.9.1"
   },
   "devDependencies": {
+    "bs-platform": "^9.0.2",
     "c8": "^7.12.0",
-    "rescript": "^9.1.4",
     "serve": "^14.1.2",
     "webpack-bundle-analyzer": "^4.7.0"
   }
