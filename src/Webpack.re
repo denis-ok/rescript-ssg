@@ -299,6 +299,9 @@ let makeConfig =
         },
       },
     },
+    "watchOptions": {
+      "aggregateTimeout": 1000,
+    },
     "devServer": {
       switch (devServerOptions) {
       | None => None
