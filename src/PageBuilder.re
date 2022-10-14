@@ -7,10 +7,6 @@ module ChildProcess = {
   };
 };
 
-let defaultRoot = {js|<div id="app"></div>|js};
-
-let makeDefaultRootWithRenderedData = (data: string) => {j|<div id="app">$(data)</div>|j};
-
 let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
   let htmlAttributes = helmet.htmlAttributes.toString();
   let title = helmet.title.toString();
@@ -18,7 +14,7 @@ let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
   let link = helmet.link.toString();
   let bodyAttributes = helmet.bodyAttributes.toString();
   {j|
-<!doctype html>
+<!DOCTYPE html>
 <html $(htmlAttributes)>
   <head>
     <meta charset="utf-8"/>
@@ -27,7 +23,7 @@ let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
     $(link)
   </head>
   <body $(bodyAttributes)>
-    <div id="app">$(renderedHtml)</div>
+    <div id="root">$(renderedHtml)</div>
   </body>
 </html>
 |j};
@@ -36,7 +32,7 @@ let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
 let defaultReactRootName = "elementString";
 
 let reactRootTemplate = {js|
-switch (ReactDOM.querySelector("#app")) {
+switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(elementString, root)
 | None => ()
 };
