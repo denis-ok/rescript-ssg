@@ -1,3 +1,10 @@
+## 1.6.0
+
+- Add `headCss` field to page to inject CSS into result HTML.
+- Minify HTML in production mode.
+- Refactor node-loader.
+- Reorganize modules, remove unused code, some refactoring.
+
 ## 1.5.0
 
 - Add `aggregateTimeout` option to Webpack config to avoid too often rebuilding.
