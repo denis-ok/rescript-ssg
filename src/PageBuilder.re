@@ -63,9 +63,9 @@ let dataPropName = "data";
 let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
-    ->Js.String2.replaceByRe([%re "/\\//g"], "")
-    ->Js.String2.replaceByRe([%re "/-/g"], "")
-    ->Js.String2.replaceByRe([%re "/\\./g"], "");
+    ->Js.String2.replaceByRe([%re {|/\//g|}], "")
+    ->Js.String2.replaceByRe([%re {|/-/g|}], "")
+    ->Js.String2.replaceByRe([%re {|/\./g|}], "");
 
   modulePrefix ++ moduleName ++ "App";
 };
