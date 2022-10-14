@@ -1,5 +1,5 @@
 let () =
-  PageBuilder.build(
+  Commands.build(
     ~pages=Pages.pages,
     ~mode=Production,
     ~outputDir=Pages.pagesOutputDir,
