@@ -1,12 +1,3 @@
-module ChildProcess = {
-  [@module "child_process"]
-  external execSync: (. string, Js.t('a)) => string = "execSync";
-
-  module Error = {
-    [@get] external stdout: Js.Exn.t => string = "stdout";
-  };
-};
-
 let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
   let htmlAttributes = helmet.htmlAttributes.toString();
   let title = helmet.title.toString();
@@ -29,14 +20,12 @@ let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
 |j};
 };
 
-let defaultReactRootName = "elementString";
-
-let reactRootTemplate = {js|
+let makeReactAppTemplate = (elementString: string) => {j|
 switch (ReactDOM.querySelector("#root")) {
-| Some(root) => ReactDOM.hydrate(elementString, root)
+| Some(root) => ReactDOM.hydrate($(elementString), root)
 | None => ()
 };
-|js};
+|j};
 
 type componentWithData('a) = {
   component: 'a => React.element,
@@ -170,12 +159,7 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
 
   let resultHtml = makeHtmlTemplate(helmet, htmlWithStyles);
 
-  let resultReactApp =
-    reactRootTemplate->Js.String2.replace(
-      defaultReactRootName,
-      elementString,
-    );
-
+  let resultReactApp = makeReactAppTemplate(elementString);
   let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
