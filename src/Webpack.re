@@ -79,19 +79,19 @@ module Hash = {
   [@send "createHash"]
   external createHash': (crypto, string) => hash = "createHash";
 
-  [@send "update"] external update': (hash, string) => hash = "update";
+  [@send "update"] external updateBuffer: (hash, Buffer.t) => hash = "update";
 
-  [@send "digest"] external digest': (hash, string) => string = "digest";
+  [@send "digest"] external digest: (hash, string) => string = "digest";
 
   let digestLength = 20;
 
   let makeNew = () => crypto->createHash'("md4");
 
-  let dataToHash = data =>
+  let bufferToHash = (data: Buffer.t) =>
     crypto
     ->createHash'("md4")
-    ->update'(data)
-    ->digest'("hex")
+    ->updateBuffer(data)
+    ->digest("hex")
     ->Js.String2.slice(~from=0, ~to_=digestLength);
 };
 
