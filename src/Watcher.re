@@ -24,20 +24,24 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(PageBuilder.page)) => {
         component: {
           switch (page.component) {
           | ComponentWithoutData(_) => ComponentWithoutData
-          | PageBuilder.ComponentWithData({data, _}) => ComponentWithData({data: data})
+          | PageBuilder.ComponentWithData({data, _}) =>
+            ComponentWithData({data: data})
           };
         },
         modulePath: page.modulePath,
         outputDir,
+        headCss: page.headCss,
         path: page.path,
       };
 
       rebuildPage;
     });
 
+  let workerData: RebuildPageWorkerT.workerData = rebuildPages;
+
   WorkingThreads.runWorker(
     ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
-    ~workerData=rebuildPages,
+    ~workerData,
   );
 };
 

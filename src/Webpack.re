@@ -180,7 +180,19 @@ let makeConfig =
               Path.join2(PageBuilderT.PagePath.toString(path), "index.html"),
             "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
             "inject": true,
-            "minify": false,
+            "minify": {
+              let shouldMinify = mode == Production;
+              {
+                "collapseWhitespace": shouldMinify,
+                "keepClosingSlash": shouldMinify,
+                "removeComments": shouldMinify,
+                "removeRedundantAttributes": shouldMinify,
+                "removeScriptTypeAttributes": shouldMinify,
+                "removeStyleLinkTypeAttributes": shouldMinify,
+                "useShortDoctype": shouldMinify,
+                "minifyCSS": shouldMinify,
+              };
+            },
           })
         });
 

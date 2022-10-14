@@ -53,7 +53,7 @@ let getFinalHashedAssetPath =
     (url: string, processFileData: option(Buffer.t => Buffer.t)) => {
   let filePath = url->Js.String2.replace("file://", "");
 
-  let fileData = Fs.readFileSync(filePath);
+  let fileData = Fs.readFileSyncAsBuffer(filePath);
 
   let processedFileData =
     switch (processFileData) {

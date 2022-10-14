@@ -1,32 +1,3 @@
-let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
-  let htmlAttributes = helmet.htmlAttributes.toString();
-  let title = helmet.title.toString();
-  let meta = helmet.meta.toString();
-  let link = helmet.link.toString();
-  let bodyAttributes = helmet.bodyAttributes.toString();
-  {j|
-<!DOCTYPE html>
-<html $(htmlAttributes)>
-  <head>
-    <meta charset="utf-8"/>
-    $(title)
-    $(meta)
-    $(link)
-  </head>
-  <body $(bodyAttributes)>
-    <div id="root">$(renderedHtml)</div>
-  </body>
-</html>
-|j};
-};
-
-let makeReactAppTemplate = (elementString: string) => {j|
-switch (ReactDOM.querySelector("#root")) {
-| Some(root) => ReactDOM.hydrate($(elementString), root)
-| None => ()
-};
-|j};
-
 type componentWithData('a) = {
   component: 'a => React.element,
   data: 'a,
@@ -56,7 +27,48 @@ type page = {
   component,
   modulePath: string,
   path: PageBuilderT.PagePath.t,
+  headCss: option(string),
 };
+
+let makeHtmlTemplate =
+    (
+      ~headCss: option(string),
+      helmet: ReactHelmet.helmetInstance,
+      renderedHtml: string,
+    ) => {
+  let headCss =
+    switch (headCss) {
+    | None => ""
+    | Some(css) => {j|<style>$(css)</style>|j}
+    };
+  let htmlAttributes = helmet.htmlAttributes.toString();
+  let title = helmet.title.toString();
+  let meta = helmet.meta.toString();
+  let link = helmet.link.toString();
+  let bodyAttributes = helmet.bodyAttributes.toString();
+  {j|
+<!DOCTYPE html>
+<html $(htmlAttributes)>
+  <head>
+    <meta charset="utf-8"/>
+    $(title)
+    $(meta)
+    $(link)
+    $(headCss)
+  </head>
+  <body $(bodyAttributes)>
+    <div id="root">$(renderedHtml)</div>
+  </body>
+</html>
+|j};
+};
+
+let makeReactAppTemplate = (elementString: string) => {j|
+switch (ReactDOM.querySelector("#root")) {
+| Some(root) => ReactDOM.hydrate($(elementString), root)
+| None => ()
+};
+|j};
 
 let dataPropName = "data";
 
@@ -157,9 +169,11 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
 
   let helmet = ReactHelmet.renderStatic();
 
-  let resultHtml = makeHtmlTemplate(helmet, htmlWithStyles);
+  let resultHtml =
+    makeHtmlTemplate(~headCss=page.headCss, helmet, htmlWithStyles);
 
   let resultReactApp = makeReactAppTemplate(elementString);
+
   let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
@@ -190,7 +204,7 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
   );
 };
 
-let buildPages = (~outputDir, pages: list(page)): Js.Dict.t(page) => {
+let buildPages = (~outputDir, pages: list(page)) => {
   Js.log("[PageBuilder.buildPages] Building pages...");
 
   let pagesDict = Js.Dict.empty();
@@ -213,5 +227,5 @@ let buildPages = (~outputDir, pages: list(page)): Js.Dict.t(page) => {
       buildPageHtmlAndReactApp(~outputDir, page);
     });
 
-  pagesDict;
+  ();
 };

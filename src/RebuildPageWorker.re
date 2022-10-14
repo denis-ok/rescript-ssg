@@ -81,6 +81,7 @@ pages
           };
         },
         modulePath: module_##modulePath,
+        headCss: None,
         path: page.path,
       };
 
