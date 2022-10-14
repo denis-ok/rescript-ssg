@@ -34,7 +34,7 @@ let make = (~data: option(PageContext.t)) => {
          </li>
        </ul>
      }}
-    <Helmet title="Page1" description="Page1 description" />
+    <MetaTags title="Page1" description="Page1 description" />
     <SharedModule.Header />
     <div className=Css.content> <h1> "Page 1"->React.string </h1> </div>
     <SharedModule.Footer />
