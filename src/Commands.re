@@ -1,6 +1,12 @@
 let build =
-    (~pages, ~outputDir, ~webpackOutputDir, ~rescriptBinaryPath, ~mode) => {
-  let _pagesDict = PageBuilder.buildPages(~outputDir, pages);
+    (
+      ~pages: list(PageBuilder.page),
+      ~outputDir: string,
+      ~webpackOutputDir: string,
+      ~rescriptBinaryPath: string,
+      ~mode: Webpack.Mode.t,
+    ) => {
+  PageBuilder.buildPages(~outputDir, pages);
 
   Js.log("[PageBuilder.build] Compiling React app files...");
 
@@ -23,8 +29,14 @@ let build =
   Webpack.build(~mode, ~webpackOutputDir, ~verbose=true);
 };
 
-let start = (~pages: list(PageBuilder.page), ~outputDir, ~webpackOutputDir, ~mode) => {
-  let _pagesDict = PageBuilder.buildPages(~outputDir, pages);
+let start =
+    (
+      ~pages: list(PageBuilder.page),
+      ~outputDir: string,
+      ~webpackOutputDir: string,
+      ~mode: Webpack.Mode.t,
+    ) => {
+  PageBuilder.buildPages(~outputDir, pages);
 
   Watcher.startWatcher(~outputDir, pages);
 

@@ -24,7 +24,8 @@ let rebuildPagesWithWorker = (~outputDir, pages: array(PageBuilder.page)) => {
         component: {
           switch (page.component) {
           | ComponentWithoutData(_) => ComponentWithoutData
-          | PageBuilder.ComponentWithData({data, _}) => ComponentWithData({data: data})
+          | PageBuilder.ComponentWithData({data, _}) =>
+            ComponentWithData({data: data})
           };
         },
         modulePath: page.modulePath,
