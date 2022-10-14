@@ -104,19 +104,18 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
   });
 
   let pageWrapperModuleDependencies =
-    pages
-    ->Belt.Array.keepMap(page => {
-        switch (page.pageWrapper) {
-        | None => None
-        | Some(wrapper) =>
-          let () =
-            updateDependencyToPageModuleDict(
-              ~dependency=wrapper.modulePath,
-              ~modulePath=page.modulePath,
-            );
-          Some(wrapper.modulePath);
-        }
-      });
+    pages->Belt.Array.keepMap(page => {
+      switch (page.pageWrapper) {
+      | None => None
+      | Some(wrapper) =>
+        let () =
+          updateDependencyToPageModuleDict(
+            ~dependency=wrapper.modulePath,
+            ~modulePath=page.modulePath,
+          );
+        Some(wrapper.modulePath);
+      }
+    });
 
   let allDependencies = {
     let dependencies =
