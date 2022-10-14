@@ -1,4 +1,4 @@
-// Here we have almost the same type as in PageBuilder module but constructord don't accept functions,
+// Here we have almost the same type as in PageBuilder module but constructor don't accept functions,
 // because we can't pass functions to workers.
 
 type componentWithData('a) = {data: 'a};
@@ -21,6 +21,7 @@ type rebuildPage = {
   component,
   modulePath: string,
   outputDir: string,
+  headCss: option(string),
   path: PageBuilderT.PagePath.t,
 };
 

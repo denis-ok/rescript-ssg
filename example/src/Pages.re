@@ -13,6 +13,7 @@ let pageIndex: PageBuilder.page = {
     }),
   component: ComponentWithoutData(<Index />),
   modulePath: Index.modulePath,
+  headCss: None,
   path: Root,
 };
 
@@ -42,6 +43,7 @@ let page1: PageBuilder.page = {
         }),
     }),
   modulePath: Page1.modulePath,
+  headCss: None,
   path: Path([|"page1"|]),
 };
 
@@ -62,6 +64,7 @@ let page11: PageBuilder.page = {
         }),
     }),
   modulePath: Page1.modulePath,
+  headCss: None,
   path: Path([|"page11"|]),
 };
 
@@ -70,6 +73,7 @@ let page2: PageBuilder.page = {
   component:
     ComponentWithData({component: data => <Page2 data />, data: true}),
   modulePath: Page2.modulePath,
+  headCss: None,
   path: Path([|"page2"|]),
 };
 
@@ -77,6 +81,7 @@ let page1Dynamic: PageBuilder.page = {
   pageWrapper: None,
   component: ComponentWithoutData(<PageDynamic />),
   modulePath: PageDynamic.modulePath,
+  headCss: None,
   path: Path([|"page1", "_id"|]),
 };
 

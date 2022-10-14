@@ -27,9 +27,20 @@ type page = {
   component,
   modulePath: string,
   path: PageBuilderT.PagePath.t,
+  headCss: option(string),
 };
 
-let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
+let makeHtmlTemplate =
+    (
+      ~headCss: option(string),
+      helmet: ReactHelmet.helmetInstance,
+      renderedHtml: string,
+    ) => {
+  let headCss =
+    switch (headCss) {
+    | None => ""
+    | Some(css) => {j|<style>$(css)</style>|j}
+    };
   let htmlAttributes = helmet.htmlAttributes.toString();
   let title = helmet.title.toString();
   let meta = helmet.meta.toString();
@@ -43,6 +54,7 @@ let makeHtmlTemplate = (helmet: ReactHelmet.helmetInstance, renderedHtml) => {
     $(title)
     $(meta)
     $(link)
+    $(headCss)
   </head>
   <body $(bodyAttributes)>
     <div id="root">$(renderedHtml)</div>
@@ -157,9 +169,11 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
 
   let helmet = ReactHelmet.renderStatic();
 
-  let resultHtml = makeHtmlTemplate(helmet, htmlWithStyles);
+  let resultHtml =
+    makeHtmlTemplate(~headCss=page.headCss, helmet, htmlWithStyles);
 
   let resultReactApp = makeReactAppTemplate(elementString);
+
   let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
