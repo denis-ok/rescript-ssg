@@ -1,8 +1,9 @@
-[@module "fs"]
-external readFileSync: (string, string) => string = "readFileSync";
+[@module "fs"] external readFileSync: string => Buffer.t = "readFileSync";
 
 [@module "fs"]
 external writeFileSync: (string, string) => unit = "writeFileSync";
+
+[@module "fs"] external existsSync: string => bool = "existsSync";
 
 type makeDirSyncOptions = {recursive: bool};
 

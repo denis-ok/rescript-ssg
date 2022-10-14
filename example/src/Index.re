@@ -7,7 +7,7 @@ let modulePath = Utils.getFilepath();
 [@react.component]
 let make = () => {
   <div>
-    <Helmet title="Index" description="Index description" />
+    <MetaTags title="Index" description="Index description" />
     <SharedModule.Header />
     <div className=Css.content> <h1> "Index page"->React.string </h1> </div>
     <img src=catImage />

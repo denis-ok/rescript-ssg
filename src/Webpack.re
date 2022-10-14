@@ -69,32 +69,6 @@ module Mode = {
     };
 };
 
-module Hash = {
-  type crypto;
-
-  type hash;
-
-  [@module "crypto"] external crypto: crypto = "default";
-
-  [@send "createHash"]
-  external createHash': (crypto, string) => hash = "createHash";
-
-  [@send "update"] external update': (hash, string) => hash = "update";
-
-  [@send "digest"] external digest': (hash, string) => string = "digest";
-
-  let digestLength = 20;
-
-  let makeNew = () => crypto->createHash'("md4");
-
-  let dataToHash = data =>
-    crypto
-    ->createHash'("md4")
-    ->update'(data)
-    ->digest'("hex")
-    ->Js.String2.slice(~from=0, ~to_=digestLength);
-};
-
 type page = {
   path: PageBuilderT.PagePath.t,
   entryPath: string,
@@ -103,8 +77,6 @@ type page = {
 };
 
 let pages: Js.Dict.t(page) = Js.Dict.empty();
-
-let webpackAssetsDir = "assets";
 
 module DevServerOptions = {
   module Proxy = {
@@ -159,10 +131,6 @@ module DevServerOptions = {
   };
 };
 
-let assetRegex = [%re
-  "/\\.(css|jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json|mp4)$/i"
-];
-
 let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
@@ -187,16 +155,17 @@ let makeConfig =
       "path": webpackOutputDir,
       "publicPath": "/",
       "filename": "js/[name]_[chunkhash].js",
-      "assetModuleFilename": webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
-      "hashFunction": Hash.makeNew,
-      "hashDigestLength": Hash.digestLength,
+      "assetModuleFilename":
+        NodeLoader.webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
+      "hashFunction": NodeLoader.Hash.makeNew,
+      "hashDigestLength": NodeLoader.Hash.digestLength,
     },
 
     "module": {
       "rules": [|
         {
           //
-          "test": assetRegex,
+          "test": NodeLoader.assetRegex,
           "type": "asset/resource",
         },
       |],

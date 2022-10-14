@@ -1,1 +1,1 @@
-[@module "./utils.mjs"] external srcPath: string = "srcPath";
+[@module "./js/utils.mjs"] external srcPath: string = "srcPath";

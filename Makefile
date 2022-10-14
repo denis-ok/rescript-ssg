@@ -18,10 +18,10 @@ start-rescript:
 	$(NODE_BINS)/rescript build -w
 
 build-example:
-	./src/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
+	./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
 
 start-example:
-	./src/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
+	./src/js/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
 
 serve-example:
 	$(NODE_BINS)/serve -l 3005 $(EXAMPLE_DIR)/build/bundle
