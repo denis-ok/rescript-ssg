@@ -1,4 +1,7 @@
 [@module "fs"]
+external readFileSync': (string, string) => string = "readFileSync";
+
+[@module "fs"]
 external readFileSyncAsBuffer: string => Buffer.t = "readFileSync";
 
 [@module "fs"]
@@ -17,3 +20,5 @@ type rmSyncOptions = {
 };
 
 [@module "fs"] external rmSync: (string, rmSyncOptions) => unit = "rmSync";
+
+let readFileSyncAsUtf8 = path => readFileSync'(path, "utf8");

@@ -27,7 +27,7 @@ type page = {
   component,
   modulePath: string,
   path: PageBuilderT.PagePath.t,
-  headCss: option(string),
+  headCssFiles: array(string),
 };
 
 let makeHtmlTemplate =
@@ -169,8 +169,18 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
 
   let helmet = ReactHelmet.renderStatic();
 
-  let resultHtml =
-    makeHtmlTemplate(~headCss=page.headCss, helmet, htmlWithStyles);
+  let headCss =
+    switch (page.headCssFiles) {
+    | [||] => None
+    | cssFiles =>
+      Some(
+        cssFiles
+        ->Js.Array2.map(filepath => Fs.readFileSyncAsUtf8(filepath))
+        ->Js.Array2.joinWith("\n"),
+      )
+    };
+
+  let resultHtml = makeHtmlTemplate(~headCss, helmet, htmlWithStyles);
 
   let resultReactApp = makeReactAppTemplate(elementString);
 
