@@ -57,9 +57,9 @@ let getModuleDependencies = (~modulePath) =>
 // Monitor changes in a module itself and monitor changes in all dependencies of a module (except node modules?)
 // After a module changed should we refresh dependencies and remove stale?
 
-let startWatcher = (~outputDir, pages: list(PageBuilder.page)) => {
+let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
   let modulePathToPagesDict = Js.Dict.empty();
-  pages->Belt.List.forEach(page => {
+  pages->Js.Array2.forEach(page => {
     switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
     | None => modulePathToPagesDict->Js.Dict.set(page.modulePath, [|page|])
     | Some(pages) =>
@@ -105,7 +105,7 @@ let startWatcher = (~outputDir, pages: list(PageBuilder.page)) => {
 
   let pageWrapperModuleDependencies =
     pages
-    ->Belt.List.keepMap(page => {
+    ->Belt.Array.keepMap(page => {
         switch (page.pageWrapper) {
         | None => None
         | Some(wrapper) =>
@@ -116,8 +116,7 @@ let startWatcher = (~outputDir, pages: list(PageBuilder.page)) => {
             );
           Some(wrapper.modulePath);
         }
-      })
-    ->Belt.List.toArray;
+      });
 
   let allDependencies = {
     let dependencies =

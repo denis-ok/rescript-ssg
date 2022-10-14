@@ -1,6 +1,6 @@
 let build =
     (
-      ~pages: list(PageBuilder.page),
+      ~pages: array(PageBuilder.page),
       ~outputDir: string,
       ~webpackOutputDir: string,
       ~rescriptBinaryPath: string,
@@ -31,7 +31,7 @@ let build =
 
 let start =
     (
-      ~pages: list(PageBuilder.page),
+      ~pages: array(PageBuilder.page),
       ~outputDir: string,
       ~webpackOutputDir: string,
       ~mode: Webpack.Mode.t,

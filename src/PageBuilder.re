@@ -204,13 +204,13 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
   );
 };
 
-let buildPages = (~outputDir, pages: list(page)) => {
+let buildPages = (~outputDir, pages: array(page)) => {
   Js.log("[PageBuilder.buildPages] Building pages...");
 
   let pagesDict = Js.Dict.empty();
 
   let () =
-    pages->Belt.List.forEach(page => {
+    pages->Js.Array2.forEach(page => {
       let pagePath = PageBuilderT.PagePath.toString(page.path);
       switch (pagesDict->Js.Dict.get(pagePath)) {
       | None => pagesDict->Js.Dict.set(pagePath, page)

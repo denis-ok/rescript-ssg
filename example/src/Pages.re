@@ -90,14 +90,14 @@ let page1Dynamic: PageBuilder.page = {
   path: Path([|"page1", "_id"|]),
 };
 
-let languages = ["en", "ru"];
+let languages = [|"en", "ru"|];
 
-let pages = [pageIndex, page1, page2, page1Dynamic];
+let pages = [|pageIndex, page1, page2, page1Dynamic|];
 
 let localizedPages =
   languages
-  ->Belt.List.map(language => {
-      pages->Belt.List.map(page =>
+  ->Js.Array2.map(language => {
+      pages->Js.Array2.map(page =>
         {
           ...page,
           path:
@@ -108,6 +108,6 @@ let localizedPages =
         }
       )
     })
-  ->Belt.List.flatten;
+  ->Array.flat1;
 
-let pages = Belt.List.concat(pages, localizedPages);
+let pages = Js.Array2.concat(pages, localizedPages);
