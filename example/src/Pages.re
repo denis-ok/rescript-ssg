@@ -1,8 +1,13 @@
+[@module "fs"]
+external readFileSync: (string, string) => string = "readFileSync";
+
 let currentDir = Utils.getDirname();
 
 let pagesOutputDir = Path.join2(currentDir, "../build");
 
 let webpackOutputDir = Path.join2(pagesOutputDir, "bundle");
+
+let normalizeCss = readFileSync(currentDir ++ "/css/normalize.css", "utf8");
 
 let pageIndex: PageBuilder.page = {
   pageWrapper:
@@ -13,7 +18,7 @@ let pageIndex: PageBuilder.page = {
     }),
   component: ComponentWithoutData(<Index />),
   modulePath: Index.modulePath,
-  headCss: None,
+  headCss: Some(normalizeCss),
   path: Root,
 };
 

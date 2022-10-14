@@ -1,4 +1,5 @@
-[@module "fs"] external readFileSync: string => Buffer.t = "readFileSync";
+[@module "fs"]
+external readFileSyncAsBuffer: string => Buffer.t = "readFileSync";
 
 [@module "fs"]
 external writeFileSync: (string, string) => unit = "writeFileSync";
