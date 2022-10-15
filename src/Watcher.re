@@ -2,6 +2,11 @@ let dirname = Utils.getDirname();
 
 let makeUniqueArray = array => Set.fromArray(array)->Set.toArray;
 
+let makeUniqueArray1 = (array:array('a), ~getId: 'a => string) => {
+  let items = array->Js.Array2.map(v => (v->getId, v));
+  items->Js.Dict.fromArray->Js.Dict.values;
+};
+
 let rebuildPagesWithWorker = (~outputDir, pages: array(PageBuilder.page)) => {
   let rebuildPages =
     pages->Js.Array2.map(page => {
@@ -168,28 +173,32 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
   watcher->Chokidar.onChange(filepath => {
     Js.log2("[Watcher] File changed: ", filepath);
 
-    switch (headCssFileToPagesDict->Js.Dict.get(filepath)) {
-    | Some(_pages) => Js.log("[Watcher] Head CSS file changed")
-    | None =>
+    let updatedRebuildQueue =
       switch (modulePathToPagesDict->Js.Dict.get(filepath)) {
       | Some(_) =>
         Js.log2("[Watcher] Exact page module changed:", filepath);
-        let newQueue =
-          Js.Array2.concat([|filepath|], rebuildQueueRef^)->makeUniqueArray;
-        rebuildQueueRef := newQueue;
+        Js.Array2.concat([|filepath|], rebuildQueueRef^)->makeUniqueArray;
       | None =>
         switch (dependencyToPageModuleDict->Js.Dict.get(filepath)) {
-        | None =>
-          // Nothing depends on changed file. Should we remove it from watcher?
-          Js.log2("[Watcher] No pages depend on file:", filepath)
         | Some(pageModules) =>
-          // Page dependency changed. Should rebuild pages that depend on it.
           Js.log2("[Watcher] Should rebuild these pages:", pageModules);
-          let newQueue =
-            Js.Array2.concat(pageModules, rebuildQueueRef^)->makeUniqueArray;
-          rebuildQueueRef := newQueue;
+          Js.Array2.concat(pageModules, rebuildQueueRef^)->makeUniqueArray;
+        | None =>
+          switch (headCssFileToPagesDict->Js.Dict.get(filepath)) {
+          | Some(_pages) =>
+            Js.log("[Watcher] Head CSS file changed.");
+            Js.Array2.concat([|filepath|], rebuildQueueRef^)
+            ->makeUniqueArray;
+          | None =>
+            // Nothing depends on changed file. We should remove it from watcher.
+            Js.log2("[Watcher] No pages depend on file:", filepath);
+            rebuildQueueRef^;
+          }
         }
-      }
+      };
+
+    if (rebuildQueueRef^ != updatedRebuildQueue) {
+      rebuildQueueRef := updatedRebuildQueue;
     };
   });
 
