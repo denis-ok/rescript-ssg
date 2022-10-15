@@ -53,13 +53,24 @@ let getModuleDependencies = (~modulePath) =>
     filter: path => path->Js.String2.indexOf("node_modules") == (-1),
   });
 
-// To make watcher work properly we need to:
-// Monitor changes in a module itself and monitor changes in all dependencies of a module (except node modules?)
-// After a module changed should we refresh dependencies and remove stale?
+// To make a watcher work properly we need to:
+// 1. Watch for the changes in a root module (page module).
+// 2. Watch for the changes in all dependencies of a root module (except node modules).
+// 3. Watch for the changes in wrapper components and handle them as dependencies of a root module.
+// 4. Watch for the changes in headCssFiles.
+
+// After a module changes we should rebuild a page and refresh dependency dicts to remove the stale ones.
+
+// The watcher logic looks like this:
+// We detect change in some file.
+// If the change is in a root module -> simply get pages from modulePathToPagesDict and rebuild them.
+// If the change is in a dependency -> get root modules from a dependency -> get pages from root modules.
+// If the change is in a head CSS file -> get pages that use this css file and rebuild them.
 
 let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
-  // Multiple pages can use the same module (root component). The common case is localized pages.
+  // Multiple pages can use the same root module. The common case is localized pages.
   // We get modulePath -> array(pages) dict here.
+
   let modulePathToPagesDict = Js.Dict.empty();
   pages->Js.Array2.forEach(page => {
     switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
@@ -79,6 +90,10 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
       let dependencies = getModuleDependencies(~modulePath);
       (modulePath, dependencies);
     });
+
+  // Dependency is a dependency of the root module (modulePath).
+  // Multiple root modules can depend on the same dependency.
+  // The dict below maps dependency to the array of root modules.
 
   let dependencyToPageModuleDict = Js.Dict.empty();
 
@@ -100,16 +115,18 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
     )
   });
 
+  // We handle pageWrapper module as a dependency of the root module.
+  // So if pageWrapper module changes we check what root modules (pages) depend on it and rebuild them.
+
   let pageWrapperModuleDependencies =
     pages->Belt.Array.keepMap(page => {
       switch (page.pageWrapper) {
       | None => None
       | Some(wrapper) =>
-        let () =
-          updateDependencyToPageModuleDict(
-            ~dependency=wrapper.modulePath,
-            ~modulePath=page.modulePath,
-          );
+        updateDependencyToPageModuleDict(
+          ~dependency=wrapper.modulePath,
+          ~modulePath=page.modulePath,
+        );
         Some(wrapper.modulePath);
       }
     });
