@@ -135,6 +135,7 @@ let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
       ~mode: Mode.t,
+      ~logger: Log.logger,
       ~webpackOutputDir: string,
     ) => {
   let pages = pages->Js.Dict.values;
@@ -334,7 +335,9 @@ let makeConfig =
                   }
                 );
 
-              Js.log2("[Webpack dev server] Path rewrites: ", rewrites);
+              logger.info(() =>
+                Js.log2("[Webpack dev server] Path rewrites: ", rewrites)
+              );
               rewrites;
             },
           },
@@ -396,36 +399,43 @@ let makeConfig =
   config;
 };
 
-let makeCompiler = (~devServerOptions, ~mode, ~webpackOutputDir) => {
-  let config = makeConfig(~devServerOptions, ~mode, ~webpackOutputDir);
+let makeCompiler =
+    (
+      ~devServerOptions: option(DevServerOptions.t),
+      ~logger: Log.logger,
+      ~mode: Mode.t,
+      ~webpackOutputDir,
+    ) => {
+  let config =
+    makeConfig(~devServerOptions, ~mode, ~logger, ~webpackOutputDir);
   // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
   (compiler, config);
 };
 
-let build = (~mode, ~webpackOutputDir, ~verbose) => {
+let build = (~mode: Mode.t, ~logger: Log.logger, ~webpackOutputDir) => {
+  logger.info(() => Js.log("[Webpack] Building webpack bundle..."));
+
   let (compiler, _config) =
-    makeCompiler(~devServerOptions=None, ~mode, ~webpackOutputDir);
+    makeCompiler(~devServerOptions=None, ~mode, ~logger, ~webpackOutputDir);
 
   compiler->Webpack.run((err, stats) => {
     switch (Js.Nullable.toOption(err)) {
-    | None => Js.log("[Webpack] Build success")
-    | Some(_error) => Js.log("[Webpack] Build error")
+    | None => logger.info(() => Js.log("[Webpack] Build success"))
+    | Some(_error) => logger.info(() => Js.log("[Webpack] Build error"))
     };
 
     switch (Webpack.Stats.hasErrors(stats)) {
-    | true => Js.log("[Webpack] Stats.hasErrors")
+    | true => logger.info(() => Js.log("[Webpack] Stats.hasErrors"))
     | _ => ()
     };
 
     switch (Webpack.Stats.hasWarnings(stats)) {
-    | true => Js.log("[Webpack] Stats.hasWarnings")
+    | true => logger.info(() => Js.log("[Webpack] Stats.hasWarnings"))
     | _ => ()
     };
 
-    if (verbose) {
-      Js.log(Webpack.Stats.toString(stats));
-    };
+    logger.info(() => Js.log(Webpack.Stats.toString(stats)));
 
     let () = {
       let statsJson = Webpack.Stats.toJson(stats);
@@ -438,7 +448,8 @@ let build = (~mode, ~webpackOutputDir, ~verbose) => {
     compiler->Webpack.close(closeError => {
       switch (Js.Nullable.toOption(closeError)) {
       | None => ()
-      | Some(_error) => Js.log("[Webpack] Compiler close error")
+      | Some(_error) =>
+        logger.info(() => Js.log("[Webpack] Compiler close error"))
       }
     });
   });
@@ -447,37 +458,32 @@ let build = (~mode, ~webpackOutputDir, ~verbose) => {
 let startDevServer =
     (
       ~devServerOptions: DevServerOptions.t,
-      ~mode,
-      ~logger as _: Log.logger,
+      ~mode: Mode.t,
+      ~logger: Log.logger,
       ~webpackOutputDir,
     ) => {
   let (compiler, config) =
     makeCompiler(
       ~devServerOptions=Some(devServerOptions),
       ~mode,
+      ~logger,
       ~webpackOutputDir,
     );
 
   let devServerOptions = config##devServer;
+
   switch (devServerOptions) {
   | None =>
-    Js.Console.error(
-      "[Webpack] Can't start dev server, config##devServer is None",
+    logger.info(() =>
+      Js.Console.error(
+        "[Webpack] Can't start dev server, config##devServer is None",
+      )
     );
     Process.exit(1);
   | Some(devServerOptions) =>
     let devServer = WebpackDevServer.make(devServerOptions, compiler);
     devServer->WebpackDevServer.startWithCallback(() => {
-      Js.log("[Webpack] WebpackDevServer started")
+      logger.info(() => Js.log("[Webpack] WebpackDevServer started"))
     });
-  //
-  // Js.Global.setTimeout(
-  //   () =>
-  //     devServer->WebpackDevServer.stopWithCallback(() => {
-  //       Js.log("Dev server stopped!")
-  //     }),
-  //   5000,
-  // )
-  // ->ignore;
   };
 };

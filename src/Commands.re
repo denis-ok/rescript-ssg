@@ -11,25 +11,31 @@ let build =
 
   PageBuilder.buildPages(~outputDir, ~logger, pages);
 
-  Js.log("[PageBuilder.build] Compiling React app files...");
+  logger.info(() =>
+    Js.log("[Commands.build] Compiling fresh React app files...")
+  );
 
   switch (ChildProcess.execSync(. rescriptBinaryPath, {"encoding": "utf8"})) {
   | exception (Js.Exn.Error(error)) =>
-    Js.log2(
-      "[PageBuilder.build] Rescript build failed:\n",
-      error->Js.Exn.message,
-    );
-    Js.log2(
-      "[PageBuilder.build] Rescript build failed:\n",
-      error->ChildProcess.Error.stdout,
-    );
+    logger.info(() => {
+      Js.Console.error2(
+        "[Commands.build] Rescript build failed:\n",
+        error->Js.Exn.message,
+      );
+      Js.Console.error2(
+        "[Commands.build] Rescript build failed:\n",
+        error->ChildProcess.Error.stdout,
+      );
+    });
+
     Process.exit(1);
-  | stdout => Js.log2("[PageBuilder.build] Rescript build success:\n", stdout)
+  | stdout =>
+    logger.info(() =>
+      Js.log2("[PageBuilder.build] Rescript build success:\n", stdout)
+    )
   };
 
-  Js.log("[PageBuilder.build] Building webpack bundle...");
-
-  Webpack.build(~mode, ~webpackOutputDir, ~verbose=true);
+  Webpack.build(~mode, ~webpackOutputDir, ~logger);
 };
 
 let start =

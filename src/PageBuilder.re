@@ -82,22 +82,21 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   modulePrefix ++ moduleName ++ "App";
 };
 
-let buildPageHtmlAndReactApp =
-    (~outputDir, ~logger as _: Log.logger, page: page) => {
+let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => {
   let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
 
   let pagePath = page.path->PageBuilderT.PagePath.toString;
 
   let pageOutputDir = Path.join2(outputDir, pagePath);
 
-  Js.log2(
-    "[PageBuilder.buildPageHtmlAndReactApp] Output dir for page: ",
-    pageOutputDir,
+  logger.debug(() =>
+    Js.log2(
+      "[PageBuilder.buildPageHtmlAndReactApp] Output dir for page: ",
+      pageOutputDir,
+    )
   );
 
-  let () = {
-    Fs.mkDirSync(pageOutputDir, {recursive: true});
-  };
+  let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
 
   let (element, elementString) = {
     switch (page.component) {
@@ -209,14 +208,16 @@ let buildPageHtmlAndReactApp =
     Webpack.pages->Js.Dict.set(pageAppModuleName, webpackPage);
   };
 
-  Js.log2(
-    "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
-    moduleName,
+  logger.debug(() =>
+    Js.log2(
+      "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
+      moduleName,
+    )
   );
 };
 
 let buildPages = (~outputDir, ~logger: Log.logger, pages: array(page)) => {
-  Js.log("[PageBuilder.buildPages] Building pages...");
+  logger.info(() => Js.log("[PageBuilder.buildPages] Building pages..."));
 
   let pagesDict = Js.Dict.empty();
 
@@ -226,10 +227,12 @@ let buildPages = (~outputDir, ~logger: Log.logger, pages: array(page)) => {
       switch (pagesDict->Js.Dict.get(pagePath)) {
       | None => pagesDict->Js.Dict.set(pagePath, page)
       | Some(_) =>
-        Js.log3(
-          "[PageBuilder.buildPages] List of pages contains pages with the same paths. Page with path: ",
-          page.path,
-          " has already been built.",
+        logger.info(() =>
+          Js.Console.error3(
+            "[PageBuilder.buildPages] List of pages contains pages with the same paths. Page with path: ",
+            page.path,
+            " has already been built.",
+          )
         );
 
         Process.exit(1);
