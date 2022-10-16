@@ -289,6 +289,14 @@ let makeConfig =
       | None => None
       | Some({listenTo, proxy}) =>
         Some({
+          "devMiddleware": {
+            "stats": {
+              switch (logger.logLevel) {
+              | Info => "errors-warnings"
+              | Debug => "normal"
+              };
+            },
+          },
           "historyApiFallback": {
             "verbose": true,
             "rewrites": {
@@ -345,7 +353,7 @@ let makeConfig =
           // static: {
           //   directory: path.join(__dirname, "public"),
           // },
-          // compress: true,
+          "compress": true,
           "port": {
             switch (listenTo) {
             | Port(port) => Some(port)
@@ -386,7 +394,7 @@ let makeConfig =
                   })
                 ->Js.Dict.fromArray;
 
-              Js.log2("[Webpack dev server] proxyDict: ", proxyDict);
+              logger.debug(() => Js.log2("[Webpack dev server] proxyDict: ", proxyDict));
 
               Some(proxyDict);
             };
