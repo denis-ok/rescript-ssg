@@ -91,7 +91,7 @@ let getModuleDependencies = (~modulePath) =>
 // If the change is in a dependency -> get root modules from a dependency -> get pages from root modules.
 // If the change is in a head CSS file -> get pages that use this css file and rebuild them.
 
-let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
+let startWatcher = (~outputDir, pages: array(PageBuilder.page)): unit => {
   // Multiple pages can use the same root module. The common case is localized pages.
   // We get modulePath -> array(pages) dict here.
 
@@ -189,6 +189,48 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
 
   let rebuildQueueRef: ref(array(PageBuilder.page)) = ref([||]);
 
+  let rebuildPages = () => {
+    switch (rebuildQueueRef^) {
+    | [||] => ()
+    | pagesToRebuild =>
+      Js.log2(
+        "[Watcher] Passing pages to worker to rebuild:\n",
+        pagesToRebuild->Log.showPages,
+      );
+
+      rebuildPagesWithWorker(~outputDir, pagesToRebuild)
+      ->Promise.map(_ => {
+          Js.log(
+            "[Watcher] Pages rebuild success, updating dependencies to watch...",
+          );
+
+          pagesToRebuild->Js.Array2.forEach(page => {
+            let modulePath = page.modulePath;
+            let newDependencies = getModuleDependencies(~modulePath);
+
+            Js.log2("[Watcher] New dependencies of the module: ", modulePath);
+            Js.log2("[Watcher] New dependencies are:\n", newDependencies);
+
+            newDependencies->Js.Array2.forEach(dependency =>
+              updateDependencyToPageModulesDict(~dependency, ~modulePath)
+            );
+
+            watcher->Chokidar.add(newDependencies);
+
+            Js.log2(
+              "[Watcher] dependencyToPageModulesDict:\n",
+              dependencyToPageModulesDict,
+            );
+          });
+        })
+      ->ignore;
+
+      rebuildQueueRef := [||];
+    };
+  };
+
+  let rebuildPagesDebounced = Debounce.debounce(~delayMs=2000, rebuildPages);
+
   watcher->Chokidar.onChange(filepath => {
     let updatedRebuildQueue =
       switch (modulePathToPagesDict->Js.Dict.get(filepath)) {
@@ -241,53 +283,12 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
     if (rebuildQueueRef^ != updatedRebuildQueue) {
       rebuildQueueRef := updatedRebuildQueue;
     };
-  });
 
-  let _intervalId =
-    Js.Global.setInterval(
-      () => {
-        switch (rebuildQueueRef^) {
-        | [||] => ()
-        | pagesToRebuild =>
-          Js.log2(
-            "[Watcher] Pages to rebuild queue:\n",
-            pagesToRebuild->Log.showPages,
-          );
-
-          rebuildPagesWithWorker(~outputDir, pagesToRebuild)
-          ->Promise.map(_ => {
-              Js.log("[Watcher] Updating dependencies to watch...");
-
-              pagesToRebuild->Js.Array2.forEach(page => {
-                let modulePath = page.modulePath;
-                let newDependencies = getModuleDependencies(~modulePath);
-
-                Js.log2(
-                  "[Watcher] New dependencies of the module: ",
-                  modulePath,
-                );
-
-                Js.log2("[Watcher] New dependencies are:\n", newDependencies);
-
-                newDependencies->Js.Array2.forEach(dependency =>
-                  updateDependencyToPageModulesDict(~dependency, ~modulePath)
-                );
-
-                watcher->Chokidar.add(newDependencies);
-
-                Js.log2(
-                  "[Watcher] dependencyToPageModulesDict:\n",
-                  dependencyToPageModulesDict,
-                );
-              });
-            })
-          ->ignore;
-
-          rebuildQueueRef := [||];
-        }
-      },
-      1000,
+    Js.log2(
+      "[Watcher] Rebuild pages queue: ",
+      (rebuildQueueRef^)->Log.showPages,
     );
 
-  ();
+    rebuildPagesDebounced();
+  });
 };
