@@ -394,7 +394,9 @@ let makeConfig =
                   })
                 ->Js.Dict.fromArray;
 
-              logger.debug(() => Js.log2("[Webpack dev server] proxyDict: ", proxyDict));
+              logger.debug(() =>
+                Js.log2("[Webpack dev server] proxyDict: ", proxyDict)
+              );
 
               Some(proxyDict);
             };

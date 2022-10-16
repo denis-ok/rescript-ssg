@@ -111,6 +111,6 @@ pages
       Js.log("[Worker] Pages rebuild success, job finished.")
     );
 
-    parentPort->WorkingThreads.postMessage({"success": true});
+    parentPort->WorkingThreads.postMessage(true);
   })
 ->ignore;
