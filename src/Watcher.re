@@ -197,6 +197,8 @@ let startWatcher =
     switch (rebuildQueueRef^) {
     | [||] => ()
     | pagesToRebuild =>
+      logger.info(() => Js.log("[Watcher] Pages rebuild triggered..."));
+
       logger.debug(() =>
         Js.log2(
           "[Watcher] Passing pages to worker to rebuild:\n",
@@ -216,15 +218,15 @@ let startWatcher =
             let modulePath = page.modulePath;
             let newDependencies = getModuleDependencies(~modulePath);
 
-            logger.debug(() =>
+            logger.debug(() => {
               Js.log2(
                 "[Watcher] New dependencies of the module: ",
                 modulePath,
-              )
-            );
-            logger.debug(() =>
-              Js.log2("[Watcher] New dependencies are:\n", newDependencies)
-            );
+              );
+              logger.debug(() =>
+                Js.log2("[Watcher] New dependencies are:\n", newDependencies)
+              );
+            });
 
             newDependencies->Js.Array2.forEach(dependency =>
               updateDependencyToPageModulesDict(~dependency, ~modulePath)
@@ -313,7 +315,7 @@ let startWatcher =
 
     logger.debug(() =>
       Js.log2(
-        "[Watcher] Rebuild pages queue: ",
+        "[Watcher] Rebuild pages queue:\n",
         (rebuildQueueRef^)->showPages,
       )
     );
