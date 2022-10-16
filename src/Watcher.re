@@ -119,14 +119,14 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
   // Multiple root modules can depend on the same dependency.
   // The dict below maps dependency to the array of root modules.
 
-  let dependencyToPageModuleDict = Js.Dict.empty();
+  let dependencyToPageModulesDict = Js.Dict.empty();
 
-  let updateDependencyToPageModuleDict = (~dependency, ~modulePath) => {
-    switch (dependencyToPageModuleDict->Js.Dict.get(dependency)) {
+  let updateDependencyToPageModulesDict = (~dependency, ~modulePath) => {
+    switch (dependencyToPageModulesDict->Js.Dict.get(dependency)) {
     | None =>
-      dependencyToPageModuleDict->Js.Dict.set(dependency, [|modulePath|])
+      dependencyToPageModulesDict->Js.Dict.set(dependency, [|modulePath|])
     | Some(pageModules) =>
-      dependencyToPageModuleDict->Js.Dict.set(
+      dependencyToPageModulesDict->Js.Dict.set(
         dependency,
         Js.Array2.concat([|modulePath|], pageModules)->uniqueStringArray,
       )
@@ -135,7 +135,7 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
 
   modulesAndDependencies->Js.Array2.forEach(((modulePath, dependencies)) => {
     dependencies->Js.Array2.forEach(dependency =>
-      updateDependencyToPageModuleDict(~dependency, ~modulePath)
+      updateDependencyToPageModulesDict(~dependency, ~modulePath)
     )
   });
 
@@ -147,7 +147,7 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
       switch (page.pageWrapper) {
       | None => None
       | Some(wrapper) =>
-        updateDependencyToPageModuleDict(
+        updateDependencyToPageModulesDict(
           ~dependency=wrapper.modulePath,
           ~modulePath=page.modulePath,
         );
@@ -174,7 +174,7 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
 
   let allDependencies = {
     let dependencies =
-      dependencyToPageModuleDict
+      dependencyToPageModulesDict
       ->Js.Dict.entries
       ->Js.Array2.map(((dependency, _pageModules)) => dependency);
 
@@ -196,7 +196,7 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
         Js.log2("[Watcher] Exact page module changed: ", filepath);
         Js.Array2.concat(pages, rebuildQueueRef^)->uniquePageArray;
       | None =>
-        switch (dependencyToPageModuleDict->Js.Dict.get(filepath)) {
+        switch (dependencyToPageModulesDict->Js.Dict.get(filepath)) {
         | Some(pageModules) =>
           Js.log2("[Watcher] Dependency changed: ", filepath);
           Js.log2(
@@ -270,14 +270,14 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
                 Js.log2("[Watcher] New dependencies are:\n", newDependencies);
 
                 newDependencies->Js.Array2.forEach(dependency =>
-                  updateDependencyToPageModuleDict(~dependency, ~modulePath)
+                  updateDependencyToPageModulesDict(~dependency, ~modulePath)
                 );
 
                 watcher->Chokidar.add(newDependencies);
 
                 Js.log2(
-                  "[Watcher] dependencyToPageModuleDict:\n",
-                  dependencyToPageModuleDict,
+                  "[Watcher] dependencyToPageModulesDict:\n",
+                  dependencyToPageModulesDict,
                 );
               });
             })
