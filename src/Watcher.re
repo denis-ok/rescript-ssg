@@ -232,6 +232,7 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
               "[Watcher] [Warning] No pages depend on the file: ",
               filepath,
             );
+            watcher->Chokidar.unwatch([|filepath|]);
             rebuildQueueRef^;
           }
         }
