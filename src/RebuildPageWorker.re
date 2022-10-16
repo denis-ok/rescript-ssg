@@ -14,7 +14,10 @@ let workerData: RebuildPageWorkerT.workerData = WorkingThreads.workerData;
 let parentPort = WorkingThreads.parentPort;
 
 let pages = workerData.pages;
+
 let logSetting = workerData.logSetting;
+
+let logger = Log.makeLogger(logSetting);
 
 Js.log2("[Worker] Pages to rebuild:\n", pages->showPages);
 
@@ -93,7 +96,7 @@ pages
         path: page.path,
       };
 
-      PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logSetting, newPage);
+      PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, newPage);
     });
   })
 ->Js.Promise.all

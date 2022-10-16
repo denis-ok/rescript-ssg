@@ -448,7 +448,7 @@ let startDevServer =
     (
       ~devServerOptions: DevServerOptions.t,
       ~mode,
-      ~logSetting as _: Log.level,
+      ~logger as _: Log.logger,
       ~webpackOutputDir,
     ) => {
   let (compiler, config) =

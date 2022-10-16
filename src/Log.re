@@ -17,8 +17,21 @@ let levelToIndex = (level: level) =>
 let log = (~logSetting: level, ~level: level, log: unit => unit) => {
   let logSettingNum = levelToIndex(logSetting);
   let levelIndexNum = levelToIndex(level);
-
   if (logSettingNum >= levelIndexNum) {
     log();
+  };
+};
+
+type logger = {
+  logSetting: level,
+  info: (unit => unit) => unit,
+  debug: (unit => unit) => unit,
+};
+
+let makeLogger = (logSetting: level) => {
+  {
+    logSetting,
+    info: log(~logSetting, ~level=Info),
+    debug: log(~logSetting, ~level=Debug),
   };
 };

@@ -24,11 +24,7 @@ let showPages = (pages: array(PageBuilder.page)) => {
 };
 
 let rebuildPagesWithWorker =
-    (
-      ~outputDir: string,
-      ~logSetting: Log.level,
-      pages: array(PageBuilder.page),
-    ) => {
+    (~outputDir: string, ~logger: Log.logger, pages: array(PageBuilder.page)) => {
   let rebuildPages =
     pages->Js.Array2.map(page => {
       let rebuildPage: RebuildPageWorkerT.rebuildPage = {
@@ -65,7 +61,7 @@ let rebuildPagesWithWorker =
 
   let workerData: RebuildPageWorkerT.workerData = {
     pages: rebuildPages,
-    logSetting,
+    logSetting: logger.logSetting,
   };
 
   WorkingThreads.runWorker(
@@ -97,9 +93,7 @@ let getModuleDependencies = (~modulePath) =>
 // If the change is in a head CSS file -> get pages that use this css file and rebuild them.
 
 let startWatcher =
-    (~outputDir, ~logSetting: Log.level, pages: array(PageBuilder.page))
-    : unit => {
-  let logDebug = Log.log(~logSetting, ~level=Debug);
+    (~outputDir, ~logger: Log.logger, pages: array(PageBuilder.page)): unit => {
   // Multiple pages can use the same root module. The common case is localized pages.
   // We get modulePath -> array(pages) dict here.
 
@@ -191,7 +185,7 @@ let startWatcher =
     ->Js.Array2.concat(headCssDependencies);
   };
 
-  logDebug(() =>
+  logger.debug(() =>
     Js.log2("[Watcher] Initial watcher dependencies:\n", allDependencies)
   );
 
@@ -203,16 +197,16 @@ let startWatcher =
     switch (rebuildQueueRef^) {
     | [||] => ()
     | pagesToRebuild =>
-      logDebug(() =>
+      logger.debug(() =>
         Js.log2(
           "[Watcher] Passing pages to worker to rebuild:\n",
           pagesToRebuild->showPages,
         )
       );
 
-      rebuildPagesWithWorker(~outputDir, ~logSetting, pagesToRebuild)
+      rebuildPagesWithWorker(~outputDir, ~logger, pagesToRebuild)
       ->Promise.map(_ => {
-          logDebug(() =>
+          logger.debug(() =>
             Js.log(
               "[Watcher] Pages rebuild success, updating dependencies to watch...",
             )
@@ -222,13 +216,13 @@ let startWatcher =
             let modulePath = page.modulePath;
             let newDependencies = getModuleDependencies(~modulePath);
 
-            logDebug(() =>
+            logger.debug(() =>
               Js.log2(
                 "[Watcher] New dependencies of the module: ",
                 modulePath,
               )
             );
-            logDebug(() =>
+            logger.debug(() =>
               Js.log2("[Watcher] New dependencies are:\n", newDependencies)
             );
 
@@ -238,7 +232,7 @@ let startWatcher =
 
             watcher->Chokidar.add(newDependencies);
 
-            logDebug(() =>
+            logger.debug(() =>
               Js.log2(
                 "[Watcher] dependencyToPageModulesDict:\n",
                 dependencyToPageModulesDict,
@@ -258,14 +252,16 @@ let startWatcher =
     let updatedRebuildQueue =
       switch (modulePathToPagesDict->Js.Dict.get(filepath)) {
       | Some(pages) =>
-        logDebug(() =>
+        logger.debug(() =>
           Js.log2("[Watcher] Exact page module changed: ", filepath)
         );
         Js.Array2.concat(pages, rebuildQueueRef^)->uniquePageArray;
       | None =>
         switch (dependencyToPageModulesDict->Js.Dict.get(filepath)) {
         | Some(pageModules) =>
-          logDebug(() => Js.log2("[Watcher] Dependency changed: ", filepath));
+          logger.debug(() =>
+            Js.log2("[Watcher] Dependency changed: ", filepath)
+          );
           Js.log2(
             "[Watcher] Should rebuild these page modules:\n",
             pageModules,
@@ -277,7 +273,7 @@ let startWatcher =
                 switch (modulePathToPagesDict->Js.Dict.get(modulePath)) {
                 | Some(pages) => Some(pages)
                 | None =>
-                  logDebug(() =>
+                  logger.debug(() =>
                     Js.log2(
                       "[Watcher] [Warning] The following page module is missing in dict: ",
                       modulePath,
@@ -293,13 +289,13 @@ let startWatcher =
         | None =>
           switch (headCssFileToPagesDict->Js.Dict.get(filepath)) {
           | Some(pages) =>
-            logDebug(() =>
+            logger.debug(() =>
               Js.log2("[Watcher] Head CSS file changed: ", filepath)
             );
             Js.Array2.concat(pages, rebuildQueueRef^)->uniquePageArray;
           | None =>
             // Nothing depends on a changed file. We should remove it from watcher.
-            logDebug(() =>
+            logger.debug(() =>
               Js.log2(
                 "[Watcher] [Warning] No pages depend on the file: ",
                 filepath,
@@ -315,7 +311,7 @@ let startWatcher =
       rebuildQueueRef := updatedRebuildQueue;
     };
 
-    logDebug(() =>
+    logger.debug(() =>
       Js.log2(
         "[Watcher] Rebuild pages queue: ",
         (rebuildQueueRef^)->showPages,

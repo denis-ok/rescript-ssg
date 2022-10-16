@@ -7,7 +7,9 @@ let build =
       ~mode: Webpack.Mode.t,
       ~pages: array(PageBuilder.page),
     ) => {
-  PageBuilder.buildPages(~outputDir, ~logSetting, pages);
+  let logger = Log.makeLogger(logSetting);
+
+  PageBuilder.buildPages(~outputDir, ~logger, pages);
 
   Js.log("[PageBuilder.build] Compiling React app files...");
 
@@ -38,9 +40,11 @@ let start =
       ~logSetting: Log.level,
       ~pages: array(PageBuilder.page),
     ) => {
-  PageBuilder.buildPages(~outputDir, ~logSetting, pages);
+  let logger = Log.makeLogger(logSetting);
 
-  Watcher.startWatcher(~outputDir, ~logSetting, pages);
+  PageBuilder.buildPages(~outputDir, ~logger, pages);
 
-  Webpack.startDevServer(~mode, ~logSetting, ~webpackOutputDir);
+  Watcher.startWatcher(~outputDir, ~logger, pages);
+
+  Webpack.startDevServer(~mode, ~logger, ~webpackOutputDir);
 };
