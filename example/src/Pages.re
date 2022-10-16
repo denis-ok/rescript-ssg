@@ -1,13 +1,10 @@
-[@module "fs"]
-external readFileSync: (string, string) => string = "readFileSync";
-
 let currentDir = Utils.getDirname();
 
 let pagesOutputDir = Path.join2(currentDir, "../build");
 
 let webpackOutputDir = Path.join2(pagesOutputDir, "bundle");
 
-let normalizeCss = readFileSync(currentDir ++ "/css/normalize.css", "utf8");
+let normalizeCssFilePath = Path.join2(currentDir, "/css/normalize.css");
 
 let pageIndex: PageBuilder.page = {
   pageWrapper:
@@ -18,7 +15,7 @@ let pageIndex: PageBuilder.page = {
     }),
   component: ComponentWithoutData(<Index />),
   modulePath: Index.modulePath,
-  headCss: Some(normalizeCss),
+  headCssFilepaths: [|normalizeCssFilePath|],
   path: Root,
 };
 
@@ -48,7 +45,7 @@ let page1: PageBuilder.page = {
         }),
     }),
   modulePath: Page1.modulePath,
-  headCss: None,
+  headCssFilepaths: [||],
   path: Path([|"page1"|]),
 };
 
@@ -69,7 +66,7 @@ let page11: PageBuilder.page = {
         }),
     }),
   modulePath: Page1.modulePath,
-  headCss: None,
+  headCssFilepaths: [||],
   path: Path([|"page11"|]),
 };
 
@@ -78,7 +75,7 @@ let page2: PageBuilder.page = {
   component:
     ComponentWithData({component: data => <Page2 data />, data: true}),
   modulePath: Page2.modulePath,
-  headCss: None,
+  headCssFilepaths: [||],
   path: Path([|"page2"|]),
 };
 
@@ -86,7 +83,7 @@ let page1Dynamic: PageBuilder.page = {
   pageWrapper: None,
   component: ComponentWithoutData(<PageDynamic />),
   modulePath: PageDynamic.modulePath,
-  headCss: None,
+  headCssFilepaths: [||],
   path: Path([|"page1", "_id"|]),
 };
 

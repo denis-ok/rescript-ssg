@@ -1,3 +1,14 @@
+module Log = {
+  let showPages = (pages: array(RebuildPageWorkerT.rebuildPage)) => {
+    pages->Js.Array2.map(page => {
+      Log.makeMinimalPrintablePageObj(
+        ~pagePath=page.path,
+        ~pageModulePath=page.modulePath,
+      )
+    });
+  };
+};
+
 [@val] external import_: string => Js.Promise.t('a) = "import";
 
 type workerData = RebuildPageWorkerT.workerData;
@@ -8,7 +19,7 @@ let parentPort = WorkingThreads.parentPort;
 
 let pages: workerData = workerData;
 
-Js.log2("[Worker] Pages to rebuild: ", pages);
+Js.log2("[Worker] Pages to rebuild:\n", pages->Log.showPages);
 
 pages
 ->Js.Array2.map(page => {
@@ -81,7 +92,7 @@ pages
           };
         },
         modulePath: module_##modulePath,
-        headCss: None,
+        headCssFilepaths: page.headCssFilepaths,
         path: page.path,
       };
 

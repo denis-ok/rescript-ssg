@@ -21,8 +21,16 @@ type rebuildPage = {
   component,
   modulePath: string,
   outputDir: string,
-  headCss: option(string),
+  headCssFilepaths: array(string),
   path: PageBuilderT.PagePath.t,
 };
 
 type workerData = array(rebuildPage);
+
+let showPage = (page: rebuildPage) => {
+  PageBuilderT.PagePath.toString(page.path);
+};
+
+let showPages = (pages: array(rebuildPage)) => {
+  pages->Js.Array2.map(page => page->showPage);
+};
