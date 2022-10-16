@@ -54,7 +54,7 @@ let rebuildPagesWithWorker =
         },
         modulePath: page.modulePath,
         outputDir,
-        headCssFiles: page.headCssFiles,
+        headCssFilepaths: page.headCssFilepaths,
         path: page.path,
       };
 
@@ -81,7 +81,7 @@ let getModuleDependencies = (~modulePath) =>
 // 1. Watch for the changes in a root module (page module).
 // 2. Watch for the changes in all dependencies of a root module (except node modules).
 // 3. Watch for the changes in wrapper components and handle them as dependencies of a root module.
-// 4. Watch for the changes in headCssFiles.
+// 4. Watch for the changes in headCssFilepaths.
 
 // After a module changes we should rebuild a page and refresh dependency dicts to remove the stale ones.
 
@@ -157,7 +157,7 @@ let startWatcher = (~outputDir, pages: array(PageBuilder.page)) => {
 
   let headCssFileToPagesDict = Js.Dict.empty();
   pages->Js.Array2.forEach(page => {
-    page.headCssFiles
+    page.headCssFilepaths
     ->Js.Array2.forEach(headCssFile => {
         switch (headCssFileToPagesDict->Js.Dict.get(headCssFile)) {
         | None => headCssFileToPagesDict->Js.Dict.set(headCssFile, [|page|])

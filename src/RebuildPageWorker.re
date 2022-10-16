@@ -92,7 +92,7 @@ pages
           };
         },
         modulePath: module_##modulePath,
-        headCssFiles: page.headCssFiles,
+        headCssFilepaths: page.headCssFilepaths,
         path: page.path,
       };
 

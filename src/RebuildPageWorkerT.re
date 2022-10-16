@@ -21,7 +21,7 @@ type rebuildPage = {
   component,
   modulePath: string,
   outputDir: string,
-  headCssFiles: array(string),
+  headCssFilepaths: array(string),
   path: PageBuilderT.PagePath.t,
 };
 

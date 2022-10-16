@@ -27,7 +27,7 @@ type page = {
   component,
   modulePath: string,
   path: PageBuilderT.PagePath.t,
-  headCssFiles: array(string),
+  headCssFilepaths: array(string),
 };
 
 let makeHtmlTemplate =
@@ -170,7 +170,7 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
   let helmet = ReactHelmet.renderStatic();
 
   let headCss =
-    switch (page.headCssFiles) {
+    switch (page.headCssFilepaths) {
     | [||] => None
     | cssFiles =>
       Some(

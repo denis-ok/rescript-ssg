@@ -15,7 +15,7 @@ let pageIndex: PageBuilder.page = {
     }),
   component: ComponentWithoutData(<Index />),
   modulePath: Index.modulePath,
-  headCssFiles: [|normalizeCssFilePath|],
+  headCssFilepaths: [|normalizeCssFilePath|],
   path: Root,
 };
 
@@ -45,7 +45,7 @@ let page1: PageBuilder.page = {
         }),
     }),
   modulePath: Page1.modulePath,
-  headCssFiles: [||],
+  headCssFilepaths: [||],
   path: Path([|"page1"|]),
 };
 
@@ -66,7 +66,7 @@ let page11: PageBuilder.page = {
         }),
     }),
   modulePath: Page1.modulePath,
-  headCssFiles: [||],
+  headCssFilepaths: [||],
   path: Path([|"page11"|]),
 };
 
@@ -75,7 +75,7 @@ let page2: PageBuilder.page = {
   component:
     ComponentWithData({component: data => <Page2 data />, data: true}),
   modulePath: Page2.modulePath,
-  headCssFiles: [||],
+  headCssFilepaths: [||],
   path: Path([|"page2"|]),
 };
 
@@ -83,7 +83,7 @@ let page1Dynamic: PageBuilder.page = {
   pageWrapper: None,
   component: ComponentWithoutData(<PageDynamic />),
   modulePath: PageDynamic.modulePath,
-  headCssFiles: [||],
+  headCssFilepaths: [||],
   path: Path([|"page1", "_id"|]),
 };
 
