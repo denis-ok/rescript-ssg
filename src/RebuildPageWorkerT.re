@@ -26,3 +26,11 @@ type rebuildPage = {
 };
 
 type workerData = array(rebuildPage);
+
+let showPage = (page: rebuildPage) => {
+  PageBuilderT.PagePath.toString(page.path);
+};
+
+let showPages = (pages: array(rebuildPage)) => {
+  pages->Js.Array2.map(page => page->showPage);
+};
