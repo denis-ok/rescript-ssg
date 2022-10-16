@@ -9,13 +9,12 @@ let showPages = (pages: array(RebuildPageWorkerT.rebuildPage)) => {
 
 [@val] external import_: string => Js.Promise.t('a) = "import";
 
-type workerData = RebuildPageWorkerT.workerData;
-
-let workerData: workerData = WorkingThreads.workerData;
+let workerData: RebuildPageWorkerT.workerData = WorkingThreads.workerData;
 
 let parentPort = WorkingThreads.parentPort;
 
-let pages: workerData = workerData;
+let pages = workerData.pages;
+let logSetting = workerData.logSetting;
 
 Js.log2("[Worker] Pages to rebuild:\n", pages->showPages);
 
@@ -94,7 +93,7 @@ pages
         path: page.path,
       };
 
-      PageBuilder.buildPageHtmlAndReactApp(~outputDir, newPage);
+      PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logSetting, newPage);
     });
   })
 ->Js.Promise.all

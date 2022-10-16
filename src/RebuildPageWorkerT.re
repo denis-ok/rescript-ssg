@@ -25,7 +25,10 @@ type rebuildPage = {
   path: PageBuilderT.PagePath.t,
 };
 
-type workerData = array(rebuildPage);
+type workerData = {
+  logSetting: Log.level,
+  pages: array(rebuildPage),
+};
 
 let showPage = (page: rebuildPage) => {
   PageBuilderT.PagePath.toString(page.path);

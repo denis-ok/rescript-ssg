@@ -24,7 +24,11 @@ let showPages = (pages: array(PageBuilder.page)) => {
 };
 
 let rebuildPagesWithWorker =
-    (~outputDir: string, pages: array(PageBuilder.page)) => {
+    (
+      ~outputDir: string,
+      ~logSetting: Log.level,
+      pages: array(PageBuilder.page),
+    ) => {
   let rebuildPages =
     pages->Js.Array2.map(page => {
       let rebuildPage: RebuildPageWorkerT.rebuildPage = {
@@ -59,7 +63,10 @@ let rebuildPagesWithWorker =
       rebuildPage;
     });
 
-  let workerData: RebuildPageWorkerT.workerData = rebuildPages;
+  let workerData: RebuildPageWorkerT.workerData = {
+    pages: rebuildPages,
+    logSetting,
+  };
 
   WorkingThreads.runWorker(
     ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
@@ -90,7 +97,7 @@ let getModuleDependencies = (~modulePath) =>
 // If the change is in a head CSS file -> get pages that use this css file and rebuild them.
 
 let startWatcher =
-    (~outputDir, ~logSetting: Log.level=Info, pages: array(PageBuilder.page))
+    (~outputDir, ~logSetting: Log.level, pages: array(PageBuilder.page))
     : unit => {
   let logDebug = Log.log(~logSetting, ~level=Debug);
   // Multiple pages can use the same root module. The common case is localized pages.
@@ -203,7 +210,7 @@ let startWatcher =
         )
       );
 
-      rebuildPagesWithWorker(~outputDir, pagesToRebuild)
+      rebuildPagesWithWorker(~outputDir, ~logSetting, pagesToRebuild)
       ->Promise.map(_ => {
           logDebug(() =>
             Js.log(

@@ -445,7 +445,12 @@ let build = (~mode, ~webpackOutputDir, ~verbose) => {
 };
 
 let startDevServer =
-    (~devServerOptions: DevServerOptions.t, ~mode, ~webpackOutputDir) => {
+    (
+      ~devServerOptions: DevServerOptions.t,
+      ~mode,
+      ~logSetting as _: Log.level,
+      ~webpackOutputDir,
+    ) => {
   let (compiler, config) =
     makeCompiler(
       ~devServerOptions=Some(devServerOptions),

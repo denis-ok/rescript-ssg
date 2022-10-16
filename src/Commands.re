@@ -1,12 +1,13 @@
 let build =
     (
-      ~pages: array(PageBuilder.page),
       ~outputDir: string,
       ~webpackOutputDir: string,
       ~rescriptBinaryPath: string,
+      ~logSetting: Log.level,
       ~mode: Webpack.Mode.t,
+      ~pages: array(PageBuilder.page),
     ) => {
-  PageBuilder.buildPages(~outputDir, pages);
+  PageBuilder.buildPages(~outputDir, ~logSetting, pages);
 
   Js.log("[PageBuilder.build] Compiling React app files...");
 
@@ -31,14 +32,15 @@ let build =
 
 let start =
     (
-      ~pages: array(PageBuilder.page),
       ~outputDir: string,
       ~webpackOutputDir: string,
       ~mode: Webpack.Mode.t,
+      ~logSetting: Log.level,
+      ~pages: array(PageBuilder.page),
     ) => {
-  PageBuilder.buildPages(~outputDir, pages);
+  PageBuilder.buildPages(~outputDir, ~logSetting, pages);
 
-  Watcher.startWatcher(~outputDir, pages);
+  Watcher.startWatcher(~outputDir, ~logSetting, pages);
 
-  Webpack.startDevServer(~mode, ~webpackOutputDir);
+  Webpack.startDevServer(~mode, ~logSetting, ~webpackOutputDir);
 };

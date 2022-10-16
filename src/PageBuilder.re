@@ -82,7 +82,8 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   modulePrefix ++ moduleName ++ "App";
 };
 
-let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
+let buildPageHtmlAndReactApp =
+    (~outputDir, ~logSetting as _: Log.level, page: page) => {
   let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
 
   let pagePath = page.path->PageBuilderT.PagePath.toString;
@@ -214,7 +215,7 @@ let buildPageHtmlAndReactApp = (~outputDir, page: page) => {
   );
 };
 
-let buildPages = (~outputDir, pages: array(page)) => {
+let buildPages = (~outputDir, ~logSetting: Log.level, pages: array(page)) => {
   Js.log("[PageBuilder.buildPages] Building pages...");
 
   let pagesDict = Js.Dict.empty();
@@ -234,7 +235,7 @@ let buildPages = (~outputDir, pages: array(page)) => {
         Process.exit(1);
       };
 
-      buildPageHtmlAndReactApp(~outputDir, page);
+      buildPageHtmlAndReactApp(~outputDir, ~logSetting, page);
     });
 
   ();
