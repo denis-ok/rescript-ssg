@@ -15,9 +15,9 @@ let parentPort = WorkingThreads.parentPort;
 
 let pages = workerData.pages;
 
-let logSetting = workerData.logSetting;
+let logLevel = workerData.logLevel;
 
-let logger = Log.makeLogger(logSetting);
+let logger = Log.makeLogger(logLevel);
 
 Js.log2("[Worker] Pages to rebuild:\n", pages->showPages);
 

@@ -3,11 +3,11 @@ let build =
       ~outputDir: string,
       ~webpackOutputDir: string,
       ~rescriptBinaryPath: string,
-      ~logSetting: Log.level,
+      ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
       ~pages: array(PageBuilder.page),
     ) => {
-  let logger = Log.makeLogger(logSetting);
+  let logger = Log.makeLogger(logLevel);
 
   PageBuilder.buildPages(~outputDir, ~logger, pages);
 
@@ -43,10 +43,10 @@ let start =
       ~outputDir: string,
       ~webpackOutputDir: string,
       ~mode: Webpack.Mode.t,
-      ~logSetting: Log.level,
+      ~logLevel: Log.level,
       ~pages: array(PageBuilder.page),
     ) => {
-  let logger = Log.makeLogger(logSetting);
+  let logger = Log.makeLogger(logLevel);
 
   PageBuilder.buildPages(~outputDir, ~logger, pages);
 

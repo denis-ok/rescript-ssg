@@ -26,7 +26,7 @@ type rebuildPage = {
 };
 
 type workerData = {
-  logSetting: Log.level,
+  logLevel: Log.level,
   pages: array(rebuildPage),
 };
 

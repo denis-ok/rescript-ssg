@@ -4,6 +4,6 @@ let () =
     ~mode=Development,
     ~outputDir=Pages.pagesOutputDir,
     ~webpackOutputDir=Pages.webpackOutputDir,
-    ~logSetting=Info,
+    ~logLevel=Info,
     ~pages=Pages.pages,
   );

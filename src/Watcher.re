@@ -61,7 +61,7 @@ let rebuildPagesWithWorker =
 
   let workerData: RebuildPageWorkerT.workerData = {
     pages: rebuildPages,
-    logSetting: logger.logSetting,
+    logLevel: logger.logLevel,
   };
 
   WorkingThreads.runWorker(

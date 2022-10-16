@@ -14,24 +14,24 @@ let levelToIndex = (level: level) =>
   | Debug => 1
   };
 
-let log = (~logSetting: level, ~level: level, log: unit => unit) => {
-  let logSettingNum = levelToIndex(logSetting);
-  let levelIndexNum = levelToIndex(level);
-  if (logSettingNum >= levelIndexNum) {
+let log = (~logLevel: level, ~messageLevel: level, log: unit => unit) => {
+  let logLevelNum = levelToIndex(logLevel);
+  let levelIndexNum = levelToIndex(messageLevel);
+  if (logLevelNum >= levelIndexNum) {
     log();
   };
 };
 
 type logger = {
-  logSetting: level,
+  logLevel: level,
   info: (unit => unit) => unit,
   debug: (unit => unit) => unit,
 };
 
-let makeLogger = (logSetting: level) => {
+let makeLogger = (logLevel: level) => {
   {
-    logSetting,
-    info: log(~logSetting, ~level=Info),
-    debug: log(~logSetting, ~level=Debug),
+    logLevel,
+    info: log(~logLevel, ~messageLevel=Info),
+    debug: log(~logLevel, ~messageLevel=Debug),
   };
 };
