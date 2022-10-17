@@ -10,7 +10,7 @@ const nodeLoaderPath = path.join(__dirname, "node-loader.mjs");
 
 spawnSync(
   "node",
-  [`--experimental-loader=${nodeLoaderPath}`, ...process.argv.slice(2)],
+  [`--experimental-loader=${nodeLoaderPath}`, "--no-warnings", ...process.argv.slice(2)],
   {
     stdio: "inherit",
     shell: true,
