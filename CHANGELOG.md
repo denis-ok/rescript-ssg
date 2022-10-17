@@ -1,3 +1,9 @@
+## 1.7.0
+
+- Add `headCssFilepaths` field to inject CSS to page's `<head>`, [PR](https://github.com/denis-ok/rescript-ssg/pull/8).
+- Refactor watcher, rebuild pages on demand with a debounced function instead of checking queue with `setInterval`, [Commit](https://github.com/denis-ok/rescript-ssg/commit/b5331109834d998cef144c1d26bc7f995accebd6).
+- Improve/refactor logging, add `logLevel` parameter to build/start commands, [PR](https://github.com/denis-ok/rescript-ssg/pull/9).
+
 ## 1.6.0
 
 - Add `headCss` field to page to inject CSS into result HTML.
