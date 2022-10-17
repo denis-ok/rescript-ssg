@@ -23,10 +23,12 @@ let showPages = (pages: array(PageBuilder.page)) => {
   });
 };
 
-let runRebuildPageWorker = (workerData: RebuildPageWorkerT.workerData) =>
+let runRebuildPageWorker =
+    (~workerData: RebuildPageWorkerT.workerData, ~onExit) =>
   WorkingThreads.runWorker(
     ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
     ~workerData,
+    ~onExit,
   );
 
 let rebuildPagesWithWorker =
@@ -70,7 +72,13 @@ let rebuildPagesWithWorker =
     logLevel: logger.logLevel,
   };
 
-  runRebuildPageWorker(workerData);
+  runRebuildPageWorker(
+    ~workerData,
+    ~onExit=
+      exitCode => {
+        logger.debug(() => Js.log2("[Worker] Exit code:", exitCode))
+      },
+  );
 };
 
 let getModuleDependencies = (~modulePath) =>

@@ -17,12 +17,12 @@ module Worker = {
 
 [@send] external postMessage: (parentPort, 'a) => unit = "postMessage";
 
-let runWorker = (~workerModulePath, ~workerData: 'a) => {
+let runWorker = (~workerModulePath, ~workerData: 'a, ~onExit: int => unit) => {
   Js.Promise.make((~resolve, ~reject) => {
     let worker = Worker.make(workerModulePath, {workerData: workerData});
 
     worker->Worker.on("message", message => resolve(. message));
     worker->Worker.on("error", error => reject(. error));
-    worker->Worker.on("exit", code => Js.log2("[Worker] Exit code:", code));
+    worker->Worker.on("exit", exitCode => onExit(exitCode));
   });
 };
