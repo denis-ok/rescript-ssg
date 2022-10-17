@@ -19,9 +19,14 @@ let logLevel = workerData.logLevel;
 
 let logger = Log.makeLogger(logLevel);
 
-logger.info(() => Js.log("[Worker] Rebuilding pages..."));
+logger.info(() =>
+  Js.log2(
+    "[Worker] Rebuilding pages:\n",
+    pages->Js.Array2.map(page => PageBuilderT.PagePath.toString(page.path)),
+  )
+);
 
-logger.debug(() => Js.log2("[Worker] Pages to rebuild:\n", pages->showPages));
+logger.debug(() => Js.log2("[Worker] Rebuilding pages:\n", pages->showPages));
 
 pages
 ->Js.Array2.map(page => {
