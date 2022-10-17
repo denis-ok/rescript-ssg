@@ -262,13 +262,13 @@ let startWatcher =
   let rebuildPagesDebounced = Debounce.debounce(~delayMs=2000, rebuildPages);
 
   watcher->Chokidar.onChange(filepath => {
-    let updatedRebuildQueue =
+    let pagesToRebuild =
       switch (modulePathToPagesDict->Js.Dict.get(filepath)) {
       | Some(pages) =>
         logger.debug(() =>
           Js.log2("[Watcher] Exact page module changed: ", filepath)
         );
-        Js.Array2.concat(pages, rebuildQueueRef^)->uniquePageArray;
+        pages;
       | None =>
         switch (dependencyToPageModulesDict->Js.Dict.get(filepath)) {
         | Some(pageModules) =>
@@ -279,7 +279,6 @@ let startWatcher =
               pageModules,
             );
           });
-
           let pages =
             pageModules
             ->Js.Array2.map(modulePath => {
@@ -297,15 +296,14 @@ let startWatcher =
               })
             ->Belt.Array.keepMap(v => v)
             ->Belt.Array.concatMany;
-
-          Js.Array2.concat(pages, rebuildQueueRef^)->uniquePageArray;
+          pages;
         | None =>
           switch (headCssFileToPagesDict->Js.Dict.get(filepath)) {
           | Some(pages) =>
             logger.debug(() =>
               Js.log2("[Watcher] Head CSS file changed: ", filepath)
             );
-            Js.Array2.concat(pages, rebuildQueueRef^)->uniquePageArray;
+            pages;
           | None =>
             // Nothing depends on a changed file. We should remove it from watcher.
             logger.debug(() =>
@@ -315,14 +313,15 @@ let startWatcher =
               )
             );
             watcher->Chokidar.unwatch([|filepath|]);
-            rebuildQueueRef^;
+            [||];
           }
         }
       };
 
-    if (rebuildQueueRef^ != updatedRebuildQueue) {
-      rebuildQueueRef := updatedRebuildQueue;
-    };
+    let newRebuildQueue =
+      Js.Array2.concat(pagesToRebuild, rebuildQueueRef^)->uniquePageArray;
+
+    rebuildQueueRef := newRebuildQueue;
 
     logger.debug(() =>
       Js.log2(
