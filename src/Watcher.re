@@ -264,13 +264,13 @@ let startWatcher =
       | None =>
         switch (dependencyToPageModulesDict->Js.Dict.get(filepath)) {
         | Some(pageModules) =>
-          logger.debug(() =>
-            Js.log2("[Watcher] Dependency changed: ", filepath)
-          );
-          Js.log2(
-            "[Watcher] Should rebuild these page modules:\n",
-            pageModules,
-          );
+          logger.debug(() => {
+            Js.log2("[Watcher] Dependency changed: ", filepath);
+            Js.log2(
+              "[Watcher] Should rebuild these page modules:\n",
+              pageModules,
+            );
+          });
 
           let pages =
             pageModules
