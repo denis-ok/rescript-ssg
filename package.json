@@ -2,7 +2,7 @@
   "name": "rescript-ssg",
   "description": "Rescript React static site generator",
   "homepage": "https://github.com/denis-ok/rescript-ssg",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "engines": {
     "node": "^16.17.0"
   },
