@@ -48,7 +48,9 @@ let getModuleNameFromModulePath = modulePath => {
   switch (filename) {
   | None
   | Some("") =>
-    Js.log("[Utils.getModuleNameFromModulePath] Filename is empty or None");
+    Js.Console.error(
+      "[Utils.getModuleNameFromModulePath] Filename is empty or None",
+    );
     Process.exit(1);
   | Some(filename) => filename->Js.String2.replace(".bs.js", "")
   };

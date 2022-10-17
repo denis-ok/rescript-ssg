@@ -21,8 +21,8 @@ let runWorker = (~workerModulePath, ~workerData: 'a) => {
   Js.Promise.make((~resolve, ~reject) => {
     let worker = Worker.make(workerModulePath, {workerData: workerData});
 
-    worker->Worker.on("message", a => resolve(. a));
-    worker->Worker.on("error", a => reject(. a));
+    worker->Worker.on("message", message => resolve(. message));
+    worker->Worker.on("error", error => reject(. error));
     worker->Worker.on("exit", code => Js.log2("[Worker] Exit code:", code));
   });
 };
