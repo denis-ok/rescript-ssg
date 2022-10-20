@@ -1,3 +1,3 @@
-open Css
+open CssJs
 
-let content = style(list{backgroundColor(violet)})
+let content = style(. [backgroundColor(violet)])

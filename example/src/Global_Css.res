@@ -1,3 +1,3 @@
-open Css
+open CssJs
 
-let injectGlobal = () => global("body", list{fontSize(#px(14)), backgroundColor(turquoise)})
+let injectGlobal = () => global(. "body", [fontSize(#px(14)), backgroundColor(turquoise)])
