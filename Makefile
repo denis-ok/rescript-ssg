@@ -42,9 +42,16 @@ init-dev:
 	rm -rf _opam
 	opam switch create . 4.06.1 --deps-only
 
-fmt:
+format-reason:
 	@$(NODE_BINS)/bsrefmt --in-place -w 80 \
 	$(shell find ./src ./example -type f \( -name *.re -o -name *.rei \))
+
+format-rescript:
+	@$(NODE_BINS)/rescript format -all
+
+format:
+	make format-reason
+	make format-rescript
 
 webpack-bundle-analyzer:
 	@$(NODE_BINS)/webpack-bundle-analyzer $(EXAMPLE_DIR)/build/bundle/stats.json
