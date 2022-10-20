@@ -64,10 +64,10 @@ let makeHtmlTemplate =
 };
 
 let makeReactAppTemplate = (elementString: string) => {j|
-switch (ReactDOM.querySelector("#root")) {
+switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate($(elementString), root)
 | None => ()
-};
+}
 |j};
 
 let dataPropName = "data";
@@ -108,7 +108,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
       let unsafeStringifiedPropValue =
         switch (data->Js.Json.stringifyAny) {
-        | Some(propValueString) => {j|{{js|$(propValueString)|js}->Js.Json.parseExn->Obj.magic}|j}
+        | Some(propValueString) => {j|{`$(propValueString)`->Js.Json.parseExn->Obj.magic}|j}
         | None =>
           // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
           "None"
@@ -145,7 +145,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
 
         let unsafeStringifiedPropValue =
           switch (data->Js.Json.stringifyAny) {
-          | Some(propValueString) => {j|{{js|$(propValueString)|js}->Js.Json.parseExn->Obj.magic}|j}
+          | Some(propValueString) => {j|{`$(propValueString)`->Js.Json.parseExn->Obj.magic}|j}
           | None =>
             // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
             "None"
@@ -189,7 +189,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
 
   let () = {
-    let reactAppFilename = pageAppModuleName ++ ".re";
+    let reactAppFilename = pageAppModuleName ++ ".res";
     Fs.writeFileSync(resultHtmlPath, resultHtml);
     Fs.writeFileSync(
       Path.join2(pageOutputDir, reactAppFilename),
