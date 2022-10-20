@@ -72,13 +72,9 @@ let rebuildPagesWithWorker =
     logLevel: logger.logLevel,
   };
 
-  runRebuildPageWorker(
-    ~workerData,
-    ~onExit=
-      exitCode => {
-        logger.debug(() => Js.log2("[Worker] Exit code:", exitCode))
-      },
-  );
+  runRebuildPageWorker(~workerData, ~onExit=exitCode => {
+    logger.debug(() => Js.log2("[Worker] Exit code:", exitCode))
+  });
 };
 
 let getModuleDependencies = (~modulePath) =>
