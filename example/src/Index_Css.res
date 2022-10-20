@@ -1,3 +1,6 @@
 open CssJs
 
-let content = style(. [backgroundColor(violet)])
+let content = style(. [
+  //
+  backgroundColor(violet),
+])
