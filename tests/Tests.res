@@ -30,4 +30,42 @@ module MakeReactAppModuleName = {
   test(~pagePath="foo/bar", ~expect="foobarPageApp")
 
   test(~pagePath="foo/bar-baz", ~expect="foobarbazPageApp")
+
+  Js.log("MakeReactAppModuleName tests passed!")
+}
+
+module BuildPageHtmlAndReactApp = {
+  let dummyLogger: Log.logger = {
+    logLevel: Log.Info,
+    info: ignore,
+    debug: ignore,
+  }
+
+  let logger = Log.makeLogger(Info)
+
+  let outputDir = Path.join2(dirname, "output")
+
+  let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true})
+
+  let rescriptBinaryPath = Path.join2(dirname, "../node_modules/.bin/rescript")
+
+  let test = page => {
+    cleanup()
+    PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, page)
+    Commands.compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=false)
+    let _ = Fs.readFileSyncAsUtf8(Path.join2(outputDir, "index.html"))->ignore
+    let _ = Fs.readFileSyncAsUtf8(Path.join2(outputDir, "TestPageApp.res"))->ignore
+  }
+
+  let page: PageBuilder.page = {
+    pageWrapper: None,
+    component: ComponentWithoutData(<TestPage />),
+    modulePath: TestPage.modulePath,
+    headCssFilepaths: [],
+    path: Root,
+  }
+
+  let () = test(page)
+
+  Js.log("BuildPageHtmlAndReactApp tests passed!")
 }
