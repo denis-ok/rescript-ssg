@@ -30,40 +30,7 @@ type page = {
   headCssFilepaths: array(string),
 };
 
-let makeHtmlTemplate =
-    (
-      ~headCss: option(string),
-      helmet: ReactHelmet.helmetInstance,
-      renderedHtml: string,
-    ) => {
-  let headCss =
-    switch (headCss) {
-    | None => ""
-    | Some(css) => {j|<style>$(css)</style>|j}
-    };
-  let htmlAttributes = helmet.htmlAttributes.toString();
-  let title = helmet.title.toString();
-  let meta = helmet.meta.toString();
-  let link = helmet.link.toString();
-  let bodyAttributes = helmet.bodyAttributes.toString();
-  {j|
-<!DOCTYPE html>
-<html $(htmlAttributes)>
-  <head>
-    <meta charset="utf-8"/>
-    $(title)
-    $(meta)
-    $(link)
-    $(headCss)
-  </head>
-  <body $(bodyAttributes)>
-    <div id="root">$(renderedHtml)</div>
-  </body>
-</html>
-|j};
-};
-
-let makeReactAppTemplate = (elementString: string) => {j|
+let renderReactAppTemplate = (elementString: string) => {j|
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate($(elementString), root)
 | None => ()
@@ -80,6 +47,61 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
     ->Js.String2.replaceByRe([%re {|/\./g|}], "");
 
   modulePrefix ++ moduleName ++ "App";
+};
+
+let renderHtmlTemplate =
+    (~element: React.element, ~headCssFilepaths: array(string)): string => {
+  let html = ReactDOMServer.renderToString(element);
+
+  let {html: renderedHtml, css, ids} = Emotion.Server.extractCritical(html);
+
+  let emotionIds = ids->Js.Array2.joinWith(" ");
+
+  // https://github.com/emotion-js/emotion/blob/92be52d894c7d81d013285e9dfe90820e6b178f8/packages/css/src/index.js#L15
+  let emotionCacheKey = "css";
+
+  let emotionStyleTag = {j|<style data-emotion="$(emotionCacheKey) $(emotionIds)">$(css)</style>|j};
+
+  let headCss =
+    switch (headCssFilepaths) {
+    | [||] => None
+    | cssFiles =>
+      Some(
+        cssFiles
+        ->Js.Array2.map(filepath => Fs.readFileSyncAsUtf8(filepath))
+        ->Js.Array2.joinWith("\n"),
+      )
+    };
+
+  let headCssStyleTag =
+    switch (headCss) {
+    | None => ""
+    | Some(css) => "<style>" ++ css ++ "</style>"
+    };
+
+  let helmet = ReactHelmet.renderStatic();
+
+  let htmlAttributes = helmet.htmlAttributes.toString();
+  let title = helmet.title.toString();
+  let meta = helmet.meta.toString();
+  let link = helmet.link.toString();
+  let bodyAttributes = helmet.bodyAttributes.toString();
+
+  {j|<!DOCTYPE html>
+<html $(htmlAttributes)>
+  <head>
+    <meta charset="utf-8"/>
+    $(title)
+    $(meta)
+    $(link)
+    $(headCssStyleTag)
+    $(emotionStyleTag)
+  </head>
+  <body $(bodyAttributes)>
+    <div id="root">$(renderedHtml)</div>
+  </body>
+</html>
+|j};
 };
 
 let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => {
@@ -115,6 +137,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
         };
 
       let element = component(data);
+
       let elementString =
         "<"
         ++ moduleName
@@ -163,26 +186,10 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
     };
   };
 
-  let html = ReactDOMServer.renderToString(element);
+  let resultHtml =
+    renderHtmlTemplate(~element, ~headCssFilepaths=page.headCssFilepaths);
 
-  let htmlWithStyles = Emotion.Server.renderStylesToString(html);
-
-  let helmet = ReactHelmet.renderStatic();
-
-  let headCss =
-    switch (page.headCssFilepaths) {
-    | [||] => None
-    | cssFiles =>
-      Some(
-        cssFiles
-        ->Js.Array2.map(filepath => Fs.readFileSyncAsUtf8(filepath))
-        ->Js.Array2.joinWith("\n"),
-      )
-    };
-
-  let resultHtml = makeHtmlTemplate(~headCss, helmet, htmlWithStyles);
-
-  let resultReactApp = makeReactAppTemplate(elementString);
+  let resultReactApp = renderReactAppTemplate(elementString);
 
   let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
 
