@@ -22,7 +22,7 @@ module MakeReactAppModuleName = {
 
   let test = (~pagePath, ~expect) => {
     let reactAppModuleName = PageBuilder.makeReactAppModuleName(~pagePath, ~moduleName)
-    isEqual(~msg="makeReactAppModuleName", expect, reactAppModuleName)
+    isEqual(~msg="makeReactAppModuleName", reactAppModuleName, expect)
   }
 
   test(~pagePath=".", ~expect="PageApp")
@@ -53,8 +53,17 @@ module BuildPageHtmlAndReactApp = {
     cleanup()
     PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, page)
     Commands.compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=false)
-    let _ = Fs.readFileSyncAsUtf8(Path.join2(outputDir, "index.html"))->ignore
-    let _ = Fs.readFileSyncAsUtf8(Path.join2(outputDir, "TestPageApp.res"))->ignore
+    let testPageAppContent = Fs.readFileSyncAsUtf8(Path.join2(outputDir, "TestPageApp.res"))
+
+    let expectedPageAppContent = `
+switch ReactDOM.querySelector("#root") {
+| Some(root) => ReactDOM.hydrate(<TestPage />, root)
+| None => ()
+}
+`
+    isEqual(testPageAppContent, expectedPageAppContent)
+
+    let () = Fs.readFileSyncAsUtf8(Path.join2(outputDir, "index.html"))->ignore
   }
 
   let page: PageBuilder.page = {
