@@ -35,6 +35,11 @@ build: clean
 	make build-rescript
 	make build-example
 
+build-ci: clean
+	make build-rescript
+	make test
+	make build-example
+
 start: clean build-rescript
 	make -j 2 start-rescript start-example
 
@@ -55,3 +60,7 @@ format:
 
 webpack-bundle-analyzer:
 	@$(NODE_BINS)/webpack-bundle-analyzer $(EXAMPLE_DIR)/build/public/stats.json
+
+test:
+	rm -rf coverage
+	$(NODE_BINS)/c8 node ./tests/Tests.bs.js
