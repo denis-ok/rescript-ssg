@@ -50,8 +50,8 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
 };
 
 let renderHtmlTemplate =
-    (~element: React.element, ~headCssFilepaths: array(string)): string => {
-  let html = ReactDOMServer.renderToString(element);
+    (~pageElement: React.element, ~headCssFilepaths: array(string)): string => {
+  let html = ReactDOMServer.renderToString(pageElement);
 
   let {html: renderedHtml, css, ids} = Emotion.Server.extractCritical(html);
 
@@ -187,7 +187,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
   };
 
   let resultHtml =
-    renderHtmlTemplate(~element, ~headCssFilepaths=page.headCssFilepaths);
+    renderHtmlTemplate(~pageElement=element, ~headCssFilepaths=page.headCssFilepaths);
 
   let resultReactApp = renderReactAppTemplate(elementString);
 
