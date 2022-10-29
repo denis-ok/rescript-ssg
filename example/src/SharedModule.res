@@ -11,5 +11,15 @@ module Header = {
 
 module Footer = {
   @react.component
-  let make = () => <p> {"2022"->React.string} </p>
+  let make = () =>
+    <div>
+      <p>
+        {"This page has been built with "->React.string}
+        <Link href="https://github.com/denis-ok/rescript-ssg">
+          {"Rescript SSG"->React.string}
+        </Link>
+        {" library."->React.string}
+      </p>
+      <p> {"2022"->React.string} </p>
+    </div>
 }
