@@ -54,4 +54,4 @@ format:
 	make format-rescript
 
 webpack-bundle-analyzer:
-	@$(NODE_BINS)/webpack-bundle-analyzer $(EXAMPLE_DIR)/build/bundle/stats.json
+	@$(NODE_BINS)/webpack-bundle-analyzer $(EXAMPLE_DIR)/build/public/stats.json
