@@ -18,6 +18,16 @@
 npm install --save-dev rescript-ssg
 ```
 
+Add `rescript-ssg` to `bs-dependencies` in your `bsconfig.json`:
+
+```json
+{
+  "bs-dependencies": [
+    "rescript-ssg",
+  ],
+}
+```
+
 ## Basic usage
 1. Create `Index.res` page component:
 
@@ -27,11 +37,11 @@ let make = () => {
   <h1> React.string "Hello from index page" </h1>
 }
 
-// This helper call gets a filepath of this module, it will be needed later
+// This helper call gets a filepath of this module
 let modulePath = RescriptSsg.Utils.getFilepath()
 ```
 
-2. Create `Pages.res` file:
+2. Create `Pages.res` file where we'll define our pages array:
 
 ```rescript
 let currentDir = RescriptSsg.Utils.getDirname()
@@ -46,15 +56,15 @@ let index: RescriptSsg.PageBuilder.page = {
   path: Root,
 }
 
-let pages = [pageIndex]
+let pages = [index]
 ```
 
 3. Create `Build.res` file. We'll pass this file to `rescript-ssg` binary to perform build.
 
 ```rescript
-let currentDir = Utils.getDirname()
+let currentDir = RescriptSsg.Utils.getDirname()
 
-let () = Commands.build(
+let () = RescriptSsg.Commands.build(
   ~mode=Production,
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
@@ -66,7 +76,7 @@ let () = Commands.build(
 4. Create `Start.res` file. We'll pass this file to `rescript-ssg` binary to start dev mode.
 
 ```rescript
-let () = Commands.start(
+let () = RescriptSsg.Commands.start(
   ~devServerOptions={listenTo: Port(9000), proxy: None},
   ~mode=Development,
   ~outputDir=Pages.outputDir,
@@ -75,13 +85,12 @@ let () = Commands.start(
 )
 ```
 
-5. Update `package.json`. We need to add `"type": "module"` and update `scripts` field:
+5. Make sure you have `"type": "module"` in `package.json` and update `scripts` field:
 
 ```json
 {
   "type": "module",
   "scripts": {
-    // existing settings...
     "build-rescript-ssg": "rescript-ssg src/Build.bs.js",
     "start-rescript-ssg": "rescript-ssg src/Start.bs.js"
   },
@@ -93,7 +102,6 @@ let () = Commands.start(
 ```json
 {
   "sources": [
-    // existing settings...
     {
       "dir": "build",
       "type" : "dev",
@@ -103,9 +111,9 @@ let () = Commands.start(
 }
 ```
 
-7. Finally, we can run commands:
+7. Finally, we can run commands.
 - To start development mode:
-Run ReScript compiler in a watch mode in the first terminal tab.
+Start ReScript compiler in a watch mode in the first terminal tab.
 Then run in a second tab:
 
 ```bash
