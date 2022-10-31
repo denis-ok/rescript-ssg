@@ -131,12 +131,14 @@ module DevServerOptions = {
   };
 };
 
+let getWebpackOutputDir = outputDir => Path.join2(outputDir, "public");
+
 let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
       ~mode: Mode.t,
       ~logger: Log.logger,
-      ~webpackOutputDir: string,
+      ~outputDir: string,
     ) => {
   let pages = pages->Js.Dict.values;
 
@@ -153,7 +155,7 @@ let makeConfig =
     "mode": Mode.toString(mode),
 
     "output": {
-      "path": webpackOutputDir,
+      "path": getWebpackOutputDir(outputDir),
       "publicPath": "/",
       "filename": "js/[name]_[chunkhash].js",
       "assetModuleFilename":
@@ -207,88 +209,87 @@ let makeConfig =
       );
     },
     "optimization": {
-      "splitChunks":
-        {
-          "chunks": "all",
-          "cacheGroups": {
-            "default": false,
-            "defaultVendors": false,
-            "framework": {
-              "priority": 40,
-              "name": "framework",
-              "test": {
-                let frameworkPackages =
-                  [|"react", "react-dom", "scheduler", "prop-types"|]
-                  ->Js.Array2.joinWith("|");
-                let regexStr = {j|(?<!node_modules.*)[\\\\/]node_modules[\\\\/]($(frameworkPackages))[\\\\/]|j};
-                let regex = Js.Re.fromString(regexStr);
-                regex;
-              },
-              "enforce": true,
+      "splitChunks": {
+        "chunks": "all",
+        "cacheGroups": {
+          "default": false,
+          "defaultVendors": false,
+          "framework": {
+            "priority": 40,
+            "name": "framework",
+            "test": {
+              let frameworkPackages =
+                [|"react", "react-dom", "scheduler", "prop-types"|]
+                ->Js.Array2.joinWith("|");
+              let regexStr = {j|(?<!node_modules.*)[\\\\/]node_modules[\\\\/]($(frameworkPackages))[\\\\/]|j};
+              let regex = Js.Re.fromString(regexStr);
+              regex;
             },
-            "bs-css": {
-              "priority": 30,
-              "name": "bs-css",
-              "test": {
-                let packages =
-                  [|"bs-css", "bs-css-emotion", "@emotion", "stylis"|]
-                  ->Js.Array2.joinWith("|");
+            "enforce": true,
+          },
+          "bs-css": {
+            "priority": 30,
+            "name": "bs-css",
+            "test": {
+              let packages =
+                [|"bs-css", "bs-css-emotion", "@emotion", "stylis"|]
+                ->Js.Array2.joinWith("|");
 
-                let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
-                let regex = Js.Re.fromString(regexStr);
-                regex;
-              },
-              "enforce": true,
+              let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
+              let regex = Js.Re.fromString(regexStr);
+              regex;
             },
-            "rescript": {
-              "priority": 30,
-              "name": "rescript",
-              "test": {
-                let packages =
-                  [|
-                    "rescript",
-                    "@rescript/react",
-                    "bs-platform",
-                    "reason-react",
-                  |]
-                  ->Js.Array2.joinWith("|");
-                let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
-                let regex = Js.Re.fromString(regexStr);
-                regex;
-              },
-              "enforce": true,
+            "enforce": true,
+          },
+          "rescript": {
+            "priority": 30,
+            "name": "rescript",
+            "test": {
+              let packages =
+                [|
+                  "rescript",
+                  "@rescript/react",
+                  "bs-platform",
+                  "reason-react",
+                |]
+                ->Js.Array2.joinWith("|");
+              let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
+              let regex = Js.Re.fromString(regexStr);
+              regex;
             },
-            "react-helmet": {
-              "priority": 30,
-              "name": "react-helmet",
-              "test": {
-                let packages = [|"react-helmet"|]->Js.Array2.joinWith("|");
-                let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
-                let regex = Js.Re.fromString(regexStr);
-                regex;
-              },
-              "enforce": true,
+            "enforce": true,
+          },
+          "react-helmet": {
+            "priority": 30,
+            "name": "react-helmet",
+            "test": {
+              let packages = [|"react-helmet"|]->Js.Array2.joinWith("|");
+              let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
+              let regex = Js.Re.fromString(regexStr);
+              regex;
             },
+            "enforce": true,
           },
         },
-        // "shared-node-modules" chunk requires more tweakage.
-        // For example, we have 3 pages: Foo, Bar, Baz and A, B, C dependencies.
-        // Page Foo depends on A, B, C deps,
-        // Page Bar depends on A, B deps,
-        // Page Baz depends on A dep.
-        // After all, Baz page will depend on a chunk that contains three A, B, C deps, where B and C deps are redundant.
-        // "shared-node-modules": {
-        //   "priority": 20,
-        //   "name": "shared-node-modules",
-        //   "test": {
-        //     let regexStr = {j|[\\\\/]node_modules[\\\\/]|j};
-        //     let regex = Js.Re.fromString(regexStr);
-        //     regex;
-        //   },
-        //   "minChunks": 2,
-        //   "enforce": true,
-        // },
+      },
     },
+    // "shared-node-modules" chunk requires more tweakage.
+    // For example, we have 3 pages: Foo, Bar, Baz and A, B, C dependencies.
+    // Page Foo depends on A, B, C deps,
+    // Page Bar depends on A, B deps,
+    // Page Baz depends on A dep.
+    // After all, Baz page will depend on a chunk that contains three A, B, C deps, where B and C deps are redundant.
+    // "shared-node-modules": {
+    //   "priority": 20,
+    //   "name": "shared-node-modules",
+    //   "test": {
+    //     let regexStr = {j|[\\\\/]node_modules[\\\\/]|j};
+    //     let regex = Js.Re.fromString(regexStr);
+    //     regex;
+    //   },
+    //   "minChunks": 2,
+    //   "enforce": true,
+    // },
     "watchOptions": {
       "aggregateTimeout": 1000,
     },
@@ -422,20 +423,19 @@ let makeCompiler =
       ~devServerOptions: option(DevServerOptions.t),
       ~logger: Log.logger,
       ~mode: Mode.t,
-      ~webpackOutputDir,
+      ~outputDir,
     ) => {
-  let config =
-    makeConfig(~devServerOptions, ~mode, ~logger, ~webpackOutputDir);
+  let config = makeConfig(~devServerOptions, ~mode, ~logger, ~outputDir);
   // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
   (compiler, config);
 };
 
-let build = (~mode: Mode.t, ~logger: Log.logger, ~webpackOutputDir) => {
+let build = (~mode: Mode.t, ~logger: Log.logger, ~outputDir) => {
   logger.info(() => Js.log("[Webpack] Building webpack bundle..."));
 
   let (compiler, _config) =
-    makeCompiler(~devServerOptions=None, ~mode, ~logger, ~webpackOutputDir);
+    makeCompiler(~devServerOptions=None, ~mode, ~logger, ~outputDir);
 
   compiler->Webpack.run((err, stats) => {
     switch (Js.Nullable.toOption(err)) {
@@ -456,6 +456,7 @@ let build = (~mode: Mode.t, ~logger: Log.logger, ~webpackOutputDir) => {
     logger.info(() => Js.log(Webpack.Stats.toString(stats)));
 
     let () = {
+      let webpackOutputDir = getWebpackOutputDir(outputDir);
       let statsJson = Webpack.Stats.toJson(stats);
       Fs.writeFileSync(
         Path.join2(webpackOutputDir, "stats.json"),
@@ -478,14 +479,14 @@ let startDevServer =
       ~devServerOptions: DevServerOptions.t,
       ~mode: Mode.t,
       ~logger: Log.logger,
-      ~webpackOutputDir,
+      ~outputDir,
     ) => {
   let (compiler, config) =
     makeCompiler(
       ~devServerOptions=Some(devServerOptions),
       ~mode,
       ~logger,
-      ~webpackOutputDir,
+      ~outputDir,
     );
 
   let devServerOptions = config##devServer;

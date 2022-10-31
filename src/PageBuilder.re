@@ -105,6 +105,8 @@ let renderHtmlTemplate =
 };
 
 let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => {
+  let outputDir = Path.join2(outputDir, "temp");
+
   let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
 
   let pagePath = page.path->PageBuilderT.PagePath.toString;
@@ -187,7 +189,10 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
   };
 
   let resultHtml =
-    renderHtmlTemplate(~pageElement=element, ~headCssFilepaths=page.headCssFilepaths);
+    renderHtmlTemplate(
+      ~pageElement=element,
+      ~headCssFilepaths=page.headCssFilepaths,
+    );
 
   let resultReactApp = renderReactAppTemplate(elementString);
 

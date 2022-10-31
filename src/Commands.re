@@ -1,7 +1,6 @@
 let build =
     (
       ~outputDir: string,
-      ~webpackOutputDir: string,
       ~rescriptBinaryPath: string,
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
@@ -35,13 +34,12 @@ let build =
     )
   };
 
-  Webpack.build(~mode, ~webpackOutputDir, ~logger);
+  Webpack.build(~mode, ~outputDir, ~logger);
 };
 
 let start =
     (
       ~outputDir: string,
-      ~webpackOutputDir: string,
       ~mode: Webpack.Mode.t,
       ~logLevel: Log.level,
       ~pages: array(PageBuilder.page),
@@ -52,5 +50,5 @@ let start =
 
   Watcher.startWatcher(~outputDir, ~logger, pages);
 
-  Webpack.startDevServer(~mode, ~logger, ~webpackOutputDir);
+  Webpack.startDevServer(~mode, ~logger, ~outputDir);
 };

@@ -1,8 +1,6 @@
 let currentDir = Utils.getDirname()
 
-let pagesOutputDir = Path.join2(currentDir, "../build")
-
-let webpackOutputDir = Path.join2(pagesOutputDir, "bundle")
+let outputDir = Path.join2(currentDir, "../build")
 
 let normalizeCssFilePath = Path.join2(currentDir, "/css/normalize.css")
 
