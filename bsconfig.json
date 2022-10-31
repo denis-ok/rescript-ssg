@@ -8,13 +8,8 @@
       "subdirs": true
     },
     {
-      "dir": "example/src",
-      "type" : "dev",
-      "subdirs": true
-    },
-    {
-      "dir": "example/build",
-      "type" : "dev",
+      "dir": "example",
+      "type": "dev",
       "subdirs": true
     }
   ],
