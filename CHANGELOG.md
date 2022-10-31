@@ -1,3 +1,10 @@
+## 1.8.0
+
+- Inject emotion styles to `<head>` instead on inline [Commit](https://github.com/denis-ok/rescript-ssg/commit/aa2a47b254a2ca0ffc33f5cad0a4d7ae4b2a1176).
+- Build React App files with ReScript syntax.
+- Remove `webpackOutputDir` param [Commit](https://github.com/denis-ok/rescript-ssg/commit/e051e769cfdaed50ec2ef4dcf9a4a5b5b23e4e20).
+- Tweak webpack chunks [Commit](https://github.com/denis-ok/rescript-ssg/commit/2a9d44a8f398a6f721eeabbd7e1b048efd33d252).
+
 ## 1.7.0
 
 - Add `headCssFilepaths` field to inject CSS to page's `<head>`, [PR](https://github.com/denis-ok/rescript-ssg/pull/8).
@@ -35,4 +42,4 @@
 
 ## 1.0.0
 
-- Switch to major varsion.
+- Switch to major version.
