@@ -157,7 +157,7 @@ let makeConfig =
     "output": {
       "path": getWebpackOutputDir(outputDir),
       "publicPath": "/",
-      "filename": "js/[name]_[chunkhash].js",
+      "filename": NodeLoader.webpackAssetsDir ++ "/" ++ "js/[name]_[chunkhash].js",
       "assetModuleFilename":
         NodeLoader.webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
       "hashFunction": NodeLoader.Hash.makeNew,
