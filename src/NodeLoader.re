@@ -46,9 +46,7 @@ let isAsset = fileUrl => {
   Js.String2.match(fileUrl, assetRegex) != None;
 };
 
-let webpackAssetsDirBase = "assets";
-
-let webpackAssetsDir = Path.join2(CliArgs.assetPrefix, webpackAssetsDirBase);
+let webpackAssetsDir = "assets";
 
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
 let getFinalHashedAssetPath =
@@ -73,17 +71,13 @@ let getFinalHashedAssetPath =
 
   let filenameWithHash = {j|$(filenameWithoutExt).$(fileHash)$(fileExt)|j};
 
-  let webpackAssetPath = Path.join2(webpackAssetsDir, filenameWithHash);
+  let assetsDir = Path.join2(CliArgs.assetPrefix, webpackAssetsDir);
 
-  let webpackAssetPath =
-    if (webpackAssetPath->Js.String2.startsWith("http")
-        || webpackAssetPath->Js.String2.startsWith("/")) {
-      webpackAssetPath;
-    } else {
-      "/" ++ webpackAssetPath;
-    };
+  let assetPath = Path.join2(assetsDir, filenameWithHash);
 
-  webpackAssetPath;
+  let assetPath = Utils.maybeAddSlashPrefix(assetPath);
+
+  assetPath;
 };
 
 let processAsset =

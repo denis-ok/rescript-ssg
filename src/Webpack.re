@@ -149,6 +149,8 @@ let makeConfig =
       )
     ->Js.Dict.fromArray;
 
+  let assetPrefix = CliArgs.assetPrefix->Utils.maybeAddSlashPrefix;
+
   let config = {
     "entry": entries,
 
@@ -156,8 +158,9 @@ let makeConfig =
 
     "output": {
       "path": getWebpackOutputDir(outputDir),
-      "publicPath": "/",
-      "filename": NodeLoader.webpackAssetsDir ++ "/" ++ "js/[name]_[chunkhash].js",
+      "publicPath": assetPrefix,
+      "filename":
+        NodeLoader.webpackAssetsDir ++ "/" ++ "js/[name]_[chunkhash].js",
       "assetModuleFilename":
         NodeLoader.webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
       "hashFunction": NodeLoader.Hash.makeNew,
