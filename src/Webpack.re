@@ -149,7 +149,8 @@ let makeConfig =
       )
     ->Js.Dict.fromArray;
 
-  let assetPrefix = CliArgs.assetPrefix->Utils.maybeAddSlashPrefix;
+  let assetPrefix =
+    CliArgs.assetPrefix->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;
 
   let config = {
     "entry": entries,

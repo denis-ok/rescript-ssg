@@ -62,3 +62,10 @@ let maybeAddSlashPrefix = path =>
   } else {
     "/" ++ path;
   };
+
+let maybeAddSlashSuffix = path =>
+  if (path->Js.String2.endsWith("/")) {
+    path;
+  } else {
+    path ++ "/";
+  };
