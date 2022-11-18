@@ -39,6 +39,9 @@ switch ReactDOM.querySelector("#root") {
 
 let dataPropName = "data";
 
+let getIntermediateFilesOutputDir = (~outputDir) =>
+  Path.join2(outputDir, "temp");
+
 let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
@@ -172,13 +175,13 @@ let processPageComponentWithWrapper =
 };
 
 let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => {
-  let outputDir = Path.join2(outputDir, "temp");
+  let intermediateFilesOutputDir = getIntermediateFilesOutputDir(~outputDir);
 
   let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
 
   let pagePath = page.path->PageBuilderT.PagePath.toString;
 
-  let pageOutputDir = Path.join2(outputDir, pagePath);
+  let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
 
   logger.debug(() =>
     Js.log2(

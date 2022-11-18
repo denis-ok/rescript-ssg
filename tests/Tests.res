@@ -45,6 +45,8 @@ module BuildPageHtmlAndReactApp = {
 
   let outputDir = Path.join2(dirname, "output")
 
+  let intermediateFilesOutputDir = PageBuilder.getIntermediateFilesOutputDir(~outputDir)
+
   let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true})
 
   let rescriptBinaryPath = Path.join2(dirname, "../node_modules/.bin/rescript")
@@ -53,7 +55,9 @@ module BuildPageHtmlAndReactApp = {
     cleanup()
     PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, page)
     Commands.compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=false)
-    let testPageAppContent = Fs.readFileSyncAsUtf8(Path.join2(outputDir, "TestPageApp.res"))
+    let testPageAppContent = Fs.readFileSyncAsUtf8(
+      Path.join2(intermediateFilesOutputDir, "TestPageApp.res"),
+    )
 
     let expectedPageAppContent = `
 switch ReactDOM.querySelector("#root") {
@@ -63,7 +67,7 @@ switch ReactDOM.querySelector("#root") {
 `
     isEqual(testPageAppContent, expectedPageAppContent)
 
-    let () = Fs.readFileSyncAsUtf8(Path.join2(outputDir, "index.html"))->ignore
+    let () = Fs.readFileSyncAsUtf8(Path.join2(intermediateFilesOutputDir, "index.html"))->ignore
   }
 
   let page: PageBuilder.page = {
