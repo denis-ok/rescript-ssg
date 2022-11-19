@@ -13,7 +13,7 @@ clean-rescript:
 build-rescript:
 	$(NODE_BINS)/rescript
 
-start-rescript: clean
+start-rescript:
 	mkdir $(EXAMPLE_DIR)/build; \
 	$(NODE_BINS)/rescript build -w
 
