@@ -39,6 +39,9 @@ switch ReactDOM.querySelector("#root") {
 
 let dataPropName = "data";
 
+let getIntermediateFilesOutputDir = (~outputDir) =>
+  Path.join2(outputDir, "temp");
+
 let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
@@ -104,39 +107,30 @@ let renderHtmlTemplate =
 |j};
 };
 
-let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => {
-  let outputDir = Path.join2(outputDir, "temp");
+let unsafeStringifyPropValue = data =>
+  // We need a way to take a prop value of any type and inject it to generated React app template.
+  // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
+  // This is unsafe. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
+  // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
+  switch (data->Js.Json.stringifyAny) {
+  | Some(propValueString) => {j|{`$(propValueString)`->Js.Json.parseExn->Obj.magic}|j}
+  | None =>
+    // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
+    "None"
+  };
 
-  let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
-
-  let pagePath = page.path->PageBuilderT.PagePath.toString;
-
-  let pageOutputDir = Path.join2(outputDir, pagePath);
-
-  logger.debug(() =>
-    Js.log2(
-      "[PageBuilder.buildPageHtmlAndReactApp] Output dir for page: ",
-      pageOutputDir,
+let processPageComponentWithWrapper =
+    (
+      ~pageComponent: component,
+      ~pageWrapper: option(pageWrapper),
+      ~moduleName: string,
     )
-  );
-
-  let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
-
-  let (element, elementString) = {
-    switch (page.component) {
+    : (React.element, string) => {
+  let (element, elementString) =
+    switch (pageComponent) {
     | ComponentWithoutData(element) => (element, "<" ++ moduleName ++ " />")
     | ComponentWithData({component, data}) =>
-      // We need a way to take a prop value of any type and inject it to generated React app template.
-      // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
-      // This is unsafe part. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
-      // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
-      let unsafeStringifiedPropValue =
-        switch (data->Js.Json.stringifyAny) {
-        | Some(propValueString) => {j|{`$(propValueString)`->Js.Json.parseExn->Obj.magic}|j}
-        | None =>
-          // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
-          "None"
-        };
+      let unsafeStringifiedPropValue = unsafeStringifyPropValue(data);
 
       let element = component(data);
 
@@ -151,42 +145,59 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
 
       (element, elementString);
     };
-  };
 
-  let (element, elementString) = {
-    switch (page.pageWrapper) {
-    | None => (element, elementString)
-    | Some({component, modulePath}) =>
-      let moduleName = Utils.getModuleNameFromModulePath(modulePath);
-      switch (component) {
-      | WrapperWithChildren(f) =>
-        let wrapperOpenTag = "<" ++ moduleName ++ ">";
-        let wrapperCloseTag = "</" ++ moduleName ++ ">";
-        let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
-        let wrappedElement = f(element);
-        (wrappedElement, elementString);
-      | WrapperWithDataAndChildren({component, data}) =>
-        let wrappedElement = component(data, element);
+  switch (pageWrapper) {
+  | None => (element, elementString)
+  | Some({component, modulePath}) =>
+    let moduleName = Utils.getModuleNameFromModulePath(modulePath);
+    switch (component) {
+    | WrapperWithChildren(f) =>
+      let wrapperOpenTag = "<" ++ moduleName ++ ">";
+      let wrapperCloseTag = "</" ++ moduleName ++ ">";
+      let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+      let wrappedElement = f(element);
+      (wrappedElement, elementString);
+    | WrapperWithDataAndChildren({component, data}) =>
+      let wrappedElement = component(data, element);
 
-        let unsafeStringifiedPropValue =
-          switch (data->Js.Json.stringifyAny) {
-          | Some(propValueString) => {j|{`$(propValueString)`->Js.Json.parseExn->Obj.magic}|j}
-          | None =>
-            // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
-            "None"
-          };
+      let unsafeStringifiedPropValue = unsafeStringifyPropValue(data);
 
-        let wrapperOpenTag =
-          "<" ++ moduleName ++ " data=" ++ unsafeStringifiedPropValue ++ " >";
+      let wrapperOpenTag =
+        "<" ++ moduleName ++ " data=" ++ unsafeStringifiedPropValue ++ " >";
 
-        let wrapperCloseTag = "</" ++ moduleName ++ ">";
+      let wrapperCloseTag = "</" ++ moduleName ++ ">";
 
-        let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+      let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
 
-        (wrappedElement, elementString);
-      };
+      (wrappedElement, elementString);
     };
   };
+};
+
+let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => {
+  let intermediateFilesOutputDir = getIntermediateFilesOutputDir(~outputDir);
+
+  let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
+
+  let pagePath = page.path->PageBuilderT.PagePath.toString;
+
+  let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
+
+  logger.debug(() =>
+    Js.log2(
+      "[PageBuilder.buildPageHtmlAndReactApp] Output dir for page: ",
+      pageOutputDir,
+    )
+  );
+
+  let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
+
+  let (element, elementString) =
+    processPageComponentWithWrapper(
+      ~pageComponent=page.component,
+      ~pageWrapper=page.pageWrapper,
+      ~moduleName,
+    );
 
   let resultHtml =
     renderHtmlTemplate(

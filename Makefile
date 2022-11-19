@@ -13,7 +13,7 @@ clean-rescript:
 build-rescript:
 	$(NODE_BINS)/rescript
 
-start-rescript:
+start-rescript: clean
 	mkdir $(EXAMPLE_DIR)/build; \
 	$(NODE_BINS)/rescript build -w
 
@@ -29,10 +29,16 @@ serve-example:
 clean:
 	rm -rf $(EXAMPLE_DIR)/build
 	mkdir $(EXAMPLE_DIR)/build
+	make clean-test
 	make clean-rescript
 
 build: clean
 	make build-rescript
+	make build-example
+
+build-ci: clean
+	make build-rescript
+	make test
 	make build-example
 
 start: clean build-rescript
@@ -55,3 +61,10 @@ format:
 
 webpack-bundle-analyzer:
 	@$(NODE_BINS)/webpack-bundle-analyzer $(EXAMPLE_DIR)/build/public/stats.json
+
+clean-test:
+	rm -rf tests/output
+	rm -rf coverage
+
+test: clean-test
+	$(NODE_BINS)/c8 node ./tests/Tests.bs.js

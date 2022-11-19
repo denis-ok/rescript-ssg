@@ -9,3 +9,6 @@
 .trash
 /_opam
 example/build
+
+coverage
+tests/output

@@ -1,0 +1,9 @@
+{
+  "reporter": [
+    "text",
+    "html"
+  ],
+  "include": [
+    "src/PageBuilder.bs.js"
+  ]
+}

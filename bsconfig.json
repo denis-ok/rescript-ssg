@@ -9,7 +9,12 @@
     },
     {
       "dir": "example",
-      "type": "dev",
+      "type" : "dev",
+      "subdirs": true
+    },
+    {
+      "dir": "tests",
+      "type" : "dev",
       "subdirs": true
     }
   ],
