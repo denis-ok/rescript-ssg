@@ -11,7 +11,29 @@ module CleanWebpackPlugin = {
 };
 
 [@new] [@module "webpack"] [@scope "default"]
-external definePlugin: 'a => webpackPlugin = "DefinePlugin";
+external definePlugin: Js.Dict.t(string) => webpackPlugin = "DefinePlugin";
+
+[@val] external processEnvDict: Js.Dict.t(string) = "process.env";
+
+let getBrowserEnvPlugin = () => {
+  let keyBase = "process.env";
+
+  let makeKey = varName => keyBase ++ "." ++ varName;
+
+  let envItems = processEnvDict->Js.Dict.entries;
+
+  let browserEnvDict = Js.Dict.empty();
+
+  browserEnvDict->Js.Dict.set(keyBase, "({})");
+
+  envItems->Js.Array2.forEach(((key, value)) => {
+    let key = makeKey(key);
+    let value = {j|"$(value)"|j};
+    browserEnvDict->Js.Dict.set(key, value);
+  });
+
+  definePlugin(browserEnvDict);
+};
 
 module Webpack = {
   module Stats = {
@@ -203,12 +225,12 @@ let makeConfig =
           })
         });
 
-      let definePlugin = definePlugin({"process.env": "({})"});
+      let browserEnvPlugin = getBrowserEnvPlugin();
 
       let cleanWebpackPlugin = CleanWebpackPlugin.make();
 
       Js.Array2.concat(
-        [|definePlugin, cleanWebpackPlugin|],
+        [|browserEnvPlugin, cleanWebpackPlugin|],
         htmlWebpackPlugins,
       );
     },

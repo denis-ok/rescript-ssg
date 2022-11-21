@@ -18,13 +18,13 @@ start-rescript:
 	$(NODE_BINS)/bsb -make-world -w
 
 build-example:
-	./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
+	MY_ENV_VAR=myEnvVar1 ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
 
 start-example:
-	./src/js/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
+	MY_ENV_VAR=myEnvVar1 ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
 
 serve-example:
-	$(NODE_BINS)/serve -l 3005 $(EXAMPLE_DIR)/build/bundle
+	$(NODE_BINS)/serve -l 3005 $(EXAMPLE_DIR)/build/public
 
 clean:
 	rm -rf $(EXAMPLE_DIR)/build
