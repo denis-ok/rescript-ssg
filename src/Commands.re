@@ -55,7 +55,7 @@ let start =
       ~mode: Webpack.Mode.t,
       ~logLevel: Log.level,
       ~pages: array(PageBuilder.page),
-      ~devServerOptions: Webpack.DevServerOptions.t
+      ~devServerOptions: Webpack.DevServerOptions.t,
     ) => {
   let logger = Log.makeLogger(logLevel);
 
