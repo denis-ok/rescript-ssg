@@ -457,7 +457,13 @@ let makeCompiler =
   (compiler, config);
 };
 
-let build = (~mode: Mode.t, ~logger: Log.logger, ~outputDir) => {
+let build =
+    (
+      ~mode: Mode.t,
+      ~writeWebpackStatsJson: bool,
+      ~logger: Log.logger,
+      ~outputDir,
+    ) => {
   logger.info(() => Js.log("[Webpack] Building webpack bundle..."));
 
   let (compiler, _config) =
@@ -483,11 +489,14 @@ let build = (~mode: Mode.t, ~logger: Log.logger, ~outputDir) => {
 
     let () = {
       let webpackOutputDir = getWebpackOutputDir(outputDir);
-      let statsJson = Webpack.Stats.toJson(stats);
-      Fs.writeFileSync(
-        Path.join2(webpackOutputDir, "stats.json"),
-        statsJson->Js.Json.stringifyAny->Belt.Option.getWithDefault(""),
-      );
+
+      if (writeWebpackStatsJson) {
+        let statsJson = Webpack.Stats.toJson(stats);
+        Fs.writeFileSync(
+          Path.join2(webpackOutputDir, "stats.json"),
+          statsJson->Js.Json.stringifyAny->Belt.Option.getWithDefault(""),
+        );
+      };
     };
 
     compiler->Webpack.close(closeError => {
