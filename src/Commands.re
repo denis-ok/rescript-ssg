@@ -33,6 +33,7 @@ let build =
       ~rescriptBinaryPath: string,
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
+      ~writeWebpackStatsJson,
       ~pages: array(PageBuilder.page),
     ) => {
   let logger = Log.makeLogger(logLevel);
@@ -46,7 +47,7 @@ let build =
   let () =
     compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=true);
 
-  Webpack.build(~mode, ~outputDir, ~logger);
+  Webpack.build(~mode, ~outputDir, ~logger, ~writeWebpackStatsJson);
 };
 
 let start =
