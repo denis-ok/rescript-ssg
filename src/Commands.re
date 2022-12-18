@@ -35,6 +35,8 @@ let build =
       ~mode: Webpack.Mode.t,
       ~writeWebpackStatsJson,
       ~pages: array(PageBuilder.page),
+      ~minimizer: Webpack.Minimizer.t=Terser,
+      (),
     ) => {
   let logger = Log.makeLogger(logLevel);
 
@@ -47,7 +49,13 @@ let build =
   let () =
     compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=true);
 
-  Webpack.build(~mode, ~outputDir, ~logger, ~writeWebpackStatsJson);
+  Webpack.build(
+    ~mode,
+    ~outputDir,
+    ~logger,
+    ~writeWebpackStatsJson,
+    ~minimizer,
+  );
 };
 
 let start =
@@ -57,6 +65,8 @@ let start =
       ~logLevel: Log.level,
       ~pages: array(PageBuilder.page),
       ~devServerOptions: Webpack.DevServerOptions.t,
+      ~minimizer: Webpack.Minimizer.t=Terser,
+      (),
     ) => {
   let logger = Log.makeLogger(logLevel);
 
@@ -64,5 +74,11 @@ let start =
 
   Watcher.startWatcher(~outputDir, ~logger, pages);
 
-  Webpack.startDevServer(~devServerOptions, ~mode, ~logger, ~outputDir);
+  Webpack.startDevServer(
+    ~devServerOptions,
+    ~mode,
+    ~logger,
+    ~outputDir,
+    ~minimizer,
+  );
 };

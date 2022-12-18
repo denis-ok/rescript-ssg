@@ -98,6 +98,12 @@ module Mode = {
     };
 };
 
+module Minimizer = {
+  type t =
+    | Terser
+    | Esbuild;
+};
+
 type page = {
   path: PageBuilderT.PagePath.t,
   entryPath: string,
@@ -166,6 +172,7 @@ let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
       ~mode: Mode.t,
+      ~minimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir: string,
     ) => {
@@ -245,9 +252,11 @@ let makeConfig =
     "optimization": {
       "minimize": shouldMinimize,
       "minimizer": {
-        switch (shouldMinimize) {
-        | false => [||]
-        | true => [|makeESBuildMinifyPlugin({"target": "es2015"})|]
+        switch (shouldMinimize, minimizer) {
+        | (true, Esbuild) =>
+          Some([|makeESBuildMinifyPlugin({"target": "es2015"})|])
+        | (false, _)
+        | (_, Terser) => None
         };
       },
       "splitChunks": {
@@ -464,9 +473,11 @@ let makeCompiler =
       ~devServerOptions: option(DevServerOptions.t),
       ~logger: Log.logger,
       ~mode: Mode.t,
+      ~minimizer: Minimizer.t,
       ~outputDir,
     ) => {
-  let config = makeConfig(~devServerOptions, ~mode, ~logger, ~outputDir);
+  let config =
+    makeConfig(~devServerOptions, ~mode, ~logger, ~minimizer, ~outputDir);
   // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
   (compiler, config);
@@ -475,6 +486,7 @@ let makeCompiler =
 let build =
     (
       ~mode: Mode.t,
+      ~minimizer: Minimizer.t,
       ~writeWebpackStatsJson: bool,
       ~logger: Log.logger,
       ~outputDir,
@@ -482,7 +494,13 @@ let build =
   logger.info(() => Js.log("[Webpack] Building webpack bundle..."));
 
   let (compiler, _config) =
-    makeCompiler(~devServerOptions=None, ~mode, ~logger, ~outputDir);
+    makeCompiler(
+      ~devServerOptions=None,
+      ~mode,
+      ~logger,
+      ~outputDir,
+      ~minimizer,
+    );
 
   compiler->Webpack.run((err, stats) => {
     switch (Js.Nullable.toOption(err)) {
@@ -528,6 +546,7 @@ let startDevServer =
     (
       ~devServerOptions: DevServerOptions.t,
       ~mode: Mode.t,
+      ~minimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir,
     ) => {
@@ -537,6 +556,7 @@ let startDevServer =
       ~mode,
       ~logger,
       ~outputDir,
+      ~minimizer,
     );
 
   let devServerOptions = config##devServer;
