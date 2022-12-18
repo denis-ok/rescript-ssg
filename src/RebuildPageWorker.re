@@ -118,4 +118,13 @@ pages
 
     parentPort->WorkingThreads.postMessage(true);
   })
+->Promise.catch(error => {
+    logger.info(() =>
+      Js.Console.error2(
+        "[Worker] [Warning] Caught error, please check: ",
+        error,
+      )
+    );
+    Js.Promise.resolve();
+  })
 ->ignore;

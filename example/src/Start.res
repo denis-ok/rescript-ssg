@@ -4,4 +4,5 @@ let () = Commands.start(
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
   ~pages=Pages.pages,
+  (),
 )
