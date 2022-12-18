@@ -70,6 +70,7 @@ let () = RescriptSsg.Commands.build(
   ~logLevel=Info,
   ~rescriptBinaryPath=Path.join2(currentDir, "../node_modules/.bin/rescript"),
   ~pages=Pages.pages,
+  (),
 )
 ```
 
@@ -82,6 +83,7 @@ let () = RescriptSsg.Commands.start(
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
   ~pages=Pages.pages,
+  (),
 )
 ```
 
