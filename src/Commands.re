@@ -33,8 +33,8 @@ let build =
       ~rescriptBinaryPath: string,
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
-      ~writeWebpackStatsJson,
       ~pages: array(PageBuilder.page),
+      ~writeWebpackStatsJson=false,
       ~minimizer: Webpack.Minimizer.t=Terser,
       (),
     ) => {
