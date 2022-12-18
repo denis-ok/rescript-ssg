@@ -1,3 +1,13 @@
+## 1.9.0
+- Put bundle `.js` files to `assets/js` dir.
+- Fix issues with `asset-prefix` parameter.
+- Initialize tests. https://github.com/denis-ok/rescript-ssg/commit/89a831147f487923db83e78c55bb797008daca60
+- Update dependencies, remove unused `webpack-cli` dep.
+- Provide env vars to browser via webpack define plugin. https://github.com/denis-ok/rescript-ssg/commit/3222bad9c39a895a928c5aaa30c493ef69944ff3
+- Add `writeWebpackStatsJson` flag to disable writing webpack `stats.json`. Now disabled by default.
+- Catch error in `RebuildPageWorker` to avoid stopping of Webpack/watcher after renaming files. https://github.com/denis-ok/rescript-ssg/commit/cde6b81b09db11f552b9d0f1ef100fbc82c8c659
+- Allow choosing minimizer for production bundle build. `Terser` is Webpack default, `Esbuild` is an alternative/experimental option added via `esbuild-loader` (it's fast). https://github.com/denis-ok/rescript-ssg/commit/21eb9d450d603267bcbd5742bf0e412591fae991
+
 ## 1.8.0
 
 - Inject emotion styles to `<head>` instead on inline [Commit](https://github.com/denis-ok/rescript-ssg/commit/aa2a47b254a2ca0ffc33f5cad0a4d7ae4b2a1176).
