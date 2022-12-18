@@ -25,6 +25,7 @@
     "chokidar": "^3.5.3",
     "clean-webpack-plugin": "^4.0.0",
     "dependency-tree": "^8.1.2",
+    "esbuild-loader": "^2.20.0",
     "html-webpack-plugin": "^5.5.0",
     "webpack": "^5.75.0",
     "webpack-dev-server": "^4.11.1"

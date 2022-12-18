@@ -13,6 +13,13 @@ module CleanWebpackPlugin = {
 [@new] [@module "webpack"] [@scope "default"]
 external definePlugin: Js.Dict.t(string) => webpackPlugin = "DefinePlugin";
 
+[@new] [@module "webpack/lib/debug/ProfilingPlugin.js"]
+external makeProfilingPlugin: unit => webpackPlugin = "default";
+
+[@new] [@module "esbuild-loader"]
+external makeESBuildMinifyPlugin: Js.t('a) => webpackPlugin =
+  "ESBuildMinifyPlugin";
+
 [@val] external processEnvDict: Js.Dict.t(string) = "process.env";
 
 let getBrowserEnvPlugin = () => {
@@ -174,6 +181,8 @@ let makeConfig =
   let assetPrefix =
     CliArgs.assetPrefix->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;
 
+  let shouldMinimize = mode == Production;
+
   let config = {
     "entry": entries,
 
@@ -210,17 +219,14 @@ let makeConfig =
             "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
             "inject": true,
             "minify": {
-              let shouldMinify = mode == Production;
-              {
-                "collapseWhitespace": shouldMinify,
-                "keepClosingSlash": shouldMinify,
-                "removeComments": shouldMinify,
-                "removeRedundantAttributes": shouldMinify,
-                "removeScriptTypeAttributes": shouldMinify,
-                "removeStyleLinkTypeAttributes": shouldMinify,
-                "useShortDoctype": shouldMinify,
-                "minifyCSS": shouldMinify,
-              };
+              "collapseWhitespace": shouldMinimize,
+              "keepClosingSlash": shouldMinimize,
+              "removeComments": shouldMinimize,
+              "removeRedundantAttributes": shouldMinimize,
+              "removeScriptTypeAttributes": shouldMinimize,
+              "removeStyleLinkTypeAttributes": shouldMinimize,
+              "useShortDoctype": shouldMinimize,
+              "minifyCSS": shouldMinimize,
             },
           })
         });
@@ -234,7 +240,16 @@ let makeConfig =
         htmlWebpackPlugins,
       );
     },
+    // Explicitly disable source maps in dev mode
+    "devtool": false,
     "optimization": {
+      "minimize": shouldMinimize,
+      "minimizer": {
+        switch (shouldMinimize) {
+        | false => [||]
+        | true => [|makeESBuildMinifyPlugin({"target": "es2015"})|]
+        };
+      },
       "splitChunks": {
         "chunks": "all",
         "cacheGroups": {
