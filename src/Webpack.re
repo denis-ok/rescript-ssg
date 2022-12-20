@@ -5,11 +5,6 @@ module HtmlWebpackPlugin = {
   external make: Js.t('a) => webpackPlugin = "default";
 };
 
-module CleanWebpackPlugin = {
-  [@module "clean-webpack-plugin"] [@new]
-  external make: unit => webpackPlugin = "CleanWebpackPlugin";
-};
-
 [@new] [@module "webpack"] [@scope "default"]
 external definePlugin: Js.Dict.t(string) => webpackPlugin = "DefinePlugin";
 
@@ -204,6 +199,8 @@ let makeConfig =
         NodeLoader.webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
       "hashFunction": NodeLoader.Hash.makeNew,
       "hashDigestLength": NodeLoader.Hash.digestLength,
+      // Clean the output directory before emit.
+      "clean": true,
     },
 
     "module": {
@@ -240,12 +237,7 @@ let makeConfig =
 
       let browserEnvPlugin = getBrowserEnvPlugin();
 
-      let cleanWebpackPlugin = CleanWebpackPlugin.make();
-
-      Js.Array2.concat(
-        [|browserEnvPlugin, cleanWebpackPlugin|],
-        htmlWebpackPlugins,
-      );
+      Js.Array2.concat([|browserEnvPlugin|], htmlWebpackPlugins);
     },
     // Explicitly disable source maps in dev mode
     "devtool": false,
