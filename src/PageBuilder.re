@@ -177,11 +177,17 @@ let processPageComponentWithWrapper =
 let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => {
   let intermediateFilesOutputDir = getIntermediateFilesOutputDir(~outputDir);
 
-  let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
+  let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
 
-  let pagePath = page.path->PageBuilderT.PagePath.toString;
+  let pagePath: string = page.path->PageBuilderT.PagePath.toString;
 
   let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
+
+  logger.info(() =>
+    Js.log(
+      {j|[PageBuilder.buildPageHtmlAndReactApp] Building page module: $(moduleName), page path: $(pagePath)|j},
+    )
+  );
 
   logger.debug(() =>
     Js.log2(
@@ -240,6 +246,9 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
 };
 
 let buildPages = (~outputDir, ~logger: Log.logger, pages: array(page)) => {
+  let durationLabel = "[PageBuilder.buildPages] duration";
+  Js.Console.timeStart(durationLabel);
+
   logger.info(() => Js.log("[PageBuilder.buildPages] Building pages..."));
 
   let pagesDict = Js.Dict.empty();
@@ -263,6 +272,11 @@ let buildPages = (~outputDir, ~logger: Log.logger, pages: array(page)) => {
 
       buildPageHtmlAndReactApp(~outputDir, ~logger, page);
     });
+
+  logger.info(() => {
+    Js.log("[PageBuilder.buildPages] Pages build finished successfully!");
+    Js.Console.timeEnd(durationLabel);
+  });
 
   ();
 };

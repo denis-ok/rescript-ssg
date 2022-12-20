@@ -483,7 +483,10 @@ let build =
       ~logger: Log.logger,
       ~outputDir,
     ) => {
-  logger.info(() => Js.log("[Webpack] Building webpack bundle..."));
+  let durationLabel = "[Webpack.build] duration";
+  Js.Console.timeStart(durationLabel);
+
+  logger.info(() => Js.log("[Webpack.build] Building webpack bundle..."));
 
   let (compiler, _config) =
     makeCompiler(
@@ -496,17 +499,17 @@ let build =
 
   compiler->Webpack.run((err, stats) => {
     switch (Js.Nullable.toOption(err)) {
-    | None => logger.info(() => Js.log("[Webpack] Build success"))
-    | Some(_error) => logger.info(() => Js.log("[Webpack] Build error"))
+    | None => logger.info(() => {Js.log("[Webpack.build] Success!")})
+    | Some(_error) => logger.info(() => Js.log("[Webpack.build] Error!"))
     };
 
     switch (Webpack.Stats.hasErrors(stats)) {
-    | true => logger.info(() => Js.log("[Webpack] Stats.hasErrors"))
+    | true => logger.info(() => Js.log("[Webpack.build] Stats.hasErrors"))
     | _ => ()
     };
 
     switch (Webpack.Stats.hasWarnings(stats)) {
-    | true => logger.info(() => Js.log("[Webpack] Stats.hasWarnings"))
+    | true => logger.info(() => Js.log("[Webpack.build] Stats.hasWarnings"))
     | _ => ()
     };
 
@@ -526,9 +529,11 @@ let build =
 
     compiler->Webpack.close(closeError => {
       switch (Js.Nullable.toOption(closeError)) {
-      | None => ()
+      | None =>
+        Js.Console.timeEnd(durationLabel);
+        ();
       | Some(_error) =>
-        logger.info(() => Js.log("[Webpack] Compiler close error"))
+        logger.info(() => Js.log("[Webpack.build] Compiler close error"))
       }
     });
   });
