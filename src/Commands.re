@@ -4,15 +4,22 @@ let compileRescript =
       ~logger: Log.logger,
       ~logStdoutOnSuccess: bool,
     ) => {
+  let durationLabel = "[Commands.compileRescript] duration";
+  Js.Console.timeStart(durationLabel);
+
+  logger.info(() =>
+    Js.log("[Commands.compileRescript] Compiling fresh React app files...")
+  );
+
   switch (ChildProcess.execSync(. rescriptBinaryPath, {"encoding": "utf8"})) {
   | exception (Js.Exn.Error(error)) =>
     logger.info(() => {
       Js.Console.error2(
-        "[Commands.build] Rescript build failed:\n",
+        "[Commands.compileRescript] Failure:\n",
         error->Js.Exn.message,
       );
       Js.Console.error2(
-        "[Commands.build] Rescript build failed:\n",
+        "[Commands.compileRescript] Failure:\n",
         error->ChildProcess.Error.stdout,
       );
     });
@@ -20,9 +27,14 @@ let compileRescript =
     Process.exit(1);
   | stdout =>
     if (logStdoutOnSuccess) {
-      logger.info(() =>
-        Js.log2("[PageBuilder.build] Rescript build success:\n", stdout)
-      );
+      logger.info(() => {
+        Js.log("[Commands.compileRescript] Success!");
+        Js.Console.timeEnd(durationLabel);
+      });
+
+      logger.debug(() => {
+        Js.log2("[Commands.compileRescript] stdout:", stdout)
+      });
     }
   };
 };
@@ -41,10 +53,6 @@ let build =
   let logger = Log.makeLogger(logLevel);
 
   PageBuilder.buildPages(~outputDir, ~logger, pages);
-
-  logger.info(() =>
-    Js.log("[Commands.build] Compiling fresh React app files...")
-  );
 
   let () =
     compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=true);

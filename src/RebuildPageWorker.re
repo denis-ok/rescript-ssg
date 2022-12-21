@@ -19,6 +19,10 @@ let logLevel = workerData.logLevel;
 
 let logger = Log.makeLogger(logLevel);
 
+let durationLabel = "[RebuildPageWorker] duration";
+
+Js.Console.timeStart(durationLabel);
+
 logger.info(() =>
   Js.log2(
     "[Worker] Rebuilding pages:\n",
@@ -112,9 +116,10 @@ pages
   })
 ->Js.Promise.all
 ->Promise.map((_: array(unit)) => {
-    logger.info(() =>
-      Js.log("[Worker] Pages rebuild success, job finished.")
-    );
+    logger.info(() => {
+      Js.log("[Worker] Pages rebuild success, job finished.");
+      Js.Console.timeEnd(durationLabel);
+    });
 
     parentPort->WorkingThreads.postMessage(true);
   })
