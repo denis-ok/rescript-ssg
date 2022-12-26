@@ -242,6 +242,9 @@ let makeConfig =
     // Explicitly disable source maps in dev mode
     "devtool": false,
     "optimization": {
+      "runtimeChunk": {
+        "name": "webpack-runtime",
+      },
       "minimize": shouldMinimize,
       "minimizer": {
         switch (shouldMinimize, minimizer) {
