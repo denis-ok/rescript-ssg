@@ -30,7 +30,30 @@ type page = {
   headCssFilepaths: array(string),
 };
 
-let renderReactAppTemplate = (elementString: string) => {j|
+module PageData = {
+  type t =
+    | PageWrapperData
+    | PageData;
+
+  let toValueName = (t: t) =>
+    switch (t) {
+    | PageWrapperData => "pageWrapperData"
+    | PageData => "pageData"
+    };
+};
+
+let makeDataModuleName = (~moduleName) => moduleName ++ "Data";
+
+let makeImportLine = (~pageDataType: PageData.t, ~moduleName) => {
+  let valueName = PageData.toValueName(pageDataType);
+  let moduleName = makeDataModuleName(~moduleName);
+  {j|@module("./$(moduleName).js") external $(valueName): string = "data";|j};
+};
+
+let renderReactAppTemplate =
+    (~importPageWrapperDataString: string, elementString: string) => {j|
+$(importPageWrapperDataString)
+
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate($(elementString), root)
 | None => ()
@@ -160,10 +183,18 @@ let processPageComponentWithWrapper =
     | WrapperWithDataAndChildren({component, data}) =>
       let wrappedElement = component(data, element);
 
-      let unsafeStringifiedPropValue = unsafeStringifyPropValue(data);
+      let dataValueName = PageData.toValueName(PageWrapperData);
+
+      let dataPropString = {j|{$(dataValueName)->Js.Json.parseExn->Obj.magic}|j};
 
       let wrapperOpenTag =
-        "<" ++ moduleName ++ " data=" ++ unsafeStringifiedPropValue ++ " >";
+        "<"
+        ++ moduleName
+        ++ " "
+        ++ dataPropName
+        ++ "="
+        ++ dataPropString
+        ++ " >";
 
       let wrapperCloseTag = "</" ++ moduleName ++ ">";
 
@@ -211,7 +242,17 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~headCssFilepaths=page.headCssFilepaths,
     );
 
-  let resultReactApp = renderReactAppTemplate(elementString);
+  let importPageWrapperDataString =
+    switch (page.pageWrapper) {
+    | Some({component: WrapperWithDataAndChildren(_), modulePath}) =>
+      let moduleName = Utils.getModuleNameFromModulePath(modulePath);
+      makeImportLine(~pageDataType=PageWrapperData, ~moduleName);
+    | Some(_)
+    | None => ""
+    };
+
+  let resultReactApp =
+    renderReactAppTemplate(~importPageWrapperDataString, elementString);
 
   let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
 
