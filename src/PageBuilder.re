@@ -61,10 +61,17 @@ let makeJsDataFileTemplate = data => {
   {j|export const data = `$(data)`|j};
 };
 
-let makeImportLine = (~pageDataType: PageData.t, ~moduleName) => {
+let makeImportLine =
+    (
+      ~pageDataType: PageData.t,
+      ~moduleName: string,
+      ~pathToPageDataDir: string,
+    ) => {
   let valueName = PageData.toValueName(pageDataType);
   let moduleName = makeJsDataModuleName(~moduleName);
-  {j|@module("./$(moduleName).js") external $(valueName): string = "data";|j};
+  // TODO If we write page's data (not page wrapper data),
+  //  we should put it to page's dir
+  {j|@module("$(pathToPageDataDir)/$(moduleName).js") external $(valueName): string = "data";|j};
 };
 
 let renderReactAppTemplate =
@@ -264,12 +271,24 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~headCssFilepaths=page.headCssFilepaths,
     );
 
+  let pageWrappersDataDir =
+    Path.join2(intermediateFilesOutputDir, "__pageWrappersData");
+
+  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
+
+  let relativePathToPageWrappersDataDir =
+    Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir);
+
   let (importPageWrapperDataString, wrapperDataFileContent, wrapperModuleName) =
     switch (page.pageWrapper) {
     | Some({component: WrapperWithDataAndChildren({data, _}), modulePath}) =>
       let moduleName = Utils.getModuleNameFromModulePath(modulePath);
       let importLine =
-        makeImportLine(~pageDataType=PageWrapperData, ~moduleName);
+        makeImportLine(
+          ~pageDataType=PageWrapperData,
+          ~pathToPageDataDir=relativePathToPageWrappersDataDir,
+          ~moduleName,
+        );
       let dataModuleContent = makeJsDataFileTemplate(data);
       (Some(importLine), Some(dataModuleContent), Some(moduleName));
     | Some(_)
@@ -293,15 +312,9 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
   };
 
   let () =
+    // Here we write page wrapper's data to a separate JS module.
     switch (wrapperModuleName, wrapperDataFileContent) {
     | (Some(wrapperModuleName), Some(wrapperDataFileContent)) =>
-      // We should write wrapperDataModule to the wrapper's shared dir.
-
-      let pageWrappersDataDir =
-        Path.join2(intermediateFilesOutputDir, "__pageWrappersData");
-
-      let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
-
       let pageWrapperDataFilename =
         makeJsDataModuleName(~moduleName=wrapperModuleName) ++ ".js";
 
