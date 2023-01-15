@@ -42,16 +42,37 @@ module PageData = {
     };
 };
 
-let makeDataModuleName = (~moduleName) => moduleName ++ "Data";
+let unsafeStringifyPropValue' = data =>
+  // We need a way to take a prop value of any type and inject it to generated React app template.
+  // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
+  // This is unsafe. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
+  // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
+  switch (data->Js.Json.stringifyAny) {
+  | Some(propValueString) => propValueString
+  | None =>
+    // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
+    "None"
+  };
+
+let makeJsDataModuleName = (~moduleName) => moduleName ++ "Data";
+
+let makeJsDataFileTemplate = data => {
+  let data = unsafeStringifyPropValue'(data);
+  {j|export const data = `$(data)`|j};
+};
 
 let makeImportLine = (~pageDataType: PageData.t, ~moduleName) => {
   let valueName = PageData.toValueName(pageDataType);
-  let moduleName = makeDataModuleName(~moduleName);
+  let moduleName = makeJsDataModuleName(~moduleName);
   {j|@module("./$(moduleName).js") external $(valueName): string = "data";|j};
 };
 
 let renderReactAppTemplate =
-    (~importPageWrapperDataString: string, elementString: string) => {j|
+    (~importPageWrapperDataString: option(string), elementString: string) => {
+  let importPageWrapperDataString =
+    importPageWrapperDataString->Belt.Option.getWithDefault("");
+
+  {j|
 $(importPageWrapperDataString)
 
 switch ReactDOM.querySelector("#root") {
@@ -59,6 +80,7 @@ switch ReactDOM.querySelector("#root") {
 | None => ()
 }
 |j};
+};
 
 let dataPropName = "data";
 
@@ -242,13 +264,16 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~headCssFilepaths=page.headCssFilepaths,
     );
 
-  let importPageWrapperDataString =
+  let (importPageWrapperDataString, wrapperDataFileContent, wrapperModuleName) =
     switch (page.pageWrapper) {
-    | Some({component: WrapperWithDataAndChildren(_), modulePath}) =>
+    | Some({component: WrapperWithDataAndChildren({data, _}), modulePath}) =>
       let moduleName = Utils.getModuleNameFromModulePath(modulePath);
-      makeImportLine(~pageDataType=PageWrapperData, ~moduleName);
+      let importLine =
+        makeImportLine(~pageDataType=PageWrapperData, ~moduleName);
+      let dataModuleContent = makeJsDataFileTemplate(data);
+      (Some(importLine), Some(dataModuleContent), Some(moduleName));
     | Some(_)
-    | None => ""
+    | None => (None, None, None)
     };
 
   let resultReactApp =
@@ -266,6 +291,26 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       resultReactApp,
     );
   };
+
+  let () =
+    switch (wrapperModuleName, wrapperDataFileContent) {
+    | (Some(wrapperModuleName), Some(wrapperDataFileContent)) =>
+      // We should write wrapperDataModule to the wrapper's shared dir.
+
+      let pageWrappersDataDir =
+        Path.join2(intermediateFilesOutputDir, "__pageWrappersData");
+
+      let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
+
+      let pageWrapperDataFilename =
+        makeJsDataModuleName(~moduleName=wrapperModuleName) ++ ".js";
+
+      Fs.writeFileSync(
+        Path.join2(pageWrappersDataDir, pageWrapperDataFilename),
+        wrapperDataFileContent,
+      );
+    | _ => ()
+    };
 
   let () = {
     let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
