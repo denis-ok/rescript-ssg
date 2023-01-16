@@ -171,21 +171,26 @@ let unsafeStringifyPropValue = data =>
     "None"
   };
 
+type processPageOutput = {
+  element: React.element,
+  elementString: string,
+};
+
 let processPageComponentWithWrapper =
     (
       ~pageComponent: component,
       ~pageWrapper: option(pageWrapper),
       ~moduleName: string,
     )
-    : (React.element, string) => {
-  let (element, elementString) =
+    : processPageOutput => {
+  let {element, elementString} =
     switch (pageComponent) {
-    | ComponentWithoutData(element) => (element, "<" ++ moduleName ++ " />")
+    | ComponentWithoutData(element) => {
+        element,
+        elementString: "<" ++ moduleName ++ " />",
+      }
     | ComponentWithData({component, data}) =>
       let unsafeStringifiedPropValue = unsafeStringifyPropValue(data);
-
-      let element = component(data);
-
       let elementString =
         "<"
         ++ moduleName
@@ -195,27 +200,26 @@ let processPageComponentWithWrapper =
         ++ unsafeStringifiedPropValue
         ++ " />";
 
-      (element, elementString);
+      let element = component(data);
+      {element, elementString};
     };
 
   switch (pageWrapper) {
-  | None => (element, elementString)
+  | None => {element, elementString}
   | Some({component, modulePath}) =>
     let moduleName = Utils.getModuleNameFromModulePath(modulePath);
     switch (component) {
     | WrapperWithChildren(f) =>
       let wrapperOpenTag = "<" ++ moduleName ++ ">";
       let wrapperCloseTag = "</" ++ moduleName ++ ">";
-      let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+      let wrappedElementString =
+        wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+
       let wrappedElement = f(element);
-      (wrappedElement, elementString);
+      {element: wrappedElement, elementString: wrappedElementString};
     | WrapperWithDataAndChildren({component, data}) =>
-      let wrappedElement = component(data, element);
-
       let dataValueName = PageData.toValueName(PageWrapperData);
-
       let dataPropString = {j|{$(dataValueName)->Js.Json.parseExn->Obj.magic}|j};
-
       let wrapperOpenTag =
         "<"
         ++ moduleName
@@ -224,12 +228,12 @@ let processPageComponentWithWrapper =
         ++ "="
         ++ dataPropString
         ++ " >";
-
       let wrapperCloseTag = "</" ++ moduleName ++ ">";
+      let wrappedElementString =
+        wrapperOpenTag ++ elementString ++ wrapperCloseTag;
 
-      let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
-
-      (wrappedElement, elementString);
+      let wrappedElement = component(data, element);
+      {element: wrappedElement, elementString: wrappedElementString};
     };
   };
 };
@@ -258,7 +262,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
 
   let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
 
-  let (element, elementString) =
+  let {element, elementString} =
     processPageComponentWithWrapper(
       ~pageComponent=page.component,
       ~pageWrapper=page.pageWrapper,
