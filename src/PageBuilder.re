@@ -65,22 +65,24 @@ let makeImportLine =
     (
       ~pageDataType: PageData.t,
       ~moduleName: string,
-      ~pathToPageDataDir: string,
+      ~relativePathToDataDir: string,
     ) => {
   let valueName = PageData.toValueName(pageDataType);
   let jsFilename = makeJsDataFilename(~moduleName);
   // TODO If we write page's data (not page wrapper data),
   //  we should put it to page's dir
-  {j|@module("$(pathToPageDataDir)/$(jsFilename)") external $(valueName): string = "data";|j};
+  {j|@module("$(relativePathToDataDir)/$(jsFilename)") external $(valueName): string = "data";|j};
 };
 
 let renderReactAppTemplate =
-    (~importPageWrapperDataString: option(string), elementString: string) => {
-  let importPageWrapperDataString =
-    importPageWrapperDataString->Belt.Option.getWithDefault("");
-
+    (
+      ~importPageWrapperDataString="",
+      ~importPageDataString="",
+      elementString: string,
+    ) => {
   {j|
 $(importPageWrapperDataString)
+$(importPageDataString)
 
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate($(elementString), root)
@@ -163,6 +165,7 @@ type processedDataProp = {
   rescriptImportString: string,
   jsDataFileContent: string,
   jsDataFilename: string,
+  jsDataFilepath: string,
 };
 
 type processedPage = {
@@ -182,17 +185,31 @@ let makeProcessedDataProp =
       ~data: 'a,
       ~pageDataType: PageData.t,
       ~moduleName: string,
-      ~pathToPageDataDir: string,
+      ~pageOutputDir,
+      ~pageWrappersDataDir,
     )
     : processedDataProp => {
+  let relativePathToDataDir =
+    switch (pageDataType) {
+    | PageData => "."
+    | PageWrapperData =>
+      Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir)
+    };
+
+  let jsDataFilepath =
+    switch (pageDataType) {
+    | PageData => pageOutputDir
+    | PageWrapperData => pageWrappersDataDir
+    };
+
   let rescriptImportString =
-    makeImportLine(~pageDataType, ~pathToPageDataDir, ~moduleName);
+    makeImportLine(~pageDataType, ~relativePathToDataDir, ~moduleName);
 
   let jsDataFileContent = makeJsDataFileTemplate(data);
 
   let jsDataFilename = makeJsDataFilename(~moduleName);
 
-  {rescriptImportString, jsDataFileContent, jsDataFilename};
+  {rescriptImportString, jsDataFileContent, jsDataFilename, jsDataFilepath};
 };
 
 let processPageComponentWithWrapper =
@@ -231,7 +248,8 @@ let processPageComponentWithWrapper =
           ~pageDataType,
           ~data,
           ~moduleName=pageModuleName,
-          ~pathToPageDataDir=pageOutputDir,
+          ~pageOutputDir,
+          ~pageWrappersDataDir,
         );
 
       {
@@ -283,7 +301,8 @@ let processPageComponentWithWrapper =
           ~pageDataType,
           ~data,
           ~moduleName=wrapperModuleName,
-          ~pathToPageDataDir=pageWrappersDataDir,
+          ~pageOutputDir,
+          ~pageWrappersDataDir,
         );
 
       {
@@ -325,7 +344,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
 
   let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
 
-  let {element, elementString, pageDataProp: _, pageWrapperDataProp: _} =
+  let {element, elementString, pageDataProp, pageWrapperDataProp} =
     processPageComponentWithWrapper(
       ~pageComponent=page.component,
       ~pageWrapper=page.pageWrapper,
@@ -340,27 +359,14 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~headCssFilepaths=page.headCssFilepaths,
     );
 
-  let relativePathToPageWrappersDataDir =
-    Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir);
-
-  let (importPageWrapperDataString, wrapperDataFileContent, wrapperModuleName) =
-    switch (page.pageWrapper) {
-    | Some({component: WrapperWithDataAndChildren({data, _}), modulePath}) =>
-      let moduleName = Utils.getModuleNameFromModulePath(modulePath);
-      let importLine =
-        makeImportLine(
-          ~pageDataType=PageWrapperData,
-          ~pathToPageDataDir=relativePathToPageWrappersDataDir,
-          ~moduleName,
-        );
-      let dataModuleContent = makeJsDataFileTemplate(data);
-      (Some(importLine), Some(dataModuleContent), Some(moduleName));
-    | Some(_)
-    | None => (None, None, None)
-    };
-
   let resultReactApp =
-    renderReactAppTemplate(~importPageWrapperDataString, elementString);
+    renderReactAppTemplate(
+      ~importPageWrapperDataString=?
+        Belt.Option.map(pageWrapperDataProp, v => v.rescriptImportString),
+      ~importPageDataString=?
+        Belt.Option.map(pageDataProp, v => v.rescriptImportString),
+      elementString,
+    );
 
   let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
 
@@ -376,18 +382,17 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
   };
 
   let () =
-    // Here we write page wrapper's data to a separate JS module.
-    switch (wrapperModuleName, wrapperDataFileContent) {
-    | (Some(wrapperModuleName), Some(wrapperDataFileContent)) =>
-      let pageWrapperDataFilename =
-        makeJsDataFilename(~moduleName=wrapperModuleName);
-
-      Fs.writeFileSync(
-        Path.join2(pageWrappersDataDir, pageWrapperDataFilename),
-        wrapperDataFileContent,
+    [|pageWrapperDataProp, pageDataProp|]
+    ->Js.Array2.forEach(data =>
+        switch (data) {
+        | None => ()
+        | Some({jsDataFileContent, jsDataFilename, jsDataFilepath, _}) =>
+          Fs.writeFileSync(
+            Path.join2(jsDataFilepath, jsDataFilename),
+            jsDataFileContent,
+          )
+        }
       );
-    | _ => ()
-    };
 
   let () = {
     let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
