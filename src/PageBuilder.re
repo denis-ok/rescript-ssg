@@ -42,7 +42,7 @@ module PageData = {
     };
 };
 
-let unsafeStringifyPropValue' = data =>
+let unsafeStringifyPropValue = data =>
   // We need a way to take a prop value of any type and inject it to generated React app template.
   // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
   // This is unsafe. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
@@ -57,7 +57,7 @@ let unsafeStringifyPropValue' = data =>
 let makeJsDataModuleName = (~moduleName) => moduleName ++ "Data";
 
 let makeJsDataFileTemplate = data => {
-  let data = unsafeStringifyPropValue'(data);
+  let data = unsafeStringifyPropValue(data);
   {j|export const data = `$(data)`|j};
 };
 
@@ -159,21 +159,14 @@ let renderHtmlTemplate =
 |j};
 };
 
-let unsafeStringifyPropValue = data =>
-  // We need a way to take a prop value of any type and inject it to generated React app template.
-  // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
-  // This is unsafe. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
-  // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
-  switch (data->Js.Json.stringifyAny) {
-  | Some(propValueString) => {j|{`$(propValueString)`->Js.Json.parseExn->Obj.magic}|j}
-  | None =>
-    // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
-    "None"
-  };
-
 type processPageOutput = {
   element: React.element,
   elementString: string,
+};
+
+let makeDataPropString = (pageDataType: PageData.t) => {
+  let dataValueName = PageData.toValueName(pageDataType);
+  {j|{$(dataValueName)->Js.Json.parseExn->Obj.magic}|j};
 };
 
 let processPageComponentWithWrapper =
@@ -190,14 +183,14 @@ let processPageComponentWithWrapper =
         elementString: "<" ++ moduleName ++ " />",
       }
     | ComponentWithData({component, data}) =>
-      let unsafeStringifiedPropValue = unsafeStringifyPropValue(data);
+      let dataPropString = makeDataPropString(PageData);
       let elementString =
         "<"
         ++ moduleName
         ++ " "
         ++ dataPropName
         ++ "="
-        ++ unsafeStringifiedPropValue
+        ++ dataPropString
         ++ " />";
 
       let element = component(data);
@@ -218,8 +211,7 @@ let processPageComponentWithWrapper =
       let wrappedElement = f(element);
       {element: wrappedElement, elementString: wrappedElementString};
     | WrapperWithDataAndChildren({component, data}) =>
-      let dataValueName = PageData.toValueName(PageWrapperData);
-      let dataPropString = {j|{$(dataValueName)->Js.Json.parseExn->Obj.magic}|j};
+      let dataPropString = makeDataPropString(PageWrapperData);
       let wrapperOpenTag =
         "<"
         ++ moduleName
