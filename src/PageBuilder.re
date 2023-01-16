@@ -54,7 +54,7 @@ let unsafeStringifyPropValue = data =>
     "None"
   };
 
-let makeJsDataModuleName = (~moduleName) => moduleName ++ "Data";
+let makeJsDataFilename = (~moduleName) => moduleName ++ "Data.js";
 
 let makeJsDataFileTemplate = data => {
   let data = unsafeStringifyPropValue(data);
@@ -68,10 +68,10 @@ let makeImportLine =
       ~pathToPageDataDir: string,
     ) => {
   let valueName = PageData.toValueName(pageDataType);
-  let moduleName = makeJsDataModuleName(~moduleName);
+  let jsFilename = makeJsDataFilename(~moduleName);
   // TODO If we write page's data (not page wrapper data),
   //  we should put it to page's dir
-  {j|@module("$(pathToPageDataDir)/$(moduleName).js") external $(valueName): string = "data";|j};
+  {j|@module("$(pathToPageDataDir)/$(jsFilename)") external $(valueName): string = "data";|j};
 };
 
 let renderReactAppTemplate =
@@ -159,9 +159,17 @@ let renderHtmlTemplate =
 |j};
 };
 
-type processPageOutput = {
+type processedDataProp = {
+  rescriptImportString: string,
+  jsDataFileContent: string,
+  jsDataFilename: string,
+};
+
+type processedPage = {
   element: React.element,
   elementString: string,
+  pageDataProp: option(processedDataProp),
+  pageWrapperDataProp: option(processedDataProp),
 };
 
 let makeDataPropString = (pageDataType: PageData.t) => {
@@ -169,24 +177,47 @@ let makeDataPropString = (pageDataType: PageData.t) => {
   {j|{$(dataValueName)->Js.Json.parseExn->Obj.magic}|j};
 };
 
+let makeProcessedDataProp =
+    (
+      ~data: 'a,
+      ~pageDataType: PageData.t,
+      ~moduleName: string,
+      ~pathToPageDataDir: string,
+    )
+    : processedDataProp => {
+  let rescriptImportString =
+    makeImportLine(~pageDataType, ~pathToPageDataDir, ~moduleName);
+
+  let jsDataFileContent = makeJsDataFileTemplate(data);
+
+  let jsDataFilename = makeJsDataFilename(~moduleName);
+
+  {rescriptImportString, jsDataFileContent, jsDataFilename};
+};
+
 let processPageComponentWithWrapper =
     (
       ~pageComponent: component,
       ~pageWrapper: option(pageWrapper),
-      ~moduleName: string,
+      ~pageModuleName: string,
+      ~pageOutputDir: string,
+      ~pageWrappersDataDir: string,
     )
-    : processPageOutput => {
-  let {element, elementString} =
+    : processedPage => {
+  let {element, elementString, pageDataProp, _} =
     switch (pageComponent) {
     | ComponentWithoutData(element) => {
         element,
-        elementString: "<" ++ moduleName ++ " />",
+        elementString: "<" ++ pageModuleName ++ " />",
+        pageDataProp: None,
+        pageWrapperDataProp: None,
       }
     | ComponentWithData({component, data}) =>
-      let dataPropString = makeDataPropString(PageData);
+      let pageDataType = PageData.PageData;
+      let dataPropString = makeDataPropString(pageDataType);
       let elementString =
         "<"
-        ++ moduleName
+        ++ pageModuleName
         ++ " "
         ++ dataPropName
         ++ "="
@@ -194,38 +225,73 @@ let processPageComponentWithWrapper =
         ++ " />";
 
       let element = component(data);
-      {element, elementString};
+
+      let pageDataProp =
+        makeProcessedDataProp(
+          ~pageDataType,
+          ~data,
+          ~moduleName=pageModuleName,
+          ~pathToPageDataDir=pageOutputDir,
+        );
+
+      {
+        element,
+        elementString,
+        pageDataProp: Some(pageDataProp),
+        pageWrapperDataProp: None,
+      };
     };
 
   switch (pageWrapper) {
-  | None => {element, elementString}
+  | None => {element, elementString, pageDataProp, pageWrapperDataProp: None}
   | Some({component, modulePath}) =>
-    let moduleName = Utils.getModuleNameFromModulePath(modulePath);
+    let wrapperModuleName = Utils.getModuleNameFromModulePath(modulePath);
     switch (component) {
     | WrapperWithChildren(f) =>
-      let wrapperOpenTag = "<" ++ moduleName ++ ">";
-      let wrapperCloseTag = "</" ++ moduleName ++ ">";
+      let wrapperOpenTag = "<" ++ wrapperModuleName ++ ">";
+      let wrapperCloseTag = "</" ++ wrapperModuleName ++ ">";
       let wrappedElementString =
         wrapperOpenTag ++ elementString ++ wrapperCloseTag;
 
       let wrappedElement = f(element);
-      {element: wrappedElement, elementString: wrappedElementString};
+
+      {
+        element: wrappedElement,
+        elementString: wrappedElementString,
+        pageDataProp,
+        pageWrapperDataProp: None,
+      };
     | WrapperWithDataAndChildren({component, data}) =>
-      let dataPropString = makeDataPropString(PageWrapperData);
+      let pageDataType = PageData.PageWrapperData;
+      let dataPropString = makeDataPropString(pageDataType);
       let wrapperOpenTag =
         "<"
-        ++ moduleName
+        ++ wrapperModuleName
         ++ " "
         ++ dataPropName
         ++ "="
         ++ dataPropString
         ++ " >";
-      let wrapperCloseTag = "</" ++ moduleName ++ ">";
+      let wrapperCloseTag = "</" ++ wrapperModuleName ++ ">";
       let wrappedElementString =
         wrapperOpenTag ++ elementString ++ wrapperCloseTag;
 
       let wrappedElement = component(data, element);
-      {element: wrappedElement, elementString: wrappedElementString};
+
+      let pageWrapperDataProp =
+        makeProcessedDataProp(
+          ~pageDataType,
+          ~data,
+          ~moduleName=wrapperModuleName,
+          ~pathToPageDataDir=pageWrappersDataDir,
+        );
+
+      {
+        element: wrappedElement,
+        elementString: wrappedElementString,
+        pageDataProp,
+        pageWrapperDataProp: Some(pageWrapperDataProp),
+      };
     };
   };
 };
@@ -238,6 +304,9 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
   let pagePath: string = page.path->PageBuilderT.PagePath.toString;
 
   let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
+
+  let pageWrappersDataDir =
+    Path.join2(intermediateFilesOutputDir, "__pageWrappersData");
 
   logger.info(() =>
     Js.log(
@@ -254,11 +323,15 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
 
   let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
 
-  let {element, elementString} =
+  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
+
+  let {element, elementString, pageDataProp: _, pageWrapperDataProp: _} =
     processPageComponentWithWrapper(
       ~pageComponent=page.component,
       ~pageWrapper=page.pageWrapper,
-      ~moduleName,
+      ~pageModuleName=moduleName,
+      ~pageOutputDir,
+      ~pageWrappersDataDir,
     );
 
   let resultHtml =
@@ -266,11 +339,6 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~pageElement=element,
       ~headCssFilepaths=page.headCssFilepaths,
     );
-
-  let pageWrappersDataDir =
-    Path.join2(intermediateFilesOutputDir, "__pageWrappersData");
-
-  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
 
   let relativePathToPageWrappersDataDir =
     Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir);
@@ -312,7 +380,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
     switch (wrapperModuleName, wrapperDataFileContent) {
     | (Some(wrapperModuleName), Some(wrapperDataFileContent)) =>
       let pageWrapperDataFilename =
-        makeJsDataModuleName(~moduleName=wrapperModuleName) ++ ".js";
+        makeJsDataFilename(~moduleName=wrapperModuleName);
 
       Fs.writeFileSync(
         Path.join2(pageWrappersDataDir, pageWrapperDataFilename),
