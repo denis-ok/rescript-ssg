@@ -164,7 +164,6 @@ let renderHtmlTemplate =
 type processedDataProp = {
   rescriptImportString: string,
   jsDataFileContent: string,
-  jsDataFilename: string,
   jsDataFilepath: string,
 };
 
@@ -195,13 +194,6 @@ let makeProcessedDataProp =
     | PageWrapperData =>
       Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir)
     };
-
-  let jsDataFilepath =
-    switch (pageDataType) {
-    | PageData => pageOutputDir
-    | PageWrapperData => pageWrappersDataDir
-    };
-
   let rescriptImportString =
     makeImportLine(~pageDataType, ~relativePathToDataDir, ~moduleName);
 
@@ -209,7 +201,13 @@ let makeProcessedDataProp =
 
   let jsDataFilename = makeJsDataFilename(~moduleName);
 
-  {rescriptImportString, jsDataFileContent, jsDataFilename, jsDataFilepath};
+  let jsDataFilepath =
+    switch (pageDataType) {
+    | PageData => Path.join2(pageOutputDir, jsDataFilename)
+    | PageWrapperData => Path.join2(pageWrappersDataDir, jsDataFilename)
+    };
+
+  {rescriptImportString, jsDataFileContent, jsDataFilepath};
 };
 
 let processPageComponentWithWrapper =
@@ -386,11 +384,8 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
     ->Js.Array2.forEach(data =>
         switch (data) {
         | None => ()
-        | Some({jsDataFileContent, jsDataFilename, jsDataFilepath, _}) =>
-          Fs.writeFileSync(
-            Path.join2(jsDataFilepath, jsDataFilename),
-            jsDataFileContent,
-          )
+        | Some({jsDataFileContent, jsDataFilepath, _}) =>
+          Fs.writeFileSync(jsDataFilepath, jsDataFileContent)
         }
       );
 
