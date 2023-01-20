@@ -17,6 +17,22 @@ let isEqual = (~msg="", v1, v2) =>
     exitWithError()
   }
 
+module Utils = {
+  module GetModuleNameFromModulePath = {
+    let testName = "Utils.getModuleNameFromModulePath"
+    let test = modulePath => {
+      let moduleName = Utils.getModuleNameFromModulePath(modulePath)
+      isEqual(~msg=testName, moduleName, "TestPage")
+    }
+    test("TestPage.bs.js")
+    test("/TestPage.bs.js")
+    test("./TestPage.bs.js")
+    test("/foo/bar/TestPage.bs.js")
+    test("foo/bar/TestPage.bs.js")
+    Js.log2(testName, " tests passed!")
+  }
+}
+
 module MakeReactAppModuleName = {
   let moduleName = "Page"
 
@@ -60,6 +76,9 @@ module BuildPageHtmlAndReactApp = {
     )
 
     let expectedPageAppContent = `
+
+
+
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate(<TestPage />, root)
 | None => ()
