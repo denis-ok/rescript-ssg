@@ -57,6 +57,11 @@ module BuildPageHtmlAndReactApp = {
     debug: ignore,
   }
 
+  let removeMultipleNewlines = (str: string) => {
+    let regex = Js.Re.fromStringWithFlags(`[\r\n]+`, ~flags="g")
+    str->Js.String2.replaceByRe(regex, "")
+  }
+
   let logger = Log.makeLogger(Info)
 
   let outputDir = Path.join2(dirname, "output")
@@ -67,37 +72,41 @@ module BuildPageHtmlAndReactApp = {
 
   let rescriptBinaryPath = Path.join2(dirname, "../node_modules/.bin/rescript")
 
-  let test = page => {
+  let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup()
+
     PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, page)
+
     Commands.compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=false)
+
     let testPageAppContent = Fs.readFileSyncAsUtf8(
       Path.join2(intermediateFilesOutputDir, "TestPageApp.res"),
     )
 
-    let expectedPageAppContent = `
+    isEqual(removeMultipleNewlines(testPageAppContent), removeMultipleNewlines(expectedAppContent))
 
+    let _html = Fs.readFileSyncAsUtf8(Path.join2(intermediateFilesOutputDir, "index.html"))
+  }
 
+  module SimplePage = {
+    let page: PageBuilder.page = {
+      pageWrapper: None,
+      component: ComponentWithoutData(<TestPage />),
+      modulePath: TestPage.modulePath,
+      headCssFilepaths: [],
+      path: Root,
+    }
 
+    let expectedAppContent = `
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate(<TestPage />, root)
 | None => ()
 }
 `
-    isEqual(testPageAppContent, expectedPageAppContent)
+    let expectedHtmlContent = ``
 
-    let () = Fs.readFileSyncAsUtf8(Path.join2(intermediateFilesOutputDir, "index.html"))->ignore
+    let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)
   }
-
-  let page: PageBuilder.page = {
-    pageWrapper: None,
-    component: ComponentWithoutData(<TestPage />),
-    modulePath: TestPage.modulePath,
-    headCssFilepaths: [],
-    path: Root,
-  }
-
-  let () = test(page)
 
   Js.log("BuildPageHtmlAndReactApp tests passed!")
 }
