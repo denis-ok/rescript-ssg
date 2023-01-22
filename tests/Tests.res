@@ -17,14 +17,6 @@ let isEqual = (~msg="", v1, v2) =>
     exitWithError()
   }
 
-let isIncludes = (~msg="", ~string: string, ~substring: string) =>
-  if !(string->Js.String2.includes(substring)) {
-    Js.log2("Test failed:", msg)
-    Js.log2("expected string:", string)
-    Js.log2("to include substring:", substring)
-    exitWithError()
-  }
-
 module Utils_ = {
   module GetModuleNameFromModulePath = {
     let testName = "Utils.getModuleNameFromModulePath"
@@ -114,6 +106,29 @@ module BuildPageHtmlAndReactApp = {
     let expectedAppContent = `
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate(<TestPage />, root)
+| None => ()
+}
+`
+    let expectedHtmlContent = ``
+
+    let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)
+  }
+
+  module PageWithWrapper = {
+    let page: PageBuilder.page = {
+      pageWrapper: Some({
+        component: WrapperWithChildren(children => <TestWrapper> children </TestWrapper>),
+        modulePath: TestWrapper.modulePath,
+      }),
+      component: ComponentWithoutData(<TestPage />),
+      modulePath: TestPage.modulePath,
+      headCssFilepaths: [],
+      path: Root,
+    }
+
+    let expectedAppContent = `
+switch ReactDOM.querySelector("#root") {
+| Some(root) => ReactDOM.hydrate(<TestWrapper><TestPage /></TestWrapper>, root)
 | None => ()
 }
 `
