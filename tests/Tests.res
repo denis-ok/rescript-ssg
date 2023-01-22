@@ -170,5 +170,56 @@ switch ReactDOM.querySelector("#root") {
     let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)
   }
 
+  module PageWrapperWithDataAndPageWithData = {
+    let page: PageBuilder.page = {
+      pageWrapper: Some({
+        component: WrapperWithDataAndChildren({
+          component: (data, children) => <TestWrapperWithData data> children </TestWrapperWithData>,
+          data: Some({
+            bool: true,
+            string: "foo",
+            int: 1,
+            float: 1.23,
+            variant: A,
+            polyVariant: #hello,
+            option: Some("bar"),
+          }),
+        }),
+        modulePath: TestWrapperWithData.modulePath,
+      }),
+      component: ComponentWithData({
+        component: data => <TestPageWithData data />,
+        data: Some({
+          bool: true,
+          string: "foo",
+          int: 1,
+          float: 1.23,
+          variant: A,
+          polyVariant: #hello,
+          option: Some("bar"),
+        }),
+      }),
+      modulePath: TestPageWithData.modulePath,
+      headCssFilepaths: [],
+      path: Root,
+    }
+
+    let expectedAppContent = `
+@module("__pageWrappersData/TestWrapperWithDataData.js") external pageWrapperData: string = "data"
+@module("./TestPageWithDataData.js") external pageData: string = "data"
+
+switch ReactDOM.querySelector("#root") {
+| Some(root) => ReactDOM.hydrate(
+<TestWrapperWithData data={pageWrapperData->Js.Json.parseExn->Obj.magic} >
+<TestPageWithData data={pageData->Js.Json.parseExn->Obj.magic} />
+</TestWrapperWithData>, root)
+| None => ()
+}
+`
+    let expectedHtmlContent = ``
+
+    let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)
+  }
+
   Js.log("BuildPageHtmlAndReactApp tests passed!")
 }
