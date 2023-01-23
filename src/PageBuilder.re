@@ -190,6 +190,8 @@ let makeDataPropString = (pageDataType: PageData.t) => {
   {j|{$(dataValueName)->Js.Json.parseExn->Obj.magic}|j};
 };
 
+let pageWrappersDataDirname = "__pageWrappersData";
+
 let makeProcessedDataProp =
     (
       ~data: 'a,
@@ -203,8 +205,15 @@ let makeProcessedDataProp =
     switch (pageDataType) {
     | PageData => "."
     | PageWrapperData =>
-      Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir)
+      let relativePath =
+        Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir);
+      if (relativePath->Js.String2.startsWith(pageWrappersDataDirname)) {
+        "./" ++ relativePath;
+      } else {
+        relativePath;
+      };
     };
+
   let rescriptImportString =
     makeImportLine(~pageDataType, ~relativePathToDataDir, ~moduleName);
 
@@ -334,7 +343,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
   let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
 
   let pageWrappersDataDir =
-    Path.join2(intermediateFilesOutputDir, "__pageWrappersData");
+    Path.join2(intermediateFilesOutputDir, pageWrappersDataDirname);
 
   logger.info(() =>
     Js.log(
