@@ -69,8 +69,6 @@ let makeImportLine =
     ) => {
   let valueName = PageData.toValueName(pageDataType);
   let jsFilename = makeJsDataFilename(~moduleName);
-  // TODO If we write page's data (not page wrapper data),
-  //  we should put it to page's dir
   {j|@module("$(relativePathToDataDir)/$(jsFilename)") external $(valueName): string = "data"|j};
 };
 
