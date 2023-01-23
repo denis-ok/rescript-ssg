@@ -57,7 +57,7 @@ module BuildPageHtmlAndReactApp = {
     debug: ignore,
   }
 
-  let removeMultipleNewlines = (str: string) => {
+  let removeNewlines = (str: string) => {
     let regex = Js.Re.fromStringWithFlags(`[\r\n]+`, ~flags="g")
     str->Js.String2.replaceByRe(regex, "")
   }
@@ -89,7 +89,7 @@ module BuildPageHtmlAndReactApp = {
       Path.join2(intermediateFilesOutputDir, reactAppModuleName ++ ".res"),
     )
 
-    isEqual(removeMultipleNewlines(testPageAppContent), removeMultipleNewlines(expectedAppContent))
+    isEqual(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent))
 
     let _html = Fs.readFileSyncAsUtf8(Path.join2(intermediateFilesOutputDir, "index.html"))
   }
