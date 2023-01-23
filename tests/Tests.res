@@ -205,7 +205,7 @@ switch ReactDOM.querySelector("#root") {
     }
 
     let expectedAppContent = `
-@module("__pageWrappersData/TestWrapperWithDataData.js") external pageWrapperData: string = "data"
+@module("./__pageWrappersData/TestWrapperWithDataData.js") external pageWrapperData: string = "data"
 @module("./TestPageWithDataData.js") external pageData: string = "data"
 
 switch ReactDOM.querySelector("#root") {
