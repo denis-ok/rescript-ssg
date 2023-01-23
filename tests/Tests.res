@@ -17,6 +17,22 @@ let isEqual = (~msg="", v1, v2) =>
     exitWithError()
   }
 
+module Utils_ = {
+  module GetModuleNameFromModulePath = {
+    let testName = "Utils.getModuleNameFromModulePath"
+    let test = modulePath => {
+      let moduleName = Utils.getModuleNameFromModulePath(modulePath)
+      isEqual(~msg=testName, moduleName, "TestPage")
+    }
+    test("TestPage.bs.js")
+    test("/TestPage.bs.js")
+    test("./TestPage.bs.js")
+    test("/foo/bar/TestPage.bs.js")
+    test("foo/bar/TestPage.bs.js")
+    Js.log2(testName, " tests passed!")
+  }
+}
+
 module MakeReactAppModuleName = {
   let moduleName = "Page"
 
@@ -41,6 +57,11 @@ module BuildPageHtmlAndReactApp = {
     debug: ignore,
   }
 
+  let removeNewlines = (str: string) => {
+    let regex = Js.Re.fromStringWithFlags(`[\r\n]+`, ~flags="g")
+    str->Js.String2.replaceByRe(regex, "")
+  }
+
   let logger = Log.makeLogger(Info)
 
   let outputDir = Path.join2(dirname, "output")
@@ -51,34 +72,154 @@ module BuildPageHtmlAndReactApp = {
 
   let rescriptBinaryPath = Path.join2(dirname, "../node_modules/.bin/rescript")
 
-  let test = page => {
+  let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup()
+
     PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, page)
+
     Commands.compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=false)
+
+    let moduleName = Utils.getModuleNameFromModulePath(page.modulePath)
+
+    let pagePath: string = page.path->PageBuilderT.PagePath.toString
+
+    let reactAppModuleName = PageBuilder.makeReactAppModuleName(~pagePath, ~moduleName)
+
     let testPageAppContent = Fs.readFileSyncAsUtf8(
-      Path.join2(intermediateFilesOutputDir, "TestPageApp.res"),
+      Path.join2(intermediateFilesOutputDir, reactAppModuleName ++ ".res"),
     )
 
-    let expectedPageAppContent = `
+    isEqual(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent))
+
+    let _html = Fs.readFileSyncAsUtf8(Path.join2(intermediateFilesOutputDir, "index.html"))
+  }
+
+  module SimplePage = {
+    let page: PageBuilder.page = {
+      pageWrapper: None,
+      component: ComponentWithoutData(<TestPage />),
+      modulePath: TestPage.modulePath,
+      headCssFilepaths: [],
+      path: Root,
+    }
+
+    let expectedAppContent = `
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate(<TestPage />, root)
 | None => ()
 }
 `
-    isEqual(testPageAppContent, expectedPageAppContent)
+    let expectedHtmlContent = ``
 
-    let () = Fs.readFileSyncAsUtf8(Path.join2(intermediateFilesOutputDir, "index.html"))->ignore
+    let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)
   }
 
-  let page: PageBuilder.page = {
-    pageWrapper: None,
-    component: ComponentWithoutData(<TestPage />),
-    modulePath: TestPage.modulePath,
-    headCssFilepaths: [],
-    path: Root,
+  module PageWithWrapper = {
+    let page: PageBuilder.page = {
+      pageWrapper: Some({
+        component: WrapperWithChildren(children => <TestWrapper> children </TestWrapper>),
+        modulePath: TestWrapper.modulePath,
+      }),
+      component: ComponentWithoutData(<TestPage />),
+      modulePath: TestPage.modulePath,
+      headCssFilepaths: [],
+      path: Root,
+    }
+
+    let expectedAppContent = `
+switch ReactDOM.querySelector("#root") {
+| Some(root) => ReactDOM.hydrate(<TestWrapper><TestPage /></TestWrapper>, root)
+| None => ()
+}
+`
+    let expectedHtmlContent = ``
+
+    let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)
   }
 
-  let () = test(page)
+  module PageWithData = {
+    let page: PageBuilder.page = {
+      pageWrapper: None,
+      component: ComponentWithData({
+        component: data => <TestPageWithData data />,
+        data: Some({
+          bool: true,
+          string: "foo",
+          int: 1,
+          float: 1.23,
+          variant: A,
+          polyVariant: #hello,
+          option: Some("bar"),
+        }),
+      }),
+      modulePath: TestPageWithData.modulePath,
+      headCssFilepaths: [],
+      path: Root,
+    }
+
+    let expectedAppContent = `
+@module("./TestPageWithDataData.js") external pageData: string = "data"
+
+switch ReactDOM.querySelector("#root") {
+| Some(root) => ReactDOM.hydrate(<TestPageWithData data={pageData->Js.Json.parseExn->Obj.magic} />, root)
+| None => ()
+}
+`
+    let expectedHtmlContent = ``
+
+    let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)
+  }
+
+  module PageWrapperWithDataAndPageWithData = {
+    let page: PageBuilder.page = {
+      pageWrapper: Some({
+        component: WrapperWithDataAndChildren({
+          component: (data, children) => <TestWrapperWithData data> children </TestWrapperWithData>,
+          data: Some({
+            bool: true,
+            string: "foo",
+            int: 1,
+            float: 1.23,
+            variant: A,
+            polyVariant: #hello,
+            option: Some("bar"),
+          }),
+        }),
+        modulePath: TestWrapperWithData.modulePath,
+      }),
+      component: ComponentWithData({
+        component: data => <TestPageWithData data />,
+        data: Some({
+          bool: true,
+          string: "foo",
+          int: 1,
+          float: 1.23,
+          variant: A,
+          polyVariant: #hello,
+          option: Some("bar"),
+        }),
+      }),
+      modulePath: TestPageWithData.modulePath,
+      headCssFilepaths: [],
+      path: Root,
+    }
+
+    let expectedAppContent = `
+@module("__pageWrappersData/TestWrapperWithDataData.js") external pageWrapperData: string = "data"
+@module("./TestPageWithDataData.js") external pageData: string = "data"
+
+switch ReactDOM.querySelector("#root") {
+| Some(root) => ReactDOM.hydrate(
+<TestWrapperWithData data={pageWrapperData->Js.Json.parseExn->Obj.magic} >
+<TestPageWithData data={pageData->Js.Json.parseExn->Obj.magic} />
+</TestWrapperWithData>, root)
+| None => ()
+}
+`
+    let expectedHtmlContent = ``
+
+    let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)
+  }
 
   Js.log("BuildPageHtmlAndReactApp tests passed!")
 }

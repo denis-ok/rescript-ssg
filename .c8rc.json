@@ -4,6 +4,7 @@
     "html"
   ],
   "include": [
-    "src/PageBuilder.bs.js"
+    "src/PageBuilder.bs.js",
+    "src/Utils.bs.js"
   ]
 }

@@ -30,12 +30,64 @@ type page = {
   headCssFilepaths: array(string),
 };
 
-let renderReactAppTemplate = (elementString: string) => {j|
+module PageData = {
+  type t =
+    | PageWrapperData
+    | PageData;
+
+  let toValueName = (t: t) =>
+    switch (t) {
+    | PageWrapperData => "pageWrapperData"
+    | PageData => "pageData"
+    };
+};
+
+let unsafeStringifyPropValue = data =>
+  // We need a way to take a prop value of any type and inject it to generated React app template.
+  // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
+  // This is unsafe. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
+  // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
+  switch (data->Js.Json.stringifyAny) {
+  | Some(propValueString) => propValueString
+  | None =>
+    // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
+    "None"
+  };
+
+let makeJsDataFilename = (~moduleName) => moduleName ++ "Data.js";
+
+let makeJsDataFileTemplate = data => {
+  let data = unsafeStringifyPropValue(data);
+  {j|export const data = `$(data)`|j};
+};
+
+let makeImportLine =
+    (
+      ~pageDataType: PageData.t,
+      ~moduleName: string,
+      ~relativePathToDataDir: string,
+    ) => {
+  let valueName = PageData.toValueName(pageDataType);
+  let jsFilename = makeJsDataFilename(~moduleName);
+  {j|@module("$(relativePathToDataDir)/$(jsFilename)") external $(valueName): string = "data"|j};
+};
+
+let renderReactAppTemplate =
+    (
+      ~importPageWrapperDataString="",
+      ~importPageDataString="",
+      elementString: string,
+    ) => {
+  {j|
+$(importPageWrapperDataString)
+$(importPageDataString)
+
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate($(elementString), root)
 | None => ()
 }
 |j};
+};
 
 let dataPropName = "data";
 
@@ -107,69 +159,154 @@ let renderHtmlTemplate =
 |j};
 };
 
-let unsafeStringifyPropValue = data =>
-  // We need a way to take a prop value of any type and inject it to generated React app template.
-  // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
-  // This is unsafe. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
-  // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
-  switch (data->Js.Json.stringifyAny) {
-  | Some(propValueString) => {j|{`$(propValueString)`->Js.Json.parseExn->Obj.magic}|j}
-  | None =>
-    // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
-    "None"
-  };
+type processedDataProp = {
+  rescriptImportString: string,
+  jsDataFileContent: string,
+  jsDataFilepath: string,
+};
+
+type processedPage = {
+  element: React.element,
+  elementString: string,
+  pageDataProp: option(processedDataProp),
+  pageWrapperDataProp: option(processedDataProp),
+};
+
+let makeDataPropString = (pageDataType: PageData.t) => {
+  let dataValueName = PageData.toValueName(pageDataType);
+  {j|{$(dataValueName)->Js.Json.parseExn->Obj.magic}|j};
+};
+
+let makeProcessedDataProp =
+    (
+      ~data: 'a,
+      ~pageDataType: PageData.t,
+      ~moduleName: string,
+      ~pageOutputDir,
+      ~pageWrappersDataDir,
+    )
+    : processedDataProp => {
+  let relativePathToDataDir =
+    switch (pageDataType) {
+    | PageData => "."
+    | PageWrapperData =>
+      Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir)
+    };
+  let rescriptImportString =
+    makeImportLine(~pageDataType, ~relativePathToDataDir, ~moduleName);
+
+  let jsDataFileContent = makeJsDataFileTemplate(data);
+
+  let jsDataFilename = makeJsDataFilename(~moduleName);
+
+  let jsDataFilepath =
+    switch (pageDataType) {
+    | PageData => Path.join2(pageOutputDir, jsDataFilename)
+    | PageWrapperData => Path.join2(pageWrappersDataDir, jsDataFilename)
+    };
+
+  {rescriptImportString, jsDataFileContent, jsDataFilepath};
+};
 
 let processPageComponentWithWrapper =
     (
       ~pageComponent: component,
       ~pageWrapper: option(pageWrapper),
-      ~moduleName: string,
+      ~pageModuleName: string,
+      ~pageOutputDir: string,
+      ~pageWrappersDataDir: string,
     )
-    : (React.element, string) => {
-  let (element, elementString) =
+    : processedPage => {
+  let {element, elementString, pageDataProp, _} =
     switch (pageComponent) {
-    | ComponentWithoutData(element) => (element, "<" ++ moduleName ++ " />")
+    | ComponentWithoutData(element) => {
+        element,
+        elementString: "<" ++ pageModuleName ++ " />",
+        pageDataProp: None,
+        pageWrapperDataProp: None,
+      }
     | ComponentWithData({component, data}) =>
-      let unsafeStringifiedPropValue = unsafeStringifyPropValue(data);
-
-      let element = component(data);
-
+      let pageDataType = PageData.PageData;
+      let dataPropString = makeDataPropString(pageDataType);
       let elementString =
         "<"
-        ++ moduleName
+        ++ pageModuleName
         ++ " "
         ++ dataPropName
         ++ "="
-        ++ unsafeStringifiedPropValue
+        ++ dataPropString
         ++ " />";
 
-      (element, elementString);
+      let element = component(data);
+
+      let pageDataProp =
+        makeProcessedDataProp(
+          ~pageDataType,
+          ~data,
+          ~moduleName=pageModuleName,
+          ~pageOutputDir,
+          ~pageWrappersDataDir,
+        );
+
+      {
+        element,
+        elementString,
+        pageDataProp: Some(pageDataProp),
+        pageWrapperDataProp: None,
+      };
     };
 
   switch (pageWrapper) {
-  | None => (element, elementString)
+  | None => {element, elementString, pageDataProp, pageWrapperDataProp: None}
   | Some({component, modulePath}) =>
-    let moduleName = Utils.getModuleNameFromModulePath(modulePath);
+    let wrapperModuleName = Utils.getModuleNameFromModulePath(modulePath);
     switch (component) {
     | WrapperWithChildren(f) =>
-      let wrapperOpenTag = "<" ++ moduleName ++ ">";
-      let wrapperCloseTag = "</" ++ moduleName ++ ">";
-      let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+      let wrapperOpenTag = "<" ++ wrapperModuleName ++ ">";
+      let wrapperCloseTag = "</" ++ wrapperModuleName ++ ">";
+      let wrappedElementString =
+        wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+
       let wrappedElement = f(element);
-      (wrappedElement, elementString);
+
+      {
+        element: wrappedElement,
+        elementString: wrappedElementString,
+        pageDataProp,
+        pageWrapperDataProp: None,
+      };
     | WrapperWithDataAndChildren({component, data}) =>
+      let pageDataType = PageData.PageWrapperData;
+      let dataPropString = makeDataPropString(pageDataType);
+      let wrapperOpenTag =
+        "<"
+        ++ wrapperModuleName
+        ++ " "
+        ++ dataPropName
+        ++ "="
+        ++ dataPropString
+        ++ " >";
+      let wrapperCloseTag = "</" ++ wrapperModuleName ++ ">";
+      let wrappedElementString =
+        wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+
       let wrappedElement = component(data, element);
 
-      let unsafeStringifiedPropValue = unsafeStringifyPropValue(data);
+      let pageWrapperDataProp =
+        makeProcessedDataProp(
+          ~pageDataType,
+          ~data,
+          ~moduleName=wrapperModuleName,
+          ~pageOutputDir,
+          ~pageWrappersDataDir,
+        );
 
-      let wrapperOpenTag =
-        "<" ++ moduleName ++ " data=" ++ unsafeStringifiedPropValue ++ " >";
-
-      let wrapperCloseTag = "</" ++ moduleName ++ ">";
-
-      let elementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
-
-      (wrappedElement, elementString);
+      {
+        element: wrappedElement,
+        elementString: wrappedElementString,
+        pageDataProp,
+        pageWrapperDataProp: Some(pageWrapperDataProp),
+      };
     };
   };
 };
@@ -182,6 +319,9 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
   let pagePath: string = page.path->PageBuilderT.PagePath.toString;
 
   let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
+
+  let pageWrappersDataDir =
+    Path.join2(intermediateFilesOutputDir, "__pageWrappersData");
 
   logger.info(() =>
     Js.log(
@@ -198,11 +338,15 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
 
   let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
 
-  let (element, elementString) =
+  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
+
+  let {element, elementString, pageDataProp, pageWrapperDataProp} =
     processPageComponentWithWrapper(
       ~pageComponent=page.component,
       ~pageWrapper=page.pageWrapper,
-      ~moduleName,
+      ~pageModuleName=moduleName,
+      ~pageOutputDir,
+      ~pageWrappersDataDir,
     );
 
   let resultHtml =
@@ -211,7 +355,14 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~headCssFilepaths=page.headCssFilepaths,
     );
 
-  let resultReactApp = renderReactAppTemplate(elementString);
+  let resultReactApp =
+    renderReactAppTemplate(
+      ~importPageWrapperDataString=?
+        Belt.Option.map(pageWrapperDataProp, v => v.rescriptImportString),
+      ~importPageDataString=?
+        Belt.Option.map(pageDataProp, v => v.rescriptImportString),
+      elementString,
+    );
 
   let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
 
@@ -225,6 +376,16 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       resultReactApp,
     );
   };
+
+  let () =
+    [|pageWrapperDataProp, pageDataProp|]
+    ->Js.Array2.forEach(data =>
+        switch (data) {
+        | None => ()
+        | Some({jsDataFileContent, jsDataFilepath, _}) =>
+          Fs.writeFileSync(jsDataFilepath, jsDataFileContent)
+        }
+      );
 
   let () = {
     let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";

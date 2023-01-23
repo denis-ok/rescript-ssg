@@ -3,3 +3,5 @@
 [@module "path"] external basename: string => string = "basename";
 [@module "path"] external extname: string => string = "extname";
 [@module "path"] external dirname: string => string = "dirname";
+[@module "path"]
+external relative: (~from: string, ~to_: string) => string = "relative";
