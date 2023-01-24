@@ -18,18 +18,16 @@ module Hash = {
 
   let digestLength = 20;
 
-  let makeNew = () => crypto->createHash'("md4");
+  let createMd4 = () => crypto->createHash'("md4");
 
   let bufferToHash = (data: Buffer.t) =>
-    crypto
-    ->createHash'("md4")
+    createMd4()
     ->updateBufferWithBuffer(data)
     ->digest("hex")
     ->Js.String2.slice(~from=0, ~to_=digestLength);
 
   let stringToHash = (data: string) =>
-    crypto
-    ->createHash'("md4")
+    createMd4()
     ->updateBufferWithString(data)
     ->digest("hex")
     ->Js.String2.slice(~from=0, ~to_=digestLength);
