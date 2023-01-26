@@ -1,29 +1,3 @@
-module Hash = {
-  type crypto;
-
-  type hash;
-
-  [@module "crypto"] external crypto: crypto = "default";
-
-  [@send "createHash"]
-  external createHash': (crypto, string) => hash = "createHash";
-
-  [@send "update"] external updateBuffer: (hash, Buffer.t) => hash = "update";
-
-  [@send "digest"] external digest: (hash, string) => string = "digest";
-
-  let digestLength = 20;
-
-  let makeNew = () => crypto->createHash'("md4");
-
-  let bufferToHash = (data: Buffer.t) =>
-    crypto
-    ->createHash'("md4")
-    ->updateBuffer(data)
-    ->digest("hex")
-    ->Js.String2.slice(~from=0, ~to_=digestLength);
-};
-
 [@send] external replaceAll: (string, string, string) => string = "replaceAll";
 
 // 'v16.15.0' => 16150
@@ -61,7 +35,7 @@ let getFinalHashedAssetPath =
     | Some(func) => func(fileData)
     };
 
-  let fileHash = Hash.bufferToHash(processedFileData);
+  let fileHash = Crypto.Hash.bufferToHash(processedFileData);
 
   let fileName = Path.basename(url);
 
