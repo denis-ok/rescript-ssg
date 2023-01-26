@@ -54,7 +54,7 @@ let unsafeStringifyPropValue = data =>
     "None"
   };
 
-let makeImportLine =
+let makeStringToImportJsFileFromRescript =
     (
       ~pageDataType: PageData.t,
       ~jsDataFilename: string,
@@ -200,7 +200,11 @@ let makeProcessedDataProp =
   let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".js";
 
   let rescriptImportString =
-    makeImportLine(~pageDataType, ~relativePathToDataDir, ~jsDataFilename);
+    makeStringToImportJsFileFromRescript(
+      ~pageDataType,
+      ~relativePathToDataDir,
+      ~jsDataFilename,
+    );
 
   let jsDataFileContent = {j|export const data = `$(stringifiedData)`|j};
 
