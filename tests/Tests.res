@@ -77,7 +77,7 @@ module BuildPageHtmlAndReactApp = {
 
     PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, page)
 
-    Commands.compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=false)
+    Commands.compileRescript(~rescriptBinaryPath, ~logger)
 
     let moduleName = Utils.getModuleNameFromModulePath(page.modulePath)
 
