@@ -67,22 +67,14 @@ let unsafeStringifyPropValue = data =>
     "None"
   };
 
-let makeJsDataFilename = (~moduleName) => moduleName ++ "Data.js";
-
-let makeJsDataFileTemplate = data => {
-  let data = unsafeStringifyPropValue(data);
-  {j|export const data = `$(data)`|j};
-};
-
-let makeImportLine =
+let makeStringToImportJsFileFromRescript =
     (
       ~pageDataType: PageData.t,
-      ~moduleName: string,
+      ~jsDataFilename: string,
       ~relativePathToDataDir: string,
     ) => {
   let valueName = PageData.toValueName(pageDataType);
-  let jsFilename = makeJsDataFilename(~moduleName);
-  {j|@module("$(relativePathToDataDir)/$(jsFilename)") external $(valueName): string = "data"|j};
+  {j|@module("$(relativePathToDataDir)/$(jsDataFilename)") external $(valueName): string = "data"|j};
 };
 
 let renderReactAppTemplate =
@@ -214,12 +206,20 @@ let makeProcessedDataProp =
       };
     };
 
+  let stringifiedData = unsafeStringifyPropValue(data);
+
+  let propDataHash = Crypto.Hash.stringToHash(stringifiedData);
+
+  let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".js";
+
   let rescriptImportString =
-    makeImportLine(~pageDataType, ~relativePathToDataDir, ~moduleName);
+    makeStringToImportJsFileFromRescript(
+      ~pageDataType,
+      ~relativePathToDataDir,
+      ~jsDataFilename,
+    );
 
-  let jsDataFileContent = makeJsDataFileTemplate(data);
-
-  let jsDataFilename = makeJsDataFilename(~moduleName);
+  let jsDataFileContent = {j|export const data = `$(stringifiedData)`|j};
 
   let jsDataFilepath =
     switch (pageDataType) {
