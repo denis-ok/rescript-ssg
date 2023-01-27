@@ -6,8 +6,6 @@ let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
     Js.log("[Commands.compileRescript] Compiling fresh React app files...")
   );
 
-  let _ = rescriptBinaryPath;
-
   switch (
     ChildProcess.spawnSync(
       rescriptBinaryPath,
