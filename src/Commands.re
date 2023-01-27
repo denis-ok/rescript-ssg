@@ -6,23 +6,28 @@ let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
     Js.log("[Commands.compileRescript] Compiling fresh React app files...")
   );
 
+  let _ = rescriptBinaryPath;
+
   switch (
     ChildProcess.spawnSync(
       rescriptBinaryPath,
       [||],
-      {"encoding": "utf8", "stdio": "inherit"},
+      {"shell": true, "encoding": "utf8", "stdio": "inherit"},
     )
   ) {
-  | exitCode when exitCode == 0 =>
+  | Ok () =>
     logger.info(() => {Js.log("[Commands.compileRescript] Success!")});
     Js.Console.timeEnd(durationLabel);
-  | exitCode =>
+  | Error(JsError(error)) =>
     logger.info(() => {
-      Js.Console.error2(
-        "[Commands.compileRescript] Failure! Exit code:",
-        exitCode,
-      )
+      Js.Console.error2("[Commands.compileRescript] Failure! Error:", error)
     });
+    Process.exit(1);
+  | Error(ExitCodeIsNotZero(exitCode)) =>
+    Js.Console.error2(
+      "[Commands.compileRescript] Failure! Exit code is not zero:",
+      exitCode,
+    );
     Process.exit(1);
   | exception (Js.Exn.Error(error)) =>
     logger.info(() => {
