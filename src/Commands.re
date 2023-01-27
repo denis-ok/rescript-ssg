@@ -1,9 +1,4 @@
-let compileRescript =
-    (
-      ~rescriptBinaryPath: string,
-      ~logger: Log.logger,
-      ~logStdoutOnSuccess: bool,
-    ) => {
+let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
   let durationLabel = "[Commands.compileRescript] duration";
   Js.Console.timeStart(durationLabel);
 
@@ -11,31 +6,32 @@ let compileRescript =
     Js.log("[Commands.compileRescript] Compiling fresh React app files...")
   );
 
-  switch (ChildProcess.execSync(. rescriptBinaryPath, {"encoding": "utf8"})) {
+  switch (
+    ChildProcess.spawnSync(
+      rescriptBinaryPath,
+      [||],
+      {"encoding": "utf8", "stdio": "inherit"},
+    )
+  ) {
+  | exitCode when exitCode == 0 =>
+    logger.info(() => {Js.log("[Commands.compileRescript] Success!")});
+    Js.Console.timeEnd(durationLabel);
+  | exitCode =>
+    logger.info(() => {
+      Js.Console.error2(
+        "[Commands.compileRescript] Failure! Exit code:",
+        exitCode,
+      )
+    });
+    Process.exit(1);
   | exception (Js.Exn.Error(error)) =>
     logger.info(() => {
       Js.Console.error2(
-        "[Commands.compileRescript] Failure:\n",
+        "[Commands.compileRescript] Exception:\n",
         error->Js.Exn.message,
-      );
-      Js.Console.error2(
-        "[Commands.compileRescript] Failure:\n",
-        error->ChildProcess.Error.stdout,
-      );
+      )
     });
-
     Process.exit(1);
-  | stdout =>
-    if (logStdoutOnSuccess) {
-      logger.info(() => {
-        Js.log("[Commands.compileRescript] Success!");
-        Js.Console.timeEnd(durationLabel);
-      });
-
-      logger.debug(() => {
-        Js.log2("[Commands.compileRescript] stdout:", stdout)
-      });
-    }
   };
 };
 
@@ -54,8 +50,7 @@ let build =
 
   PageBuilder.buildPages(~outputDir, ~logger, pages);
 
-  let () =
-    compileRescript(~rescriptBinaryPath, ~logger, ~logStdoutOnSuccess=true);
+  let () = compileRescript(~rescriptBinaryPath, ~logger);
 
   Webpack.build(
     ~mode,
