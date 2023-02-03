@@ -17,24 +17,29 @@ external makeESBuildMinifyPlugin: Js.t('a) => webpackPlugin =
 
 [@val] external processEnvDict: Js.Dict.t(string) = "process.env";
 
-let getBrowserEnvPlugin = () => {
+let getPluginWithGlobalValues = (globalValues: array((string, string))) => {
   let keyBase = "process.env";
 
   let makeKey = varName => keyBase ++ "." ++ varName;
 
   let envItems = processEnvDict->Js.Dict.entries;
 
-  let browserEnvDict = Js.Dict.empty();
+  let dict = Js.Dict.empty();
 
-  browserEnvDict->Js.Dict.set(keyBase, "({})");
+  dict->Js.Dict.set(keyBase, "({})");
 
   envItems->Js.Array2.forEach(((key, value)) => {
     let key = makeKey(key);
     let value = {j|"$(value)"|j};
-    browserEnvDict->Js.Dict.set(key, value);
+    dict->Js.Dict.set(key, value);
   });
 
-  definePlugin(browserEnvDict);
+  globalValues->Js.Array2.forEach(((key, value)) => {
+    let value = {j|"$(value)"|j};
+    dict->Js.Dict.set(key, value);
+  });
+
+  definePlugin(dict);
 };
 
 module Webpack = {
@@ -170,6 +175,7 @@ let makeConfig =
       ~minimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir: string,
+      ~globalValues: array((string, string)),
     ) => {
   let pages = pages->Js.Dict.values;
 
@@ -235,7 +241,7 @@ let makeConfig =
           })
         });
 
-      let browserEnvPlugin = getBrowserEnvPlugin();
+      let browserEnvPlugin = getPluginWithGlobalValues(globalValues);
 
       Js.Array2.concat([|browserEnvPlugin|], htmlWebpackPlugins);
     },
@@ -469,10 +475,18 @@ let makeCompiler =
       ~logger: Log.logger,
       ~mode: Mode.t,
       ~minimizer: Minimizer.t,
+      ~globalValues: array((string, string)),
       ~outputDir,
     ) => {
   let config =
-    makeConfig(~devServerOptions, ~mode, ~logger, ~minimizer, ~outputDir);
+    makeConfig(
+      ~devServerOptions,
+      ~mode,
+      ~logger,
+      ~minimizer,
+      ~outputDir,
+      ~globalValues,
+    );
   // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
   (compiler, config);
@@ -485,6 +499,7 @@ let build =
       ~writeWebpackStatsJson: bool,
       ~logger: Log.logger,
       ~outputDir,
+      ~globalValues: array((string, string)),
     ) => {
   let durationLabel = "[Webpack.build] duration";
   Js.Console.timeStart(durationLabel);
@@ -498,6 +513,7 @@ let build =
       ~logger,
       ~outputDir,
       ~minimizer,
+      ~globalValues,
     );
 
   compiler->Webpack.run((err, stats) => {
@@ -549,6 +565,7 @@ let startDevServer =
       ~minimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir,
+      ~globalValues: array((string, string)),
     ) => {
   let (compiler, config) =
     makeCompiler(
@@ -557,6 +574,7 @@ let startDevServer =
       ~logger,
       ~outputDir,
       ~minimizer,
+      ~globalValues,
     );
 
   let devServerOptions = config##devServer;
