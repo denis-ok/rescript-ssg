@@ -1,3 +1,11 @@
+[@val] external globalThis: Js.Dict.t(string) = "globalThis";
+
+let unsafeAddGlobalValues = (globalValues: array((string, string))) => {
+  globalValues->Js.Array2.forEach(((key, value)) => {
+    globalThis->Js.Dict.set(key, value)
+  });
+};
+
 let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
   let durationLabel = "[Commands.compileRescript] duration";
   Js.Console.timeStart(durationLabel);
@@ -47,8 +55,11 @@ let build =
       ~pages: array(PageBuilder.page),
       ~writeWebpackStatsJson=false,
       ~minimizer: Webpack.Minimizer.t=Terser,
+      ~globalValues: array((string, string))=[||],
       (),
     ) => {
+  let () = unsafeAddGlobalValues(globalValues);
+
   let logger = Log.makeLogger(logLevel);
 
   PageBuilder.buildPages(~outputDir, ~logger, pages);
@@ -61,6 +72,7 @@ let build =
     ~logger,
     ~writeWebpackStatsJson,
     ~minimizer,
+    ~globalValues,
   );
 };
 
@@ -72,8 +84,11 @@ let start =
       ~pages: array(PageBuilder.page),
       ~devServerOptions: Webpack.DevServerOptions.t,
       ~minimizer: Webpack.Minimizer.t=Terser,
+      ~globalValues: array((string, string))=[||],
       (),
     ) => {
+  let () = unsafeAddGlobalValues(globalValues);
+
   let logger = Log.makeLogger(logLevel);
 
   PageBuilder.buildPages(~outputDir, ~logger, pages);
@@ -86,5 +101,6 @@ let start =
     ~logger,
     ~outputDir,
     ~minimizer,
+    ~globalValues,
   );
 };
