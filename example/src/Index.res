@@ -13,4 +13,5 @@ let make = () =>
     <img src=catImage />
     <SharedModule.Footer />
     <div> {"MY_ENV_VAR: "->React.string} {Env.myEnvVar->React.string} </div>
+    <div> {"GLOBAL_VALUE: "->React.string} {Env.globalValue->React.string} </div>
   </div>

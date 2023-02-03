@@ -4,6 +4,8 @@ let outputDir = Path.join2(currentDir, "../build")
 
 let normalizeCssFilePath = Path.join2(currentDir, "/css/normalize.css")
 
+let globalValues = [("GLOBAL_VALUE", "GLOBAL_VALUE123")]
+
 let pageIndex: PageBuilder.page = {
   pageWrapper: Some({
     component: WrapperWithChildren(children => <Wrapper> children </Wrapper>),
