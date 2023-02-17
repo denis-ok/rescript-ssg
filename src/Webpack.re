@@ -262,9 +262,8 @@ let makeConfig =
       },
       "splitChunks": {
         "chunks": "all",
+        "minSize": 20000,
         "cacheGroups": {
-          "default": false,
-          "defaultVendors": false,
           "framework": {
             "priority": 40,
             "name": "framework",
@@ -273,38 +272,6 @@ let makeConfig =
                 [|"react", "react-dom", "scheduler", "prop-types"|]
                 ->Js.Array2.joinWith("|");
               let regexStr = {j|(?<!node_modules.*)[\\\\/]node_modules[\\\\/]($(frameworkPackages))[\\\\/]|j};
-              let regex = Js.Re.fromString(regexStr);
-              regex;
-            },
-            "enforce": true,
-          },
-          "bs-css": {
-            "priority": 30,
-            "name": "bs-css",
-            "test": {
-              let packages =
-                [|"bs-css", "bs-css-emotion", "@emotion", "stylis"|]
-                ->Js.Array2.joinWith("|");
-
-              let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
-              let regex = Js.Re.fromString(regexStr);
-              regex;
-            },
-            "enforce": true,
-          },
-          "rescript": {
-            "priority": 30,
-            "name": "rescript",
-            "test": {
-              let packages =
-                [|
-                  "rescript",
-                  "@rescript/react",
-                  "bs-platform",
-                  "reason-react",
-                |]
-                ->Js.Array2.joinWith("|");
-              let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
               let regex = Js.Re.fromString(regexStr);
               regex;
             },
@@ -324,23 +291,6 @@ let makeConfig =
         },
       },
     },
-    // "shared-node-modules" chunk requires more tweakage.
-    // For example, we have 3 pages: Foo, Bar, Baz and A, B, C dependencies.
-    // Page Foo depends on A, B, C deps,
-    // Page Bar depends on A, B deps,
-    // Page Baz depends on A dep.
-    // After all, Baz page will depend on a chunk that contains three A, B, C deps, where B and C deps are redundant.
-    // "shared-node-modules": {
-    //   "priority": 20,
-    //   "name": "shared-node-modules",
-    //   "test": {
-    //     let regexStr = {j|[\\\\/]node_modules[\\\\/]|j};
-    //     let regex = Js.Re.fromString(regexStr);
-    //     regex;
-    //   },
-    //   "minChunks": 2,
-    //   "enforce": true,
-    // },
     "watchOptions": {
       "aggregateTimeout": 1000,
     },
