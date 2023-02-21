@@ -21,14 +21,14 @@ let page1: PageBuilder.page = {
   pageWrapper: Some({
     component: WrapperWithDataAndChildren({
       component: (data, children) => <WrapperWithData data> children </WrapperWithData>,
-      data: "LALA",
+      data: "LALA \"escape\"",
     }),
     modulePath: WrapperWithData.modulePath,
   }),
   component: ComponentWithData({
     component: data => <Page1 data />,
     data: Some({
-      string: "lala",
+      string: "foo \"bar\" baz",
       int: 1,
       float: 1.23,
       variant: One,

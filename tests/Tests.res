@@ -158,10 +158,12 @@ switch ReactDOM.querySelector("#root") {
     }
 
     let expectedAppContent = `
-@module("./TestPageWithData_Data_942478bfd11ff03aaad9.js") external pageData: string = "data"
+type pageData
+
+@module("./TestPageWithData_Data_942478bfd11ff03aaad9.js") external pageData: pageData = "data"
 
 switch ReactDOM.querySelector("#root") {
-| Some(root) => ReactDOM.hydrate(<TestPageWithData data={pageData->Js.Json.parseExn->Obj.magic} />, root)
+| Some(root) => ReactDOM.hydrate(<TestPageWithData data={pageData->Obj.magic} />, root)
 | None => ()
 }
 `
@@ -205,13 +207,15 @@ switch ReactDOM.querySelector("#root") {
     }
 
     let expectedAppContent = `
-@module("./__pageWrappersData/TestWrapperWithData_Data_942478bfd11ff03aaad9.js") external pageWrapperData: string = "data"
-@module("./TestPageWithData_Data_942478bfd11ff03aaad9.js") external pageData: string = "data"
+type pageWrapperData
+@module("./__pageWrappersData/TestWrapperWithData_Data_942478bfd11ff03aaad9.js") external pageWrapperData: pageWrapperData = "data"
+type pageData
+@module("./TestPageWithData_Data_942478bfd11ff03aaad9.js") external pageData: pageData = "data"
 
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate(
-<TestWrapperWithData data={pageWrapperData->Js.Json.parseExn->Obj.magic} >
-<TestPageWithData data={pageData->Js.Json.parseExn->Obj.magic} />
+<TestWrapperWithData data={pageWrapperData->Obj.magic} >
+<TestPageWithData data={pageData->Obj.magic} />
 </TestWrapperWithData>, root)
 | None => ()
 }

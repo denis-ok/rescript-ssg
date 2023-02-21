@@ -58,9 +58,9 @@ let makeStringToImportJsFileFromRescript =
       ~relativePathToDataDir: string,
     ) => {
   let valueName = PageData.toValueName(pageDataType);
-  {j|type $(valueName)
-@module("$(relativePathToDataDir)/$(jsDataFilename)") external $(valueName): $(valueName) = "data"
-  |j};
+  {j|
+type $(valueName)
+@module("$(relativePathToDataDir)/$(jsDataFilename)") external $(valueName): $(valueName) = "data"|j};
 };
 
 let renderReactAppTemplate =
