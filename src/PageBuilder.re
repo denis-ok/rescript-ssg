@@ -55,17 +55,14 @@ module PageData = {
     };
 };
 
-let unsafeStringifyPropValue = data =>
+let unsafeStringifyPropValue = data => {
   // We need a way to take a prop value of any type and inject it to generated React app template.
-  // We take a prop and inject it's JSON stringified->parsed value in combination with Obj.magic.
-  // This is unsafe. Prop value should contain only values that possible to JSON.stringify<->JSON.parse.
+  // This is unsafe. Prop value should contain only values that is possible to JSON.stringify<->JSON.parse.
   // So it should be composed only of simple values. Types like functions, dates, promises etc can't be stringified.
-  switch (data->Js.Json.stringifyAny) {
-  | Some(propValueString) => propValueString
-  | None =>
-    // Js.Json.stringifyAny(None) returns None. No need to do anything with it, can be injected to template as is.
-    "None"
-  };
+  Jsesc.jsesc(
+    data,
+  );
+};
 
 let makeStringToImportJsFileFromRescript =
     (
@@ -74,7 +71,9 @@ let makeStringToImportJsFileFromRescript =
       ~relativePathToDataDir: string,
     ) => {
   let valueName = PageData.toValueName(pageDataType);
-  {j|@module("$(relativePathToDataDir)/$(jsDataFilename)") external $(valueName): string = "data"|j};
+  {j|
+type $(valueName)
+@module("$(relativePathToDataDir)/$(jsDataFilename)") external $(valueName): $(valueName) = "data"|j};
 };
 
 let renderReactAppTemplate =
@@ -179,7 +178,7 @@ type processedPage = {
 
 let makeDataPropString = (pageDataType: PageData.t) => {
   let dataValueName = PageData.toValueName(pageDataType);
-  {j|{$(dataValueName)->Js.Json.parseExn->Obj.magic}|j};
+  {j|{$(dataValueName)->Obj.magic}|j};
 };
 
 let pageWrappersDataDirname = "__pageWrappersData";
@@ -219,7 +218,7 @@ let makeProcessedDataProp =
       ~jsDataFilename,
     );
 
-  let jsDataFileContent = {j|export const data = `$(stringifiedData)`|j};
+  let jsDataFileContent = {j|export const data = $(stringifiedData)|j};
 
   let jsDataFilepath =
     switch (pageDataType) {
