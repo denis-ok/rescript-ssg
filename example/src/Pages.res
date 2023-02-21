@@ -47,7 +47,7 @@ let page11: PageBuilder.page = {
   component: ComponentWithData({
     component: data => <Page1 data />,
     data: Some({
-      string: "lala",
+      string: "foo \"bar\" baz",
       int: 1,
       float: 1.23,
       variant: One,
