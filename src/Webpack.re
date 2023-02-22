@@ -518,6 +518,9 @@ let startDevServer =
       ~globalValues: array((string, string)),
     ) => {
   logger.info(() => Js.log("[Webpack] Starting dev server..."));
+  let startupDurationLabel = "[Webpack] WebpackDevServer startup duration";
+  Js.Console.timeStart(startupDurationLabel);
+
   let (compiler, config) =
     makeCompiler(
       ~devServerOptions=Some(devServerOptions),
@@ -541,7 +544,10 @@ let startDevServer =
   | Some(devServerOptions) =>
     let devServer = WebpackDevServer.make(devServerOptions, compiler);
     devServer->WebpackDevServer.startWithCallback(() => {
-      logger.info(() => Js.log("[Webpack] WebpackDevServer started"))
+      logger.info(() => {
+        Js.log("[Webpack] WebpackDevServer started");
+        Js.Console.timeEnd(startupDurationLabel);
+      })
     });
   };
 };
