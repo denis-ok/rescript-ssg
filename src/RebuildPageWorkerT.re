@@ -28,6 +28,7 @@ type rebuildPage = {
 type workerData = {
   logLevel: Log.level,
   pages: array(rebuildPage),
+  globalValues: array((string, string)),
 };
 
 let showPage = (page: rebuildPage) => {

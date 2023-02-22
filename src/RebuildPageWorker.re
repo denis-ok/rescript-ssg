@@ -1,3 +1,5 @@
+[@val] external import_: string => Js.Promise.t('a) = "import";
+
 let showPages = (pages: array(RebuildPageWorkerT.rebuildPage)) => {
   pages->Js.Array2.map(page => {
     Log.makeMinimalPrintablePageObj(
@@ -7,9 +9,9 @@ let showPages = (pages: array(RebuildPageWorkerT.rebuildPage)) => {
   });
 };
 
-[@val] external import_: string => Js.Promise.t('a) = "import";
-
 let workerData: RebuildPageWorkerT.workerData = WorkingThreads.workerData;
+
+let () = GlobalValues.unsafeAdd(workerData.globalValues);
 
 let parentPort = WorkingThreads.parentPort;
 
