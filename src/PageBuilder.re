@@ -131,6 +131,9 @@ let renderHtmlTemplate =
   let title = helmet.title.toString();
   let meta = helmet.meta.toString();
   let link = helmet.link.toString();
+  let script = helmet.script.toString();
+  let noscript = helmet.noscript.toString();
+  let style = helmet.style.toString();
   let bodyAttributes = helmet.bodyAttributes.toString();
 
   {j|<!DOCTYPE html>
@@ -140,6 +143,9 @@ let renderHtmlTemplate =
     $(title)
     $(meta)
     $(link)
+    $(script)
+    $(noscript)
+    $(style)
     $(headCssStyleTag)
     $(emotionStyleTag)
   </head>
