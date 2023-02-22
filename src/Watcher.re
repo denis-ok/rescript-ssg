@@ -101,6 +101,7 @@ let getModuleDependencies = (~modulePath) =>
 
 let startWatcher =
     (~outputDir, ~logger: Log.logger, pages: array(PageBuilder.page)): unit => {
+  logger.info(() => Js.log("[Watcher] Starting file watcher..."));
   // Multiple pages can use the same root module. The common case is localized pages.
   // We get modulePath -> array(pages) dict here.
 

@@ -517,6 +517,7 @@ let startDevServer =
       ~outputDir,
       ~globalValues: array((string, string)),
     ) => {
+  logger.info(() => Js.log("[Webpack] Starting dev server..."));
   let (compiler, config) =
     makeCompiler(
       ~devServerOptions=Some(devServerOptions),
