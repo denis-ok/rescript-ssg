@@ -32,7 +32,12 @@ let runRebuildPageWorker =
   );
 
 let rebuildPagesWithWorker =
-    (~outputDir: string, ~logger: Log.logger, pages: array(PageBuilder.page)) => {
+    (
+      ~outputDir: string,
+      ~logger: Log.logger,
+      ~globalValues: array((string, string)),
+      pages: array(PageBuilder.page),
+    ) => {
   let rebuildPages =
     pages->Js.Array2.map(page => {
       let rebuildPage: RebuildPageWorkerT.rebuildPage = {
@@ -70,6 +75,7 @@ let rebuildPagesWithWorker =
   let workerData: RebuildPageWorkerT.workerData = {
     pages: rebuildPages,
     logLevel: logger.logLevel,
+    globalValues,
   };
 
   runRebuildPageWorker(~workerData, ~onExit=exitCode => {
@@ -100,7 +106,13 @@ let getModuleDependencies = (~modulePath) =>
 // If the change is in a head CSS file -> get pages that use this css file and rebuild them.
 
 let startWatcher =
-    (~outputDir, ~logger: Log.logger, pages: array(PageBuilder.page)): unit => {
+    (
+      ~outputDir,
+      ~logger: Log.logger,
+      ~globalValues: array((string, string)),
+      pages: array(PageBuilder.page),
+    )
+    : unit => {
   logger.info(() => Js.log("[Watcher] Starting file watcher..."));
   // Multiple pages can use the same root module. The common case is localized pages.
   // We get modulePath -> array(pages) dict here.
@@ -214,7 +226,12 @@ let startWatcher =
         )
       );
 
-      rebuildPagesWithWorker(~outputDir, ~logger, pagesToRebuild)
+      rebuildPagesWithWorker(
+        ~outputDir,
+        ~logger,
+        ~globalValues,
+        pagesToRebuild,
+      )
       ->Promise.map(_ => {
           logger.debug(() =>
             Js.log(

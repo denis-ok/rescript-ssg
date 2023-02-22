@@ -1,11 +1,3 @@
-[@val] external globalThis: Js.Dict.t(string) = "globalThis";
-
-let unsafeAddGlobalValues = (globalValues: array((string, string))) => {
-  globalValues->Js.Array2.forEach(((key, value)) => {
-    globalThis->Js.Dict.set(key, value)
-  });
-};
-
 let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
   let durationLabel = "[Commands.compileRescript] duration";
   Js.Console.timeStart(durationLabel);
@@ -58,7 +50,7 @@ let build =
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
-  let () = unsafeAddGlobalValues(globalValues);
+  let () = GlobalValues.unsafeAdd(globalValues);
 
   let logger = Log.makeLogger(logLevel);
 
@@ -87,13 +79,13 @@ let start =
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
-  let () = unsafeAddGlobalValues(globalValues);
+  let () = GlobalValues.unsafeAdd(globalValues);
 
   let logger = Log.makeLogger(logLevel);
 
   PageBuilder.buildPages(~outputDir, ~logger, pages);
 
-  Watcher.startWatcher(~outputDir, ~logger, pages);
+  Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
 
   Webpack.startDevServer(
     ~devServerOptions,
