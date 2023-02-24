@@ -111,8 +111,6 @@ type page = {
   htmlTemplatePath: string,
 };
 
-let pages: Js.Dict.t(page) = Js.Dict.empty();
-
 module DevServerOptions = {
   module Proxy = {
     // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/eefa7b7fce1443e2b6ee5e34d84e142880418208/types/http-proxy/index.d.ts#L25
@@ -176,11 +174,10 @@ let makeConfig =
       ~logger: Log.logger,
       ~outputDir: string,
       ~globalValues: array((string, string)),
+      ~webpackPages: array(page),
     ) => {
-  let pages = pages->Js.Dict.values;
-
   let entries =
-    pages
+    webpackPages
     ->Js.Array2.map(({path, entryPath, _}) =>
         (PageBuilderT.PagePath.toWebpackEntryName(path), entryPath)
       )
@@ -221,7 +218,7 @@ let makeConfig =
 
     "plugins": {
       let htmlWebpackPlugins =
-        pages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
+        webpackPages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
           HtmlWebpackPlugin.make({
             "template": htmlTemplatePath,
             "filename":
@@ -316,7 +313,7 @@ let makeConfig =
               // from: "/^\/users\/.*/"
               // to: "/users/_id/index.html"
               let rewrites =
-                pages->Belt.Array.keepMap(page =>
+                webpackPages->Belt.Array.keepMap(page =>
                   switch (page.path) {
                   | Root => None
                   | Path(parts) =>
@@ -427,6 +424,7 @@ let makeCompiler =
       ~minimizer: Minimizer.t,
       ~globalValues: array((string, string)),
       ~outputDir,
+      ~webpackPages: array(page),
     ) => {
   let config =
     makeConfig(
@@ -436,6 +434,7 @@ let makeCompiler =
       ~minimizer,
       ~outputDir,
       ~globalValues,
+      ~webpackPages,
     );
   // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
@@ -450,6 +449,7 @@ let build =
       ~logger: Log.logger,
       ~outputDir,
       ~globalValues: array((string, string)),
+      ~webpackPages: array(page),
     ) => {
   let durationLabel = "[Webpack.build] duration";
   Js.Console.timeStart(durationLabel);
@@ -464,6 +464,7 @@ let build =
       ~outputDir,
       ~minimizer,
       ~globalValues,
+      ~webpackPages,
     );
 
   compiler->Webpack.run((err, stats) => {
@@ -516,6 +517,7 @@ let startDevServer =
       ~logger: Log.logger,
       ~outputDir,
       ~globalValues: array((string, string)),
+      ~webpackPages: array(page),
     ) => {
   logger.info(() => Js.log("[Webpack] Starting dev server..."));
   let startupDurationLabel = "[Webpack] WebpackDevServer startup duration";
@@ -529,6 +531,7 @@ let startDevServer =
       ~outputDir,
       ~minimizer,
       ~globalValues,
+      ~webpackPages,
     );
 
   let devServerOptions = config##devServer;

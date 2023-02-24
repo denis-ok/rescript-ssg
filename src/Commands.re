@@ -50,13 +50,13 @@ let build =
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
-  let () = GlobalValues.unsafeAdd(globalValues);
+  GlobalValues.unsafeAdd(globalValues);
 
   let logger = Log.makeLogger(logLevel);
 
-  PageBuilder.buildPages(~outputDir, ~logger, pages);
+  let webpackPages = PageBuilder.buildPages(~outputDir, ~logger, pages);
 
-  let () = compileRescript(~rescriptBinaryPath, ~logger);
+  compileRescript(~rescriptBinaryPath, ~logger);
 
   Webpack.build(
     ~mode,
@@ -65,6 +65,7 @@ let build =
     ~writeWebpackStatsJson,
     ~minimizer,
     ~globalValues,
+    ~webpackPages,
   );
 };
 
@@ -79,11 +80,11 @@ let start =
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
-  let () = GlobalValues.unsafeAdd(globalValues);
+  GlobalValues.unsafeAdd(globalValues);
 
   let logger = Log.makeLogger(logLevel);
 
-  PageBuilder.buildPages(~outputDir, ~logger, pages);
+  let webpackPages = PageBuilder.buildPages(~outputDir, ~logger, pages);
 
   Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
 
@@ -94,5 +95,6 @@ let start =
     ~outputDir,
     ~minimizer,
     ~globalValues,
+    ~webpackPages,
   );
 };

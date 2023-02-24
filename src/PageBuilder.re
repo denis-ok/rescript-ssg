@@ -401,51 +401,53 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
         }
       );
 
-  let () = {
-    let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
-    let webpackPage: Webpack.page = {
-      path: page.path,
-      entryPath: Path.join2(pageOutputDir, compiledReactAppFilename),
-      outputDir: pageOutputDir,
-      htmlTemplatePath: resultHtmlPath,
-    };
-    Webpack.pages->Js.Dict.set(pageAppModuleName, webpackPage);
-  };
-
   logger.debug(() =>
     Js.log2(
       "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
       moduleName,
     )
   );
+
+  let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
+
+  let webpackPage: Webpack.page = {
+    path: page.path,
+    entryPath: Path.join2(pageOutputDir, compiledReactAppFilename),
+    outputDir: pageOutputDir,
+    htmlTemplatePath: resultHtmlPath,
+  };
+
+  webpackPage;
+};
+
+let checkPageDuplicates = (pages: array(page)) => {
+  let pagesDict = Js.Dict.empty();
+
+  pages->Js.Array2.forEach(page => {
+    let pagePath = PageBuilderT.PagePath.toString(page.path);
+    switch (pagesDict->Js.Dict.get(pagePath)) {
+    | None => pagesDict->Js.Dict.set(pagePath, page)
+    | Some(_) =>
+      Js.Console.error2(
+        "[PageBuilder.buildPages] List of pages contains pages with the same paths. Duplicated page path: ",
+        pagePath,
+      );
+      Process.exit(1);
+    };
+  });
 };
 
 let buildPages = (~outputDir, ~logger: Log.logger, pages: array(page)) => {
+  checkPageDuplicates(pages);
+
   let durationLabel = "[PageBuilder.buildPages] duration";
   Js.Console.timeStart(durationLabel);
 
   logger.info(() => Js.log("[PageBuilder.buildPages] Building pages..."));
 
-  let pagesDict = Js.Dict.empty();
-
-  let () =
-    pages->Js.Array2.forEach(page => {
-      let pagePath = PageBuilderT.PagePath.toString(page.path);
-      switch (pagesDict->Js.Dict.get(pagePath)) {
-      | None => pagesDict->Js.Dict.set(pagePath, page)
-      | Some(_) =>
-        logger.info(() =>
-          Js.Console.error3(
-            "[PageBuilder.buildPages] List of pages contains pages with the same paths. Page with path: ",
-            page.path,
-            " has already been built.",
-          )
-        );
-
-        Process.exit(1);
-      };
-
-      buildPageHtmlAndReactApp(~outputDir, ~logger, page);
+  let webpackPages =
+    pages->Js.Array2.map(page => {
+      buildPageHtmlAndReactApp(~outputDir, ~logger, page)
     });
 
   logger.info(() => {
@@ -453,5 +455,5 @@ let buildPages = (~outputDir, ~logger: Log.logger, pages: array(page)) => {
     Js.Console.timeEnd(durationLabel);
   });
 
-  ();
+  webpackPages;
 };
