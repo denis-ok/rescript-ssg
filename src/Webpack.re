@@ -12,8 +12,7 @@ external definePlugin: Js.Dict.t(string) => webpackPlugin = "DefinePlugin";
 external makeProfilingPlugin: unit => webpackPlugin = "default";
 
 [@new] [@module "esbuild-loader"]
-external makeESBuildMinifyPlugin: Js.t('a) => webpackPlugin =
-  "ESBuildMinifyPlugin";
+external makeESBuildPlugin: Js.t('a) => webpackPlugin = "EsbuildPlugin";
 
 [@val] external processEnvDict: Js.Dict.t(string) = "process.env";
 
@@ -252,7 +251,7 @@ let makeConfig =
       "minimizer": {
         switch (shouldMinimize, minimizer) {
         | (true, Esbuild) =>
-          Some([|makeESBuildMinifyPlugin({"target": "es2015"})|])
+          Some([|makeESBuildPlugin({"target": "es2015"})|])
         | (false, _)
         | (_, Terser) => None
         };
