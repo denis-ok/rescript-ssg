@@ -23,7 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "chokidar": "^3.5.3",
-    "dependency-tree": "^8.1.2",
+    "dependency-tree": "^9.0.0",
     "esbuild-loader": "^2.20.0",
     "html-webpack-plugin": "^5.5.0",
     "jsesc": "^3.0.2",
