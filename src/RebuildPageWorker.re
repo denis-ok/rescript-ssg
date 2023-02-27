@@ -117,7 +117,7 @@ pages
     });
   })
 ->Js.Promise.all
-->Promise.map((_: array(unit)) => {
+->Promise.map((_: array(Webpack.page)) => {
     logger.info(() => {
       Js.log("[Worker] Pages rebuild success, job finished.");
       Js.Console.timeEnd(durationLabel);
