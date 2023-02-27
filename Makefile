@@ -18,11 +18,9 @@ start-rescript:
 	$(NODE_BINS)/rescript build -w
 
 build-example:
-	NODE_OPTIONS="--openssl-legacy-provider" \
 	MY_ENV_VAR=myEnvVar1 ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
 
 start-example:
-	NODE_OPTIONS="--openssl-legacy-provider" \
 	MY_ENV_VAR=myEnvVar1 ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
 
 serve-example:
