@@ -112,7 +112,8 @@ let renderHtmlTemplate =
     (~pageElement: React.element, ~headCssFilepaths: array(string)): string => {
   let html = ReactDOMServer.renderToString(pageElement);
 
-  let {html: renderedHtml, css, ids} = Emotion.Server.extractCritical(html);
+  let Emotion.Server.{html: renderedHtml, css, ids} =
+    Emotion.Server.extractCritical(html);
 
   let emotionIds = ids->Js.Array2.joinWith(" ");
 
