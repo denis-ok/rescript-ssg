@@ -67,7 +67,9 @@ module Webpack = {
   [@module "webpack"]
   external makeCompiler: Js.t({..}) => compiler = "default";
 
-  [@send] external run: (compiler, ('err, Stats.t) => unit) => unit = "run";
+  [@send]
+  external run: (compiler, ('err, Js.Nullable.t(Stats.t)) => unit) => unit =
+    "run";
 
   [@send] external close: (compiler, 'closeError => unit) => unit = "close";
 };
@@ -468,43 +470,53 @@ let build =
 
   compiler->Webpack.run((err, stats) => {
     switch (Js.Nullable.toOption(err)) {
-    | None => logger.info(() => {Js.log("[Webpack.build] Success!")})
-    | Some(_error) => logger.info(() => Js.log("[Webpack.build] Error!"))
-    };
-
-    switch (Webpack.Stats.hasErrors(stats)) {
-    | true => logger.info(() => Js.log("[Webpack.build] Stats.hasErrors"))
-    | _ => ()
-    };
-
-    switch (Webpack.Stats.hasWarnings(stats)) {
-    | true => logger.info(() => Js.log("[Webpack.build] Stats.hasWarnings"))
-    | _ => ()
-    };
-
-    logger.info(() => Js.log(Webpack.Stats.toString(stats)));
-
-    let () = {
-      let webpackOutputDir = getWebpackOutputDir(outputDir);
-
-      if (writeWebpackStatsJson) {
-        let statsJson = Webpack.Stats.toJson(stats);
-        Fs.writeFileSync(
-          Path.join2(webpackOutputDir, "stats.json"),
-          statsJson->Js.Json.stringifyAny->Belt.Option.getWithDefault(""),
-        );
-      };
-    };
-
-    compiler->Webpack.close(closeError => {
-      switch (Js.Nullable.toOption(closeError)) {
+    | Some(error) =>
+      logger.info(() => {
+        Js.Console.error2("[Webpack.build] Fatal error:", error);
+        Process.exit(1);
+      })
+    | None =>
+      logger.info(() => Js.log("[Webpack.build] Success!"));
+      switch (Js.Nullable.toOption(stats)) {
       | None =>
-        Js.Console.timeEnd(durationLabel);
-        ();
-      | Some(_error) =>
-        logger.info(() => Js.log("[Webpack.build] Compiler close error"))
-      }
-    });
+        logger.info(() => {
+          Js.Console.error("[Webpack.build] Error: stats object is None");
+          Process.exit(1);
+        })
+      | Some(stats) =>
+        switch (Webpack.Stats.hasErrors(stats)) {
+        | false => ()
+        | true => logger.info(() => Js.log("[Webpack.build] Stats.hasErrors"))
+        };
+        switch (Webpack.Stats.hasWarnings(stats)) {
+        | false => ()
+        | true =>
+          logger.info(() => Js.log("[Webpack.build] Stats.hasWarnings"))
+        };
+
+        logger.info(() => Js.log(Webpack.Stats.toString(stats)));
+
+        let webpackOutputDir = getWebpackOutputDir(outputDir);
+
+        if (writeWebpackStatsJson) {
+          let statsJson = Webpack.Stats.toJson(stats);
+          Fs.writeFileSync(
+            Path.join2(webpackOutputDir, "stats.json"),
+            statsJson->Js.Json.stringifyAny->Belt.Option.getWithDefault(""),
+          );
+        };
+
+        compiler->Webpack.close(closeError => {
+          switch (Js.Nullable.toOption(closeError)) {
+          | None => Js.Console.timeEnd(durationLabel)
+          | Some(error) =>
+            logger.info(() =>
+              Js.log2("[Webpack.build] Compiler close error:", error)
+            )
+          }
+        });
+      };
+    }
   });
 };
 
