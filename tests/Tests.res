@@ -75,7 +75,7 @@ module BuildPageHtmlAndReactApp = {
   let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup()
 
-    let _webpackPages = PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, page)
+    let _webpackPages: Webpack.page = PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~melangeOutputDir=None, ~logger, page)
 
     Commands.compileRescript(~rescriptBinaryPath, ~logger)
 

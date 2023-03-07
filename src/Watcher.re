@@ -34,6 +34,7 @@ let runRebuildPageWorker =
 let rebuildPagesWithWorker =
     (
       ~outputDir: string,
+      ~melangeOutputDir,
       ~logger: Log.logger,
       ~globalValues: array((string, string)),
       pages: array(PageBuilder.page),
@@ -76,6 +77,7 @@ let rebuildPagesWithWorker =
     pages: rebuildPages,
     logLevel: logger.logLevel,
     globalValues,
+    melangeOutputDir,
   };
 
   runRebuildPageWorker(~workerData, ~onExit=exitCode => {
@@ -108,6 +110,7 @@ let getModuleDependencies = (~modulePath) =>
 let startWatcher =
     (
       ~outputDir,
+      ~melangeOutputDir,
       ~logger: Log.logger,
       ~globalValues: array((string, string)),
       pages: array(PageBuilder.page),
@@ -228,6 +231,7 @@ let startWatcher =
 
       rebuildPagesWithWorker(
         ~outputDir,
+        ~melangeOutputDir,
         ~logger,
         ~globalValues,
         pagesToRebuild,

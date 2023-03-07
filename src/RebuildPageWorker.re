@@ -18,6 +18,7 @@ let parentPort = WorkingThreads.parentPort;
 let pages = workerData.pages;
 
 let logLevel = workerData.logLevel;
+let melangeOutputDir = workerData.melangeOutputDir;
 
 let logger = Log.makeLogger(logLevel);
 
@@ -113,7 +114,12 @@ pages
         path: page.path,
       };
 
-      PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, newPage);
+      PageBuilder.buildPageHtmlAndReactApp(
+        ~outputDir,
+        ~melangeOutputDir,
+        ~logger,
+        newPage,
+      );
     });
   })
 ->Js.Promise.all

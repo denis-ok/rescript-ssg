@@ -41,6 +41,7 @@ let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
 let build =
     (
       ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
       ~rescriptBinaryPath: string,
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
@@ -54,7 +55,8 @@ let build =
 
   let logger = Log.makeLogger(logLevel);
 
-  let webpackPages = PageBuilder.buildPages(~outputDir, ~logger, pages);
+  let webpackPages =
+    PageBuilder.buildPages(~outputDir, ~melangeOutputDir, ~logger, pages);
 
   compileRescript(~rescriptBinaryPath, ~logger);
 
@@ -72,6 +74,7 @@ let build =
 let start =
     (
       ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
       ~mode: Webpack.Mode.t,
       ~logLevel: Log.level,
       ~pages: array(PageBuilder.page),
@@ -84,9 +87,16 @@ let start =
 
   let logger = Log.makeLogger(logLevel);
 
-  let webpackPages = PageBuilder.buildPages(~outputDir, ~logger, pages);
+  let webpackPages =
+    PageBuilder.buildPages(~outputDir, ~melangeOutputDir, ~logger, pages);
 
-  Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
+  Watcher.startWatcher(
+    ~outputDir,
+    ~melangeOutputDir,
+    ~logger,
+    ~globalValues,
+    pages,
+  );
 
   Webpack.startDevServer(
     ~devServerOptions,
