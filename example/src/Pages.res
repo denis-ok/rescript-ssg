@@ -74,7 +74,7 @@ let page1Dynamic: PageBuilder.page = {
   component: ComponentWithoutData(<PageDynamic />),
   modulePath: PageDynamic.modulePath,
   headCssFilepaths: [],
-  path: Path(["page1", "_id"]),
+  path: Path(["page1", "dynamic__id"]),
 }
 
 let languages = ["en", "ru"]
@@ -88,7 +88,7 @@ let localizedPages =
       ...page,
       path: switch page.path {
       | Root => Path([language])
-      | Path(parts) => Path(Js.Array2.concat([language], parts))
+      | Path(segments) => Path(Js.Array2.concat([language], segments))
       },
     })
   )

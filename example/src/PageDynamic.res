@@ -5,7 +5,7 @@ let modulePath = Utils.getFilepath()
 @react.component
 let make = () => {
   let url = RescriptReactRouter.useUrl(
-    ~serverUrl={path: list{"page1", "@id"}, hash: "", search: ""},
+    ~serverUrl={path: list{"page1", "server-id"}, hash: "", search: ""},
     (),
   )
 

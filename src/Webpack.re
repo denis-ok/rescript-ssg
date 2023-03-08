@@ -175,6 +175,8 @@ module DevServerOptions = {
 
 let getWebpackOutputDir = outputDir => Path.join2(outputDir, "public");
 
+let dynamicPageSegmentPrefix = "dynamic__";
+
 let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
@@ -329,11 +331,13 @@ let makeConfig =
                 webpackPages->Belt.Array.keepMap(page =>
                   switch (page.path) {
                   | Root => None
-                  | Path(parts) =>
+                  | Path(segments) =>
                     let hasDynamicPart =
-                      parts
-                      ->Js.Array2.find(part =>
-                          part->Js.String2.startsWith("_")
+                      segments
+                      ->Js.Array2.find(segment =>
+                          segment->Js.String2.startsWith(
+                            dynamicPageSegmentPrefix,
+                          )
                         )
                       ->Belt.Option.isSome;
 
@@ -341,9 +345,12 @@ let makeConfig =
                     | false => None
                     | _true =>
                       let pathWithAsterisks =
-                        parts
+                        segments
                         ->Js.Array2.map(part =>
-                            part->Js.String2.startsWith("_") ? ".*" : part
+                            part->Js.String2.startsWith(
+                              dynamicPageSegmentPrefix,
+                            )
+                              ? ".*" : part
                           )
                         ->Js.Array2.joinWith("/");
 
