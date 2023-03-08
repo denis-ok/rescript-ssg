@@ -1,3 +1,5 @@
-@val external myEnvVar: string = "process.env.MY_ENV_VAR"
+@val external envVar: option<string> = "process.env.ENV_VAR"
 
-@val external globalValue: string = "GLOBAL_VALUE"
+let envVar = envVar->Belt.Option.getWithDefault("ENV_VAR IS MISSING")
+
+@val external globalVar: string = "GLOBAL_VAR"

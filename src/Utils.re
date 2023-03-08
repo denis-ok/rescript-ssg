@@ -40,10 +40,10 @@ let getFilepath = () => makeError()->getFilepathFromError;
 let getDirname = () => makeError()->getFilepathFromError->dirnameFromFilepath;
 
 let getModuleNameFromModulePath = modulePath => {
-  let parts = modulePath->Js.String2.split("/");
+  let segments = modulePath->Js.String2.split("/");
 
   let filename =
-    parts->Js.Array2.copy->Js.Array2.reverseInPlace->Belt.Array.get(0);
+    segments->Js.Array2.copy->Js.Array2.reverseInPlace->Belt.Array.get(0);
 
   switch (filename) {
   | None

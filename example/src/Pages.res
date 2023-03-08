@@ -4,7 +4,11 @@ let outputDir = Path.join2(currentDir, "../build")
 
 let normalizeCssFilePath = Path.join2(currentDir, "/css/normalize.css")
 
-let globalValues = [("GLOBAL_VALUE", "GLOBAL_VALUE123")]
+let globalValues = [
+  //
+  ("process.env.ENV_VAR", Env.envVar),
+  ("GLOBAL_VAR", "BAR"),
+]
 
 let pageIndex: PageBuilder.page = {
   pageWrapper: Some({
@@ -74,7 +78,7 @@ let page1Dynamic: PageBuilder.page = {
   component: ComponentWithoutData(<PageDynamic />),
   modulePath: PageDynamic.modulePath,
   headCssFilepaths: [],
-  path: Path(["page1", "_id"]),
+  path: Path(["page1", "dynamic__id"]),
 }
 
 let languages = ["en", "ru"]
@@ -88,7 +92,7 @@ let localizedPages =
       ...page,
       path: switch page.path {
       | Root => Path([language])
-      | Path(parts) => Path(Js.Array2.concat([language], parts))
+      | Path(segments) => Path(Js.Array2.concat([language], segments))
       },
     })
   )

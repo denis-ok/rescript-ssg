@@ -5,6 +5,14 @@ module HtmlWebpackPlugin = {
   external make: Js.t('a) => webpackPlugin = "default";
 };
 
+module MiniCssExtractPlugin = {
+  [@module "mini-css-extract-plugin"] [@new]
+  external make: unit => webpackPlugin = "default";
+
+  [@module "mini-css-extract-plugin"] [@scope "default"]
+  external loader: string = "loader";
+};
+
 [@new] [@module "webpack"] [@scope "default"]
 external definePlugin: Js.Dict.t(string) => webpackPlugin = "DefinePlugin";
 
@@ -14,24 +22,8 @@ external makeProfilingPlugin: unit => webpackPlugin = "default";
 [@new] [@module "esbuild-loader"]
 external makeESBuildPlugin: Js.t('a) => webpackPlugin = "EsbuildPlugin";
 
-[@val] external processEnvDict: Js.Dict.t(string) = "process.env";
-
 let getPluginWithGlobalValues = (globalValues: array((string, string))) => {
-  let keyBase = "process.env";
-
-  let makeKey = varName => keyBase ++ "." ++ varName;
-
-  let envItems = processEnvDict->Js.Dict.entries;
-
   let dict = Js.Dict.empty();
-
-  dict->Js.Dict.set(keyBase, "({})");
-
-  envItems->Js.Array2.forEach(((key, value)) => {
-    let key = makeKey(key);
-    let value = {j|"$(value)"|j};
-    dict->Js.Dict.set(key, value);
-  });
 
   globalValues->Js.Array2.forEach(((key, value)) => {
     let value = {j|"$(value)"|j};
@@ -167,6 +159,8 @@ module DevServerOptions = {
 
 let getWebpackOutputDir = outputDir => Path.join2(outputDir, "public");
 
+let dynamicPageSegmentPrefix = "dynamic__";
+
 let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
@@ -211,9 +205,10 @@ let makeConfig =
       "rules": [|
         {
           //
-          "test": NodeLoader.assetRegex,
-          "type": "asset/resource",
+          "test": [%re {|/\.css$/|}],
+          "use": [|MiniCssExtractPlugin.loader, "css-loader"|],
         },
+        {"test": NodeLoader.assetRegex, "type": "asset/resource"}->Obj.magic,
       |],
     },
 
@@ -241,7 +236,10 @@ let makeConfig =
 
       let browserEnvPlugin = getPluginWithGlobalValues(globalValues);
 
-      Js.Array2.concat([|browserEnvPlugin|], htmlWebpackPlugins);
+      Js.Array2.concat(
+        [|browserEnvPlugin, MiniCssExtractPlugin.make()|],
+        htmlWebpackPlugins,
+      );
     },
     // Explicitly disable source maps in dev mode
     "devtool": false,
@@ -317,11 +315,13 @@ let makeConfig =
                 webpackPages->Belt.Array.keepMap(page =>
                   switch (page.path) {
                   | Root => None
-                  | Path(parts) =>
+                  | Path(segments) =>
                     let hasDynamicPart =
-                      parts
-                      ->Js.Array2.find(part =>
-                          part->Js.String2.startsWith("_")
+                      segments
+                      ->Js.Array2.find(segment =>
+                          segment->Js.String2.startsWith(
+                            dynamicPageSegmentPrefix,
+                          )
                         )
                       ->Belt.Option.isSome;
 
@@ -329,9 +329,12 @@ let makeConfig =
                     | false => None
                     | _true =>
                       let pathWithAsterisks =
-                        parts
+                        segments
                         ->Js.Array2.map(part =>
-                            part->Js.String2.startsWith("_") ? ".*" : part
+                            part->Js.String2.startsWith(
+                              dynamicPageSegmentPrefix,
+                            )
+                              ? ".*" : part
                           )
                         ->Js.Array2.joinWith("/");
 

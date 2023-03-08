@@ -1,6 +1,6 @@
 {
   "ocaml.sandbox": {
     "kind": "opam",
-    "switch": "${workspaceFolder:builder}"
+    "switch": "${workspaceFolder:rescript-ssg}"
   }
 }

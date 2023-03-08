@@ -1,4 +1,4 @@
-let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
+let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   let durationLabel = "[Commands.compileRescript] duration";
   Js.Console.timeStart(durationLabel);
 
@@ -8,7 +8,7 @@ let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
 
   switch (
     ChildProcess.spawnSync(
-      rescriptBinaryPath,
+      compileCommand,
       [||],
       {"shell": true, "encoding": "utf8", "stdio": "inherit"},
     )
@@ -42,7 +42,7 @@ let build =
     (
       ~outputDir: string,
       ~melangeOutputDir: option(string)=?,
-      ~rescriptBinaryPath: string,
+      ~compileCommand: string,
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
       ~pages: array(PageBuilder.page),
@@ -58,7 +58,7 @@ let build =
   let webpackPages =
     PageBuilder.buildPages(~outputDir, ~melangeOutputDir, ~logger, pages);
 
-  compileRescript(~rescriptBinaryPath, ~logger);
+  compileRescript(~compileCommand, ~logger);
 
   Webpack.build(
     ~mode,
