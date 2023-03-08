@@ -45,7 +45,7 @@
     "c8": "^7.12.0",
     "lite-flag-icon": "^1.0.8",
     "rescript": "^9.1.4",
-    "serve": "^14.1.2",
+    "serve": "^14.2.0",
     "webpack-bundle-analyzer": "^4.8.0"
   }
 }
