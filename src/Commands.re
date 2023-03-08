@@ -51,24 +51,27 @@ let build =
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
-  GlobalValues.unsafeAdd(globalValues);
+  let () = GlobalValues.unsafeAdd(globalValues);
 
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
     PageBuilder.buildPages(~outputDir, ~melangeOutputDir, ~logger, pages);
 
-  compileRescript(~compileCommand, ~logger);
+  let () = compileRescript(~compileCommand, ~logger);
 
-  Webpack.build(
-    ~mode,
-    ~outputDir,
-    ~logger,
-    ~writeWebpackStatsJson,
-    ~minimizer,
-    ~globalValues,
-    ~webpackPages,
-  );
+  let () =
+    Webpack.build(
+      ~mode,
+      ~outputDir,
+      ~logger,
+      ~writeWebpackStatsJson,
+      ~minimizer,
+      ~globalValues,
+      ~webpackPages,
+    );
+
+  ();
 };
 
 let start =
@@ -83,28 +86,26 @@ let start =
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
-  GlobalValues.unsafeAdd(globalValues);
+  let () = GlobalValues.unsafeAdd(globalValues);
 
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
     PageBuilder.buildPages(~outputDir, ~melangeOutputDir, ~logger, pages);
 
-  Watcher.startWatcher(
-    ~outputDir,
-    ~melangeOutputDir,
-    ~logger,
-    ~globalValues,
-    pages,
-  );
+  let () =
+    Webpack.startDevServer(
+      ~devServerOptions,
+      ~mode,
+      ~logger,
+      ~outputDir,
+      ~melangeOutputDir,
+      ~minimizer,
+      ~globalValues,
+      ~webpackPages,
+    );
 
-  Webpack.startDevServer(
-    ~devServerOptions,
-    ~mode,
-    ~logger,
-    ~outputDir,
-    ~minimizer,
-    ~globalValues,
-    ~webpackPages,
-  );
+  let () = Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
+
+  ();
 };
