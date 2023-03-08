@@ -6,7 +6,7 @@ let () = Commands.build(
   ~mode=Production,
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
-  ~rescriptBinaryPath=Path.join2(currentDir, "../../node_modules/.bin/rescript"),
+  ~compileRescriptCommand=Path.join2(currentDir, "../../node_modules/.bin/rescript"),
   ~writeWebpackStatsJson=true,
   ~minimizer=Esbuild,
   (),
