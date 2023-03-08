@@ -70,14 +70,14 @@ module BuildPageHtmlAndReactApp = {
 
   let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true})
 
-  let compileRescriptCommand = Path.join2(dirname, "../node_modules/.bin/rescript")
+  let compileCommand = Path.join2(dirname, "../node_modules/.bin/rescript")
 
   let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup()
 
     let _webpackPages = PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, page)
 
-    Commands.compileRescript(~compileRescriptCommand, ~logger)
+    Commands.compileRescript(~compileCommand, ~logger)
 
     let moduleName = Utils.getModuleNameFromModulePath(page.modulePath)
 
