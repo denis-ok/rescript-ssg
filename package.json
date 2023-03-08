@@ -42,7 +42,7 @@
     "react-helmet": "^6.1.0"
   },
   "devDependencies": {
-    "c8": "^7.12.0",
+    "c8": "^7.13.0",
     "lite-flag-icon": "^1.0.8",
     "rescript": "^9.1.4",
     "serve": "^14.2.0",
