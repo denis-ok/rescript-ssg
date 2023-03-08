@@ -23,10 +23,12 @@
   "license": "MIT",
   "dependencies": {
     "chokidar": "^3.5.3",
+    "css-loader": "^6.7.3",
     "dependency-tree": "^9.0.0",
     "esbuild-loader": "^3.0.1",
     "html-webpack-plugin": "^5.5.0",
     "jsesc": "^3.0.2",
+    "mini-css-extract-plugin": "^2.7.2",
     "webpack": "^5.75.0",
     "webpack-dev-server": "^4.11.1"
   },
@@ -41,6 +43,7 @@
   },
   "devDependencies": {
     "c8": "^7.12.0",
+    "lite-flag-icon": "^1.0.8",
     "rescript": "^9.1.4",
     "serve": "^14.1.2",
     "webpack-bundle-analyzer": "^4.7.0"
