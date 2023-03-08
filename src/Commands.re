@@ -99,13 +99,19 @@ let start =
       ~mode,
       ~logger,
       ~outputDir,
-      ~melangeOutputDir,
       ~minimizer,
       ~globalValues,
       ~webpackPages,
     );
 
-  let () = Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
+  let () =
+    Watcher.startWatcher(
+      ~outputDir,
+      ~melangeOutputDir,
+      ~logger,
+      ~globalValues,
+      pages,
+    );
 
   ();
 };
