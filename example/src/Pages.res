@@ -4,7 +4,11 @@ let outputDir = Path.join2(currentDir, "../build")
 
 let normalizeCssFilePath = Path.join2(currentDir, "/css/normalize.css")
 
-let globalValues = [("GLOBAL_VALUE", "GLOBAL_VALUE123")]
+let globalValues = [
+  //
+  ("process.env.ENV_VAR", Env.envVar),
+  ("GLOBAL_VAR", "BAR"),
+]
 
 let pageIndex: PageBuilder.page = {
   pageWrapper: Some({

@@ -18,10 +18,10 @@ start-rescript:
 	$(NODE_BINS)/rescript build -w
 
 build-example:
-	MY_ENV_VAR=myEnvVar1 ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
+	ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
 
 start-example:
-	MY_ENV_VAR=myEnvVar1 ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
+	ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
 
 serve-example:
 	$(NODE_BINS)/serve -l 3005 $(EXAMPLE_DIR)/build/public

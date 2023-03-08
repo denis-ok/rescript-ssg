@@ -22,24 +22,8 @@ external makeProfilingPlugin: unit => webpackPlugin = "default";
 [@new] [@module "esbuild-loader"]
 external makeESBuildPlugin: Js.t('a) => webpackPlugin = "EsbuildPlugin";
 
-[@val] external processEnvDict: Js.Dict.t(string) = "process.env";
-
 let getPluginWithGlobalValues = (globalValues: array((string, string))) => {
-  let keyBase = "process.env";
-
-  let makeKey = varName => keyBase ++ "." ++ varName;
-
-  let envItems = processEnvDict->Js.Dict.entries;
-
   let dict = Js.Dict.empty();
-
-  dict->Js.Dict.set(keyBase, "({})");
-
-  envItems->Js.Array2.forEach(((key, value)) => {
-    let key = makeKey(key);
-    let value = {j|"$(value)"|j};
-    dict->Js.Dict.set(key, value);
-  });
 
   globalValues->Js.Array2.forEach(((key, value)) => {
     let value = {j|"$(value)"|j};

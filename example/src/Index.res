@@ -9,6 +9,7 @@ let modulePath = Utils.getFilepath()
 // If we just import something and don't use it, the import statement will be missing in the compiled code.
 // Using dynamic import to avoid that.
 import_("lite-flag-icon/css/flag-icon.min.css")->ignore
+
 import_("./index.css")->ignore
 
 @react.component
@@ -27,7 +28,7 @@ let make = () => {
     </button>
     {isFlagVisible ? <div className={"flag-icon flag-icon-us"} /> : React.null}
     <SharedModule.Footer />
-    <div> {"MY_ENV_VAR: "->React.string} {Env.myEnvVar->React.string} </div>
-    <div> {"GLOBAL_VALUE: "->React.string} {Env.globalValue->React.string} </div>
+    <div> {"ENV_VAR: "->React.string} {Env.envVar->React.string} </div>
+    <div> {"GLOBAL_VAR: "->React.string} {Env.globalVar->React.string} </div>
   </div>
 }
