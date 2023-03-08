@@ -5,6 +5,14 @@ module HtmlWebpackPlugin = {
   external make: Js.t('a) => webpackPlugin = "default";
 };
 
+module MiniCssExtractPlugin = {
+  [@module "mini-css-extract-plugin"] [@new]
+  external make: unit => webpackPlugin = "default";
+
+  [@module "mini-css-extract-plugin"] [@scope "default"]
+  external loader: string = "loader";
+};
+
 [@new] [@module "webpack"] [@scope "default"]
 external definePlugin: Js.Dict.t(string) => webpackPlugin = "DefinePlugin";
 
@@ -211,9 +219,10 @@ let makeConfig =
       "rules": [|
         {
           //
-          "test": NodeLoader.assetRegex,
-          "type": "asset/resource",
+          "test": [%re {|/\.css$/|}],
+          "use": [|MiniCssExtractPlugin.loader, "css-loader"|],
         },
+        {"test": NodeLoader.assetRegex, "type": "asset/resource"}->Obj.magic,
       |],
     },
 
@@ -241,7 +250,10 @@ let makeConfig =
 
       let browserEnvPlugin = getPluginWithGlobalValues(globalValues);
 
-      Js.Array2.concat([|browserEnvPlugin|], htmlWebpackPlugins);
+      Js.Array2.concat(
+        [|browserEnvPlugin, MiniCssExtractPlugin.make()|],
+        htmlWebpackPlugins,
+      );
     },
     // Explicitly disable source maps in dev mode
     "devtool": false,
