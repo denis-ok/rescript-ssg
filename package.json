@@ -46,6 +46,6 @@
     "lite-flag-icon": "^1.0.8",
     "rescript": "^9.1.4",
     "serve": "^14.1.2",
-    "webpack-bundle-analyzer": "^4.7.0"
+    "webpack-bundle-analyzer": "^4.8.0"
   }
 }
