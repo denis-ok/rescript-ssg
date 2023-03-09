@@ -4,13 +4,13 @@ let modulePath = Utils.getFilepath()
 
 @module("./images/cat.jpeg") external catImage: string = "default"
 
-@val external import_: string => Js.Promise.t<'a> = "import"
+@module("./index.css") external css: string = "default"
 
-// If we just import something and don't use it, the import statement will be missing in the compiled code.
-// Using dynamic import to avoid that.
-import_("lite-flag-icon/css/flag-icon.min.css")->ignore
+@module("lite-flag-icon/css/flag-icon.min.css") external flagsCss: string = "default"
 
-import_("./index.css")->ignore
+css->ignore
+
+flagsCss->ignore
 
 @react.component
 let make = () => {

@@ -7,7 +7,7 @@ module HtmlWebpackPlugin = {
 
 module MiniCssExtractPlugin = {
   [@module "mini-css-extract-plugin"] [@new]
-  external make: unit => webpackPlugin = "default";
+  external make: Js.t('a) => webpackPlugin = "default";
 
   [@module "mini-css-extract-plugin"] [@scope "default"]
   external loader: string = "loader";
@@ -234,11 +234,17 @@ let makeConfig =
           })
         });
 
-      let browserEnvPlugin = getPluginWithGlobalValues(globalValues);
+      let globalValuesPlugin = getPluginWithGlobalValues(globalValues);
+
+      let miniCssExtractPlugin =
+        MiniCssExtractPlugin.make({
+          "filename":
+            NodeLoader.webpackAssetsDir ++ "/" ++ "[name]_[chunkhash].css",
+        });
 
       Js.Array2.concat(
-        [|browserEnvPlugin, MiniCssExtractPlugin.make()|],
         htmlWebpackPlugins,
+        [|miniCssExtractPlugin, globalValuesPlugin|],
       );
     },
     // Explicitly disable source maps in dev mode
@@ -287,6 +293,9 @@ let makeConfig =
         },
       },
     },
+    // },
+    //   "name": "webpack-runtime",
+    // "runtimeChunk": {
     "watchOptions": {
       "aggregateTimeout": 1000,
     },
