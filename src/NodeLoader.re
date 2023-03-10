@@ -45,9 +45,15 @@ let getFinalHashedAssetPath =
 
   let filenameWithHash = {j|$(filenameWithoutExt).$(fileHash)$(fileExt)|j};
 
-  let assetsDir = Path.join2(CliArgs.assetPrefix, webpackAssetsDir);
-
-  let assetPath = Path.join2(assetsDir, filenameWithHash);
+  let assetPath =
+    switch (CliArgs.assetPrefix->Js.String2.startsWith("https://")) {
+    | false =>
+      let assetsDir = Path.join2(CliArgs.assetPrefix, webpackAssetsDir);
+      Path.join2(assetsDir, filenameWithHash);
+    | true =>
+      let assetsDir = CliArgs.assetPrefix ++ "/" ++ webpackAssetsDir;
+      assetsDir ++ "/" ++ filenameWithHash;
+    };
 
   let assetPath = Utils.maybeAddSlashPrefix(assetPath);
 
