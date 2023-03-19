@@ -173,7 +173,7 @@ switch ReactDOM.querySelector("#root") {
 
     let expectedAppContent = `
 type pageData
-@module("./TestPageWithData_Data_688ca4c30fca5edb6793.js") external pageData: pageData = "data"
+@module("./TestPageWithData_Data_9164ff40c83c547e.js") external pageData: pageData = "data"
 
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate(<TestPageWithData data={pageData->Obj.magic} />, root)
@@ -224,9 +224,9 @@ switch ReactDOM.querySelector("#root") {
 
     let expectedAppContent = `
 type pageWrapperData
-@module("./__pageWrappersData/TestWrapperWithData_Data_688ca4c30fca5edb6793.js") external pageWrapperData: pageWrapperData = "data"
+@module("./__pageWrappersData/TestWrapperWithData_Data_9164ff40c83c547e.js") external pageWrapperData: pageWrapperData = "data"
 type pageData
-@module("./TestPageWithData_Data_688ca4c30fca5edb6793.js") external pageData: pageData = "data"
+@module("./TestPageWithData_Data_9164ff40c83c547e.js") external pageData: pageData = "data"
 
 switch ReactDOM.querySelector("#root") {
 | Some(root) => ReactDOM.hydrate(
