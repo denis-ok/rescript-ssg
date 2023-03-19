@@ -275,8 +275,7 @@ let makeConfig =
         NodeLoader.webpackAssetsDir ++ "/" ++ "js/[name]_[chunkhash].js",
       "assetModuleFilename":
         NodeLoader.webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
-      "hashFunction": Crypto.Hash.createMd5,
-      "hashDigestLength": Crypto.Hash.digestLength,
+      "hashFunction": XXHash.createXXHash64,
       // Clean the output directory before emit.
       "clean": true,
     },

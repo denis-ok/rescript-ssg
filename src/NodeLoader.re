@@ -35,7 +35,7 @@ let getFinalHashedAssetPath =
     | Some(func) => func(fileData)
     };
 
-  let fileHash = Crypto.Hash.bufferToHash(processedFileData);
+  let fileHash = XXHash.bufferToHash(processedFileData);
 
   let fileName = Path.basename(url);
 

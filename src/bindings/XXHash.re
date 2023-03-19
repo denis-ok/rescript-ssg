@@ -13,4 +13,8 @@ let seed = 123;
 
 let createXXHash64 = () => createXXHash64'(~seed);
 
-let bufferToHash = buffer => bufferTohash'(. buffer, ~seed, ~encbuf=`hex);
+let bufferToHash = (buffer: Buffer.t) =>
+  bufferTohash'(. buffer, ~seed, ~encbuf=`hex);
+
+let stringToHash = (s: string) =>
+  bufferTohash'(. Buffer.fromUtf8String(s), ~seed, ~encbuf=`hex);

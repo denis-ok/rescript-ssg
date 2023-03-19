@@ -258,7 +258,7 @@ let makeProcessedDataProp =
 
   let stringifiedData = unsafeStringifyPropValue(data);
 
-  let propDataHash = Crypto.Hash.stringToHash(stringifiedData);
+  let propDataHash = XXHash.stringToHash(stringifiedData);
 
   let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".js";
 
