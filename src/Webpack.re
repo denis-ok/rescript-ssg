@@ -13,6 +13,14 @@ module MiniCssExtractPlugin = {
   external loader: string = "loader";
 };
 
+module TerserPlugin = {
+  type minifier;
+  [@module "terser-webpack-plugin"] [@new]
+  external make: Js.t('a) => webpackPlugin = "default";
+  [@module "terser-webpack-plugin"] [@scope "default"]
+  external swcMinify: minifier = "swcMinify";
+};
+
 [@new] [@module "webpack"] [@scope "default"]
 external definePlugin: Js.Dict.t(string) => webpackPlugin = "DefinePlugin";
 
@@ -94,7 +102,8 @@ module Mode = {
 module Minimizer = {
   type t =
     | Terser
-    | Esbuild;
+    | Esbuild
+    | Swc;
 };
 
 type page = {
@@ -258,6 +267,8 @@ let makeConfig =
         switch (shouldMinimize, minimizer) {
         | (true, Esbuild) =>
           Some([|makeESBuildPlugin({"target": "es2015"})|])
+        | (true, Swc) =>
+          Some([|TerserPlugin.make({"minify": TerserPlugin.swcMinify})|])
         | (false, _)
         | (_, Terser) => None
         };
