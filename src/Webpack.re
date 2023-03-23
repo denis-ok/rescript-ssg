@@ -19,6 +19,8 @@ module TerserPlugin = {
   external make: Js.t('a) => webpackPlugin = "default";
   [@module "terser-webpack-plugin"] [@scope "default"]
   external swcMinify: minifier = "swcMinify";
+  [@module "terser-webpack-plugin"] [@scope "default"]
+  external esbuildMinify: minifier = "esbuildMinify";
 };
 
 [@new] [@module "webpack"] [@scope "default"]
@@ -102,8 +104,9 @@ module Mode = {
 module Minimizer = {
   type t =
     | Terser
-    | Esbuild
-    | Swc;
+    | EsbuildPlugin
+    | TerserPluginWithSwc
+    | TerserPluginWithEsbuild;
 };
 
 type page = {
@@ -265,12 +268,16 @@ let makeConfig =
       "minimize": shouldMinimize,
       "minimizer": {
         switch (shouldMinimize, minimizer) {
-        | (true, Esbuild) =>
+        | (true, EsbuildPlugin) =>
           Some([|makeESBuildPlugin({"target": "es2015"})|])
-        | (true, Swc) =>
+        | (true, TerserPluginWithEsbuild) =>
+          Some([|TerserPlugin.make({"minify": TerserPlugin.esbuildMinify})|])
+        | (true, TerserPluginWithSwc) =>
           Some([|TerserPlugin.make({"minify": TerserPlugin.swcMinify})|])
         | (false, _)
-        | (_, Terser) => None
+        | (_, Terser) =>
+          // Terser is used by default under the hood
+          None
         };
       },
       "splitChunks": {
