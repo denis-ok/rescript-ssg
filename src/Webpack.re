@@ -1,5 +1,8 @@
 type webpackPlugin;
 
+module NodeLoader = NodeLoader; /* Workaround bug in dune and melange: https://github.com/ocaml/dune/pull/6625 */
+module Crypto = Crypto; /* Workaround bug in dune and melange: https://github.com/ocaml/dune/pull/6625 */
+
 module HtmlWebpackPlugin = {
   [@module "html-webpack-plugin"] [@new]
   external make: Js.t('a) => webpackPlugin = "default";
