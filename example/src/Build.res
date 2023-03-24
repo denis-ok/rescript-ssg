@@ -8,6 +8,6 @@ let () = Commands.build(
   ~logLevel=Info,
   ~compileCommand=Path.join2(currentDir, "../../node_modules/.bin/bsb"),
   ~writeWebpackStatsJson=true,
-  ~minimizer=Esbuild,
+  ~minimizer=TerserPluginWithEsbuild,
   (),
 )

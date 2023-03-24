@@ -1,5 +1,8 @@
 type webpackPlugin;
 
+module NodeLoader = NodeLoader; /* Workaround bug in dune and melange: https://github.com/ocaml/dune/pull/6625 */
+module Crypto = Crypto; /* Workaround bug in dune and melange: https://github.com/ocaml/dune/pull/6625 */
+
 module HtmlWebpackPlugin = {
   [@module "html-webpack-plugin"] [@new]
   external make: Js.t('a) => webpackPlugin = "default";
@@ -11,6 +14,16 @@ module MiniCssExtractPlugin = {
 
   [@module "mini-css-extract-plugin"] [@scope "default"]
   external loader: string = "loader";
+};
+
+module TerserPlugin = {
+  type minifier;
+  [@module "terser-webpack-plugin"] [@new]
+  external make: Js.t('a) => webpackPlugin = "default";
+  [@module "terser-webpack-plugin"] [@scope "default"]
+  external swcMinify: minifier = "swcMinify";
+  [@module "terser-webpack-plugin"] [@scope "default"]
+  external esbuildMinify: minifier = "esbuildMinify";
 };
 
 [@new] [@module "webpack"] [@scope "default"]
@@ -94,7 +107,9 @@ module Mode = {
 module Minimizer = {
   type t =
     | Terser
-    | Esbuild;
+    | EsbuildPlugin
+    | TerserPluginWithSwc
+    | TerserPluginWithEsbuild;
 };
 
 type page = {
@@ -256,10 +271,16 @@ let makeConfig =
       "minimize": shouldMinimize,
       "minimizer": {
         switch (shouldMinimize, minimizer) {
-        | (true, Esbuild) =>
+        | (true, EsbuildPlugin) =>
           Some([|makeESBuildPlugin({"target": "es2015"})|])
+        | (true, TerserPluginWithEsbuild) =>
+          Some([|TerserPlugin.make({"minify": TerserPlugin.esbuildMinify})|])
+        | (true, TerserPluginWithSwc) =>
+          Some([|TerserPlugin.make({"minify": TerserPlugin.swcMinify})|])
         | (false, _)
-        | (_, Terser) => None
+        | (_, Terser) =>
+          // Terser is used by default under the hood
+          None
         };
       },
       "splitChunks": {
