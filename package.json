@@ -30,7 +30,7 @@
     "html-webpack-plugin": "^5.5.0",
     "jsesc": "^3.0.2",
     "mini-css-extract-plugin": "^2.7.5",
-    "webpack": "^5.76.1",
+    "webpack": "^5.76.3",
     "webpack-dev-server": "^4.13.1"
   },
   "peerDependencies": {
