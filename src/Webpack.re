@@ -314,9 +314,6 @@ let makeConfig =
         },
       },
     },
-    // },
-    //   "name": "webpack-runtime",
-    // "runtimeChunk": {
     "watchOptions": {
       "aggregateTimeout": 1000,
     },
