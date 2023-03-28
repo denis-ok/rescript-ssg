@@ -1,7 +1,5 @@
 import * as NodeLoader from "../NodeLoader.bs.js"
 
-const nodeVersion = NodeLoader.nodeVersionToInt(process.version)
-
 export async function load(url, context, nextLoad) {
   if (NodeLoader.isBsArtifact(url)) {
     // We need to fix the error that appeared after bs-css added:
@@ -16,10 +14,6 @@ export async function load(url, context, nextLoad) {
     return NodeLoader.processAsset(url, undefined)
   } else {
     // Defer to Node.js for all other URLs.
-    if (nodeVersion >= 16170) {
-      return nextLoad(url)
-    } else {
-      return nextLoad(url, context, nextLoad)
-    }
+    return nextLoad(url)
   }
 }

@@ -1,30 +1,29 @@
 [@send] external replaceAll: (string, string, string) => string = "replaceAll";
 
-// 'v16.15.0' => 16150
-let nodeVersionToInt = (s: string) => {
-  let refinedNodeVersion = s->replaceAll("v", "")->replaceAll(".", "");
-  Belt.Int.fromString(refinedNodeVersion)->Belt.Option.getWithDefault(0);
-};
-
 let bsArtifactRegex = [%re {|/file:.*\.bs\.js$/i|}];
 
 let isBsArtifact = fileUrl => {
-  Js.String2.match(fileUrl, bsArtifactRegex) != None;
+  switch (Js.String2.match(fileUrl, bsArtifactRegex)) {
+  | None => false
+  | Some(_) => true
+  };
 };
 
 let assetRegex = [%re
   {|/\.(css|jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json|mp4)$/i|}
 ];
 
-let isAsset = fileUrl => {
-  Js.String2.match(fileUrl, assetRegex) != None;
-};
+let isAsset = fileUrl =>
+  switch (Js.String2.match(fileUrl, assetRegex)) {
+  | None => false
+  | Some(_) => true
+  };
 
 let webpackAssetsDir = "assets";
 
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
 let getFinalHashedAssetPath =
-    (url: string, processFileData: option(Buffer.t => Buffer.t)) => {
+    (url: string, processFileData: option((. Buffer.t) => Buffer.t)) => {
   let filePath = url->Js.String2.replace("file://", "");
 
   let fileData = Fs.readFileSyncAsBuffer(filePath);
@@ -32,7 +31,7 @@ let getFinalHashedAssetPath =
   let processedFileData =
     switch (processFileData) {
     | None => fileData
-    | Some(func) => func(fileData)
+    | Some(func) => func(. fileData)
     };
 
   let fileHash = Crypto.Hash.bufferToHash(processedFileData);
@@ -55,13 +54,13 @@ let getFinalHashedAssetPath =
       assetsDir ++ "/" ++ filenameWithHash;
     };
 
-  let assetPath = Utils.maybeAddSlashPrefix(assetPath);
+  let assetPath = PathUtils.maybeAddSlashPrefix(assetPath);
 
   assetPath;
 };
 
 let processAsset =
-    (url: string, processFileData: option(Buffer.t => Buffer.t)) => {
+    (url: string, processFileData: option((. Buffer.t) => Buffer.t)) => {
   let webpackAssetPath = getFinalHashedAssetPath(url, processFileData);
 
   Js.Promise.resolve({

@@ -6,11 +6,10 @@ let getProcessArgValue = (name: string) => {
     ->Js.Array2.find(arg => arg->Js.String2.startsWith(prefix));
 
   let value =
-    arg
-    ->Belt.Option.map(arg =>
-        arg->Js.String2.replace(prefix, "")->Js.String2.trim
-      )
-    ->Belt.Option.getWithDefault("");
+    switch (arg) {
+    | None => ""
+    | Some(arg) => arg->Js.String2.replace(prefix, "")->Js.String2.trim
+    };
 
   value;
 };

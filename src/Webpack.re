@@ -194,7 +194,9 @@ let makeConfig =
     ->Js.Dict.fromArray;
 
   let assetPrefix =
-    CliArgs.assetPrefix->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;
+    CliArgs.assetPrefix
+    ->PathUtils.maybeAddSlashPrefix
+    ->PathUtils.maybeAddSlashSuffix;
 
   let shouldMinimize = mode == Production;
 
