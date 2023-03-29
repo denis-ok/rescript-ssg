@@ -516,17 +516,19 @@ let build =
           Process.exit(1);
         })
       | Some(stats) =>
+        logger.info(() => Js.log(Webpack.Stats.toString(stats)));
+
         switch (Webpack.Stats.hasErrors(stats)) {
         | false => ()
-        | true => logger.info(() => Js.log("[Webpack.build] Stats.hasErrors"))
+        | true =>
+          Js.Console.error("[Webpack.build] Error: stats object has errors");
+          Process.exit(1);
         };
         switch (Webpack.Stats.hasWarnings(stats)) {
         | false => ()
         | true =>
           logger.info(() => Js.log("[Webpack.build] Stats.hasWarnings"))
         };
-
-        logger.info(() => Js.log(Webpack.Stats.toString(stats)));
 
         let webpackOutputDir = getWebpackOutputDir(outputDir);
 
