@@ -28,6 +28,7 @@ type page = {
   modulePath: string,
   path: PageBuilderT.PagePath.t,
   headCssFilepaths: array(string),
+  globalValues: option(array((string, string))),
 };
 
 module PageData = {

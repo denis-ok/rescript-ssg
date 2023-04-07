@@ -36,12 +36,18 @@ logger.debug(() => Js.log2("[Worker] Pages to build:\n", pages->showPages));
 
 pages
 ->Js.Array2.map(page => {
+    let () =
+      page.globalValues
+      ->Belt.Option.map(globalValues => GlobalValues.unsafeAdd(globalValues))
+      ->ignore;
+
     let modulePath = page.modulePath;
     let outputDir = page.outputDir;
 
     logger.debug(() =>
       Js.log2("[Worker] Trying to import module: ", modulePath)
     );
+
     let importedModule = import_(modulePath);
 
     let importedWrapperModule =
@@ -111,6 +117,7 @@ pages
         modulePath: module_##modulePath,
         headCssFilepaths: page.headCssFilepaths,
         path: page.path,
+        globalValues: None,
       };
 
       PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, newPage);

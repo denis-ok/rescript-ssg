@@ -30,5 +30,6 @@ let make = () => {
     <SharedModule.Footer />
     <div> {"ENV_VAR: "->React.string} {Env.envVar->React.string} </div>
     <div> {"GLOBAL_VAR: "->React.string} {Env.globalVar->React.string} </div>
+    <PerPageGlobal />
   </div>
 }

@@ -19,6 +19,7 @@ let pageIndex: PageBuilder.page = {
   modulePath: Index.modulePath,
   headCssFilepaths: [normalizeCssFilePath],
   path: Root,
+  globalValues: Some([("PER_PAGE_GLOBAL", "INDEX")]),
 }
 
 let page1: PageBuilder.page = {
@@ -44,6 +45,7 @@ let page1: PageBuilder.page = {
   modulePath: Page1.modulePath,
   headCssFilepaths: [],
   path: Path(["page1"]),
+  globalValues: Some([("PER_PAGE_GLOBAL", "PAGE1")]),
 }
 
 let page11: PageBuilder.page = {
@@ -63,6 +65,7 @@ let page11: PageBuilder.page = {
   modulePath: Page1.modulePath,
   headCssFilepaths: [],
   path: Path(["page11"]),
+  globalValues: None,
 }
 
 let page2: PageBuilder.page = {
@@ -71,6 +74,7 @@ let page2: PageBuilder.page = {
   modulePath: Page2.modulePath,
   headCssFilepaths: [],
   path: Path(["page2"]),
+  globalValues: None,
 }
 
 let page1Dynamic: PageBuilder.page = {
@@ -79,6 +83,7 @@ let page1Dynamic: PageBuilder.page = {
   modulePath: PageDynamic.modulePath,
   headCssFilepaths: [],
   path: Path(["page1", "dynamic__id"]),
+  globalValues: None,
 }
 
 let languages = ["en", "ru"]
