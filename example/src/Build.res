@@ -1,6 +1,6 @@
 let currentDir = Utils.getDirname()
 
-let () = Commands.build(
+let () = Commands.buildWithWorkers(
   ~pages=Pages.pages,
   ~globalValues=Pages.globalValues,
   ~mode=Production,

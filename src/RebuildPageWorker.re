@@ -117,13 +117,12 @@ pages
     });
   })
 ->Js.Promise.all
-->Promise.map((_: array(Webpack.page)) => {
+->Promise.map((webpackPages: array(Webpack.page)) => {
     logger.info(() => {
       Js.log("[Worker] Pages rebuild success, job finished.");
       Js.Console.timeEnd(durationLabel);
     });
-
-    parentPort->WorkingThreads.postMessage(true);
+    parentPort->WorkingThreads.postMessage(webpackPages);
   })
 ->Promise.catch(error => {
     logger.info(() =>
