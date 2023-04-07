@@ -1,7 +1,7 @@
 let dirname = Utils.getDirname();
 
 let mapPageToPageForRebuild =
-    (~page: PageBuilder.page, ~outputDir): RebuildPageWorkerT.rebuildPage => {
+    (~page: PageBuilder.page, ~outputDir): RebuildPageWorkerT.workerPage => {
   {
     pageWrapper: {
       switch (page.pageWrapper) {

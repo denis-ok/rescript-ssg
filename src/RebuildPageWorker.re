@@ -1,6 +1,6 @@
 [@val] external import_: string => Js.Promise.t('a) = "import";
 
-let showPages = (pages: array(RebuildPageWorkerT.rebuildPage)) => {
+let showPages = (pages: array(RebuildPageWorkerT.workerPage)) => {
   pages->Js.Array2.map(page => {
     Log.makeMinimalPrintablePageObj(
       ~pagePath=page.path,
