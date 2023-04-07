@@ -84,8 +84,6 @@ let buildWithWorkers =
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
-  let () = GlobalValues.unsafeAdd(globalValues);
-
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
