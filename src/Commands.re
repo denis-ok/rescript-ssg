@@ -88,39 +88,23 @@ let buildWithWorkers =
 
   let logger = Log.makeLogger(logLevel);
 
-  let rebuildPages =
-    pages->Js.Array2.map(page =>
-      RebuildPageWorkerHelpers.mapPageToPageForRebuild(~page, ~outputDir)
-    );
-
-  let workerDatas =
-    rebuildPages
-    ->Js.Array2.map(page => {
-        let workerData: RebuildPageWorkerT.workerData = {
-          pages: [|page|],
-          logLevel: logger.logLevel,
-          globalValues,
-        };
-        workerData;
-      })
-    ->Array.splitIntoChunks(~chunkSize=2);
-
-  let createPageCallbacks =
-    workerDatas->Js.Array2.map((workerDatas, ()) =>
-      workerDatas
-      ->Js.Array2.map(workerData =>
-          RebuildPageWorkerHelpers.runRebuildPageWorker(
-            ~workerData, ~onExit=_exitCode =>
-            ()
-          )
-        )
-      ->Js.Promise.all
-      ->Promise.map(result => Array.flat1(result))
-    );
-
   let webpackPages =
-    Promise.seqRun(createPageCallbacks)
-    ->Js.Promise.all
+    pages
+    ->Array.splitIntoChunks(~chunkSize=1)
+    ->Js.Array2.map((pages, ()) =>
+        pages
+        ->Js.Array2.map(page =>
+            RebuildPageWorkerHelpers.rebuildPagesWithWorker(
+              ~outputDir,
+              ~logger,
+              ~globalValues,
+              [|page|],
+            )
+          )
+        ->Js.Promise.all
+        ->Promise.map(result => Array.flat1(result))
+      )
+    ->Promise.seqRun
     ->Promise.map(result => Array.flat1(result));
 
   webpackPages
