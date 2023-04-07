@@ -89,38 +89,9 @@ let buildWithWorkers =
   let logger = Log.makeLogger(logLevel);
 
   let rebuildPages =
-    pages->Js.Array2.map(page => {
-      let rebuildPage: RebuildPageWorkerT.rebuildPage = {
-        pageWrapper: {
-          switch (page.pageWrapper) {
-          | None => None
-          | Some({component: WrapperWithChildren(_), modulePath}) =>
-            Some({component: WrapperWithChildren, modulePath})
-          | Some({
-              component: PageBuilder.WrapperWithDataAndChildren({data, _}),
-              modulePath,
-            }) =>
-            Some({
-              component: WrapperWithDataAndChildren({data: data}),
-              modulePath,
-            })
-          };
-        },
-        component: {
-          switch (page.component) {
-          | ComponentWithoutData(_) => ComponentWithoutData
-          | PageBuilder.ComponentWithData({data, _}) =>
-            ComponentWithData({data: data})
-          };
-        },
-        modulePath: page.modulePath,
-        outputDir,
-        headCssFilepaths: page.headCssFilepaths,
-        path: page.path,
-      };
-
-      rebuildPage;
-    });
+    pages->Js.Array2.map(page =>
+      RebuildPageWorkerHelpers.mapPageToPageForRebuild(~page, ~outputDir)
+    );
 
   let workerDatas =
     rebuildPages
@@ -132,16 +103,17 @@ let buildWithWorkers =
         };
         workerData;
       })
-    ->Array.splitIntoChunks(~chunkSize=NodeOs.availableParallelism());
-
-  let runRebuildPageWorker =
-      (~workerData): Js.Promise.t(array(Webpack.page)) =>
-    Watcher.runRebuildPageWorker(~workerData, ~onExit=_exitCode => ());
+    ->Array.splitIntoChunks(~chunkSize=2);
 
   let createPageCallbacks =
     workerDatas->Js.Array2.map((workerDatas, ()) =>
       workerDatas
-      ->Js.Array2.map(workerData => runRebuildPageWorker(~workerData))
+      ->Js.Array2.map(workerData =>
+          RebuildPageWorkerHelpers.runRebuildPageWorker(
+            ~workerData, ~onExit=_exitCode =>
+            ()
+          )
+        )
       ->Js.Promise.all
       ->Promise.map(result => Array.flat1(result))
     );
