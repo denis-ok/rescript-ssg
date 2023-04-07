@@ -21,18 +21,18 @@ let logLevel = workerData.logLevel;
 
 let logger = Log.makeLogger(logLevel);
 
-let durationLabel = "[RebuildPageWorker] duration";
+let successText = "[Worker] Pages build success. Duration";
 
-Js.Console.timeStart(durationLabel);
+Js.Console.timeStart(successText);
 
 logger.info(() =>
   Js.log2(
-    "[Worker] Rebuilding pages:\n",
+    "[Worker] Pages to build:\n",
     pages->Js.Array2.map(page => PageBuilderT.PagePath.toString(page.path)),
   )
 );
 
-logger.debug(() => Js.log2("[Worker] Rebuilding pages:\n", pages->showPages));
+logger.debug(() => Js.log2("[Worker] Pages to build:\n", pages->showPages));
 
 pages
 ->Js.Array2.map(page => {
@@ -118,10 +118,7 @@ pages
   })
 ->Js.Promise.all
 ->Promise.map((webpackPages: array(Webpack.page)) => {
-    logger.info(() => {
-      Js.log("[Worker] Pages rebuild success, job finished.");
-      Js.Console.timeEnd(durationLabel);
-    });
+    logger.info(() => Js.Console.timeEnd(successText));
     parentPort->WorkingThreads.postMessage(webpackPages);
   })
 ->Promise.catch(error => {
