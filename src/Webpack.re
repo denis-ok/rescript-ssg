@@ -121,28 +121,32 @@ type page = {
 
 module DevServerOptions = {
   module Proxy = {
-    // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/eefa7b7fce1443e2b6ee5e34d84e142880418208/types/http-proxy/index.d.ts#L25
-    type devServerTarget = {
-      host: option(string),
-      socketPath: option(string),
+    module DevServerTarget = {
+      // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/eefa7b7fce1443e2b6ee5e34d84e142880418208/types/http-proxy/index.d.ts#L25
+      type params = {
+        host: option(string),
+        socketPath: option(string),
+      };
+
+      type t =
+        | String(string)
+        | Params(params);
+
+      [@unboxed]
+      type unboxed =
+        | Any('a): unboxed;
+
+      let makeUnboxed = (devServerTarget: t) =>
+        switch (devServerTarget) {
+        | String(s) => Any(s)
+        | Params(devServerTarget) => Any(devServerTarget)
+        };
     };
-
-    type devServerTargetT =
-      | Str(string)
-      | DevServerTarget(devServerTarget);
-
-    [@unboxed]
-    type unboxedDevServerTarget =
-      | Any('a): unboxedDevServerTarget;
-    let devServerTarget_or_string =
-      fun
-      | Str(s) => Any(s)
-      | DevServerTarget(devServerTarget) => Any(devServerTarget);
 
     type devServerPathRewrite = Js.Dict.t(string);
 
     type devServerProxyTo = {
-      target: unboxedDevServerTarget,
+      target: DevServerTarget.unboxed,
       pathRewrite: option(devServerPathRewrite),
       secure: bool,
       changeOrigin: bool,
@@ -429,12 +433,12 @@ let makeConfig =
                       target:
                         switch (proxy.to_.target) {
                         | Host(host) =>
-                          DevServerOptions.Proxy.devServerTarget_or_string(
-                            DevServerOptions.Proxy.Str(host),
+                          DevServerOptions.Proxy.DevServerTarget.makeUnboxed(
+                            String(host),
                           )
                         | UnixSocket(socketPath) =>
-                          DevServerOptions.Proxy.devServerTarget_or_string(
-                            DevServerOptions.Proxy.DevServerTarget({
+                          DevServerOptions.Proxy.DevServerTarget.makeUnboxed(
+                            Params({
                               host: None,
                               socketPath: Some(socketPath),
                             }),
