@@ -127,10 +127,22 @@ module DevServerOptions = {
       socketPath: option(string),
     };
 
+    type devServerTargetT =
+      | Str(string)
+      | DevServerTarget(devServerTarget);
+
+    [@unboxed]
+    type unboxedDevServerTarget =
+      | Any('a): unboxedDevServerTarget;
+    let devServerTarget_or_string =
+      fun
+      | Str(s) => Any(s)
+      | DevServerTarget(devServerTarget) => Any(devServerTarget);
+
     type devServerPathRewrite = Js.Dict.t(string);
 
     type devServerProxyTo = {
-      target: devServerTarget,
+      target: unboxedDevServerTarget,
       pathRewrite: option(devServerPathRewrite),
       secure: bool,
       changeOrigin: bool,
@@ -416,13 +428,23 @@ let makeConfig =
                     let proxyTo: DevServerOptions.Proxy.devServerProxyTo = {
                       target:
                         switch (proxy.to_.target) {
-                        | Host(host) => {host: Some(host), socketPath: None}
-                        | UnixSocket(socketPath) => {
-                            host: None,
-                            socketPath: Some(socketPath),
-                          }
+                        | Host(host) =>
+                          DevServerOptions.Proxy.devServerTarget_or_string(
+                            DevServerOptions.Proxy.Str(host),
+                          )
+                        | UnixSocket(socketPath) =>
+                          DevServerOptions.Proxy.devServerTarget_or_string(
+                            DevServerOptions.Proxy.DevServerTarget({
+                              host: None,
+                              socketPath: Some(socketPath),
+                            }),
+                          )
                         },
-                      pathRewrite: None,
+                      pathRewrite:
+                        proxy.to_.pathRewrite
+                        ->Belt.Option.map(({from, to_}) => {
+                            Js.Dict.fromList([(from, to_)])
+                          }),
                       secure: proxy.to_.secure,
                       changeOrigin: proxy.to_.changeOrigin,
                       logLevel: "debug",
