@@ -29,6 +29,7 @@ type workerData = {
   logLevel: Log.level,
   pages: array(rebuildPage),
   globalValues: array((string, string)),
+  melangeOutputDir: option(string),
 };
 
 let showPage = (page: rebuildPage) => {

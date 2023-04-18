@@ -1,4 +1,4 @@
-let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
+let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   let durationLabel = "[Commands.compileRescript] duration";
   Js.Console.timeStart(durationLabel);
 
@@ -8,7 +8,7 @@ let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
 
   switch (
     ChildProcess.spawnSync(
-      rescriptBinaryPath,
+      compileCommand,
       [||],
       {"shell": true, "encoding": "utf8", "stdio": "inherit"},
     )
@@ -41,7 +41,8 @@ let compileRescript = (~rescriptBinaryPath: string, ~logger: Log.logger) => {
 let build =
     (
       ~outputDir: string,
-      ~rescriptBinaryPath: string,
+      ~melangeOutputDir: option(string)=?,
+      ~compileCommand: string,
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
       ~pages: array(PageBuilder.page),
@@ -50,28 +51,33 @@ let build =
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
-  GlobalValues.unsafeAdd(globalValues);
+  let () = GlobalValues.unsafeAdd(globalValues);
 
   let logger = Log.makeLogger(logLevel);
 
-  let webpackPages = PageBuilder.buildPages(~outputDir, ~logger, pages);
+  let webpackPages =
+    PageBuilder.buildPages(~outputDir, ~melangeOutputDir, ~logger, pages);
 
-  compileRescript(~rescriptBinaryPath, ~logger);
+  let () = compileRescript(~compileCommand, ~logger);
 
-  Webpack.build(
-    ~mode,
-    ~outputDir,
-    ~logger,
-    ~writeWebpackStatsJson,
-    ~minimizer,
-    ~globalValues,
-    ~webpackPages,
-  );
+  let () =
+    Webpack.build(
+      ~mode,
+      ~outputDir,
+      ~logger,
+      ~writeWebpackStatsJson,
+      ~minimizer,
+      ~globalValues,
+      ~webpackPages,
+    );
+
+  ();
 };
 
 let start =
     (
       ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
       ~mode: Webpack.Mode.t,
       ~logLevel: Log.level,
       ~pages: array(PageBuilder.page),
@@ -80,21 +86,32 @@ let start =
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
-  GlobalValues.unsafeAdd(globalValues);
+  let () = GlobalValues.unsafeAdd(globalValues);
 
   let logger = Log.makeLogger(logLevel);
 
-  let webpackPages = PageBuilder.buildPages(~outputDir, ~logger, pages);
+  let webpackPages =
+    PageBuilder.buildPages(~outputDir, ~melangeOutputDir, ~logger, pages);
 
-  Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
+  let () =
+    Webpack.startDevServer(
+      ~devServerOptions,
+      ~mode,
+      ~logger,
+      ~outputDir,
+      ~minimizer,
+      ~globalValues,
+      ~webpackPages,
+    );
 
-  Webpack.startDevServer(
-    ~devServerOptions,
-    ~mode,
-    ~logger,
-    ~outputDir,
-    ~minimizer,
-    ~globalValues,
-    ~webpackPages,
-  );
+  let () =
+    Watcher.startWatcher(
+      ~outputDir,
+      ~melangeOutputDir,
+      ~logger,
+      ~globalValues,
+      pages,
+    );
+
+  ();
 };

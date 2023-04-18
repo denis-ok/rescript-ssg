@@ -40,10 +40,10 @@ let getFilepath = () => makeError()->getFilepathFromError;
 let getDirname = () => makeError()->getFilepathFromError->dirnameFromFilepath;
 
 let getModuleNameFromModulePath = modulePath => {
-  let parts = modulePath->Js.String2.split("/");
+  let segments = modulePath->Js.String2.split("/");
 
   let filename =
-    parts->Js.Array2.copy->Js.Array2.reverseInPlace->Belt.Array.get(0);
+    segments->Js.Array2.copy->Js.Array2.reverseInPlace->Belt.Array.get(0);
 
   switch (filename) {
   | None
@@ -55,17 +55,3 @@ let getModuleNameFromModulePath = modulePath => {
   | Some(filename) => filename->Js.String2.replace(".bs.js", "")
   };
 };
-
-let maybeAddSlashPrefix = path =>
-  if (path->Js.String2.startsWith("http") || path->Js.String2.startsWith("/")) {
-    path;
-  } else {
-    "/" ++ path;
-  };
-
-let maybeAddSlashSuffix = path =>
-  if (path->Js.String2.endsWith("/")) {
-    path;
-  } else {
-    path ++ "/";
-  };

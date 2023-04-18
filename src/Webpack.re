@@ -1,8 +1,29 @@
 type webpackPlugin;
 
+module NodeLoader = NodeLoader; /* Workaround bug in dune and melange: https://github.com/ocaml/dune/pull/6625 */
+module Crypto = Crypto; /* Workaround bug in dune and melange: https://github.com/ocaml/dune/pull/6625 */
+
 module HtmlWebpackPlugin = {
   [@module "html-webpack-plugin"] [@new]
   external make: Js.t('a) => webpackPlugin = "default";
+};
+
+module MiniCssExtractPlugin = {
+  [@module "mini-css-extract-plugin"] [@new]
+  external make: Js.t('a) => webpackPlugin = "default";
+
+  [@module "mini-css-extract-plugin"] [@scope "default"]
+  external loader: string = "loader";
+};
+
+module TerserPlugin = {
+  type minifier;
+  [@module "terser-webpack-plugin"] [@new]
+  external make: Js.t('a) => webpackPlugin = "default";
+  [@module "terser-webpack-plugin"] [@scope "default"]
+  external swcMinify: minifier = "swcMinify";
+  [@module "terser-webpack-plugin"] [@scope "default"]
+  external esbuildMinify: minifier = "esbuildMinify";
 };
 
 [@new] [@module "webpack"] [@scope "default"]
@@ -14,24 +35,8 @@ external makeProfilingPlugin: unit => webpackPlugin = "default";
 [@new] [@module "esbuild-loader"]
 external makeESBuildPlugin: Js.t('a) => webpackPlugin = "EsbuildPlugin";
 
-[@val] external processEnvDict: Js.Dict.t(string) = "process.env";
-
 let getPluginWithGlobalValues = (globalValues: array((string, string))) => {
-  let keyBase = "process.env";
-
-  let makeKey = varName => keyBase ++ "." ++ varName;
-
-  let envItems = processEnvDict->Js.Dict.entries;
-
   let dict = Js.Dict.empty();
-
-  dict->Js.Dict.set(keyBase, "({})");
-
-  envItems->Js.Array2.forEach(((key, value)) => {
-    let key = makeKey(key);
-    let value = {j|"$(value)"|j};
-    dict->Js.Dict.set(key, value);
-  });
 
   globalValues->Js.Array2.forEach(((key, value)) => {
     let value = {j|"$(value)"|j};
@@ -102,7 +107,9 @@ module Mode = {
 module Minimizer = {
   type t =
     | Terser
-    | Esbuild;
+    | EsbuildPlugin
+    | TerserPluginWithSwc
+    | TerserPluginWithEsbuild;
 };
 
 type page = {
@@ -167,6 +174,8 @@ module DevServerOptions = {
 
 let getWebpackOutputDir = outputDir => Path.join2(outputDir, "public");
 
+let dynamicPageSegmentPrefix = "dynamic__";
+
 let makeConfig =
     (
       ~devServerOptions: option(DevServerOptions.t),
@@ -185,7 +194,9 @@ let makeConfig =
     ->Js.Dict.fromArray;
 
   let assetPrefix =
-    CliArgs.assetPrefix->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;
+    CliArgs.assetPrefix
+    ->PathUtils.maybeAddSlashPrefix
+    ->PathUtils.maybeAddSlashSuffix;
 
   let shouldMinimize = mode == Production;
 
@@ -211,9 +222,10 @@ let makeConfig =
       "rules": [|
         {
           //
-          "test": NodeLoader.assetRegex,
-          "type": "asset/resource",
+          "test": [%re {|/\.css$/|}],
+          "use": [|MiniCssExtractPlugin.loader, "css-loader"|],
         },
+        {"test": NodeLoader.assetRegex, "type": "asset/resource"}->Obj.magic,
       |],
     },
 
@@ -239,9 +251,18 @@ let makeConfig =
           })
         });
 
-      let browserEnvPlugin = getPluginWithGlobalValues(globalValues);
+      let globalValuesPlugin = getPluginWithGlobalValues(globalValues);
 
-      Js.Array2.concat([|browserEnvPlugin|], htmlWebpackPlugins);
+      let miniCssExtractPlugin =
+        MiniCssExtractPlugin.make({
+          "filename":
+            NodeLoader.webpackAssetsDir ++ "/" ++ "[name]_[chunkhash].css",
+        });
+
+      Js.Array2.concat(
+        htmlWebpackPlugins,
+        [|miniCssExtractPlugin, globalValuesPlugin|],
+      );
     },
     // Explicitly disable source maps in dev mode
     "devtool": false,
@@ -252,10 +273,16 @@ let makeConfig =
       "minimize": shouldMinimize,
       "minimizer": {
         switch (shouldMinimize, minimizer) {
-        | (true, Esbuild) =>
+        | (true, EsbuildPlugin) =>
           Some([|makeESBuildPlugin({"target": "es2015"})|])
+        | (true, TerserPluginWithEsbuild) =>
+          Some([|TerserPlugin.make({"minify": TerserPlugin.esbuildMinify})|])
+        | (true, TerserPluginWithSwc) =>
+          Some([|TerserPlugin.make({"minify": TerserPlugin.swcMinify})|])
         | (false, _)
-        | (_, Terser) => None
+        | (_, Terser) =>
+          // Terser is used by default under the hood
+          None
         };
       },
       "splitChunks": {
@@ -317,11 +344,13 @@ let makeConfig =
                 webpackPages->Belt.Array.keepMap(page =>
                   switch (page.path) {
                   | Root => None
-                  | Path(parts) =>
+                  | Path(segments) =>
                     let hasDynamicPart =
-                      parts
-                      ->Js.Array2.find(part =>
-                          part->Js.String2.startsWith("_")
+                      segments
+                      ->Js.Array2.find(segment =>
+                          segment->Js.String2.startsWith(
+                            dynamicPageSegmentPrefix,
+                          )
                         )
                       ->Belt.Option.isSome;
 
@@ -329,9 +358,12 @@ let makeConfig =
                     | false => None
                     | _true =>
                       let pathWithAsterisks =
-                        parts
+                        segments
                         ->Js.Array2.map(part =>
-                            part->Js.String2.startsWith("_") ? ".*" : part
+                            part->Js.String2.startsWith(
+                              dynamicPageSegmentPrefix,
+                            )
+                              ? ".*" : part
                           )
                         ->Js.Array2.joinWith("/");
 
@@ -484,17 +516,19 @@ let build =
           Process.exit(1);
         })
       | Some(stats) =>
+        logger.info(() => Js.log(Webpack.Stats.toString(stats)));
+
         switch (Webpack.Stats.hasErrors(stats)) {
         | false => ()
-        | true => logger.info(() => Js.log("[Webpack.build] Stats.hasErrors"))
+        | true =>
+          Js.Console.error("[Webpack.build] Error: stats object has errors");
+          Process.exit(1);
         };
         switch (Webpack.Stats.hasWarnings(stats)) {
         | false => ()
         | true =>
           logger.info(() => Js.log("[Webpack.build] Stats.hasWarnings"))
         };
-
-        logger.info(() => Js.log(Webpack.Stats.toString(stats)));
 
         let webpackOutputDir = getWebpackOutputDir(outputDir);
 

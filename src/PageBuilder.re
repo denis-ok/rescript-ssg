@@ -326,7 +326,13 @@ let processPageComponentWithWrapper =
   };
 };
 
-let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => {
+let buildPageHtmlAndReactApp =
+    (
+      ~outputDir,
+      ~melangeOutputDir: option(string),
+      ~logger: Log.logger,
+      page: page,
+    ) => {
   let intermediateFilesOutputDir = getIntermediateFilesOutputDir(~outputDir);
 
   let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
@@ -334,6 +340,17 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
   let pagePath: string = page.path->PageBuilderT.PagePath.toString;
 
   let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
+
+  // Melange emits compiled JS files to a separate dir (not next to Reason files).
+  // We need to handle it to build correct relative paths to webpack entries and to prop data files.
+  let melangePageOutputDir =
+    switch (melangeOutputDir) {
+    | None => None
+    | Some(melangeOutputDir) =>
+      let melangeIntermediateFilesOutputDir =
+        getIntermediateFilesOutputDir(~outputDir=melangeOutputDir);
+      Some(Path.join2(melangeIntermediateFilesOutputDir, pagePath));
+    };
 
   let pageWrappersDataDir =
     Path.join2(intermediateFilesOutputDir, pageWrappersDataDirname);
@@ -360,7 +377,8 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~pageComponent=page.component,
       ~pageWrapper=page.pageWrapper,
       ~pageModuleName=moduleName,
-      ~pageOutputDir,
+      ~pageOutputDir=
+        melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
       ~pageWrappersDataDir,
     );
 
@@ -413,7 +431,11 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
 
   let webpackPage: Webpack.page = {
     path: page.path,
-    entryPath: Path.join2(pageOutputDir, compiledReactAppFilename),
+    entryPath:
+      Path.join2(
+        melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
+        compiledReactAppFilename,
+      ),
     outputDir: pageOutputDir,
     htmlTemplatePath: resultHtmlPath,
   };
@@ -438,7 +460,8 @@ let checkPageDuplicates = (pages: array(page)) => {
   });
 };
 
-let buildPages = (~outputDir, ~logger: Log.logger, pages: array(page)) => {
+let buildPages =
+    (~outputDir, ~melangeOutputDir, ~logger: Log.logger, pages: array(page)) => {
   checkPageDuplicates(pages);
 
   let durationLabel = "[PageBuilder.buildPages] duration";
@@ -448,7 +471,7 @@ let buildPages = (~outputDir, ~logger: Log.logger, pages: array(page)) => {
 
   let webpackPages =
     pages->Js.Array2.map(page => {
-      buildPageHtmlAndReactApp(~outputDir, ~logger, page)
+      buildPageHtmlAndReactApp(~outputDir, ~melangeOutputDir, ~logger, page)
     });
 
   logger.info(() => {

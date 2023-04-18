@@ -34,6 +34,7 @@ let runRebuildPageWorker =
 let rebuildPagesWithWorker =
     (
       ~outputDir: string,
+      ~melangeOutputDir,
       ~logger: Log.logger,
       ~globalValues: array((string, string)),
       pages: array(PageBuilder.page),
@@ -76,6 +77,7 @@ let rebuildPagesWithWorker =
     pages: rebuildPages,
     logLevel: logger.logLevel,
     globalValues,
+    melangeOutputDir,
   };
 
   runRebuildPageWorker(~workerData, ~onExit=exitCode => {
@@ -108,15 +110,19 @@ let getModuleDependencies = (~modulePath) =>
 let startWatcher =
     (
       ~outputDir,
+      ~melangeOutputDir,
       ~logger: Log.logger,
       ~globalValues: array((string, string)),
       pages: array(PageBuilder.page),
     )
     : unit => {
   logger.info(() => Js.log("[Watcher] Starting file watcher..."));
+
+  let durationLabel = "[Watcher] Startup duration";
+  Js.Console.timeStart(durationLabel);
+
   // Multiple pages can use the same root module. The common case is localized pages.
   // We get modulePath -> array(pages) dict here.
-
   let modulePathToPagesDict = Js.Dict.empty();
   pages->Js.Array2.forEach(page => {
     switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
@@ -211,6 +217,13 @@ let startWatcher =
 
   let watcher = Chokidar.chokidar->Chokidar.watchFiles(allDependencies);
 
+  watcher->Chokidar.onReady(() =>
+    logger.info(() => {
+      Js.Console.timeEnd(durationLabel);
+      Js.log("[Watcher] Started, ready for changes.");
+    })
+  );
+
   let rebuildQueueRef: ref(array(PageBuilder.page)) = ref([||]);
 
   let rebuildPages = () => {
@@ -228,6 +241,7 @@ let startWatcher =
 
       rebuildPagesWithWorker(
         ~outputDir,
+        ~melangeOutputDir,
         ~logger,
         ~globalValues,
         pagesToRebuild,
