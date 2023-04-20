@@ -117,7 +117,7 @@ pages
         modulePath: module_##modulePath,
         headCssFilepaths: page.headCssFilepaths,
         path: page.path,
-        globalValues: None,
+        globalValues: page.globalValues,
       };
 
       PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, newPage);
