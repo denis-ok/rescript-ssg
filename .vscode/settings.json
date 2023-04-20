@@ -2,5 +2,11 @@
   "ocaml.sandbox": {
     "kind": "opam",
     "switch": "${workspaceFolder:rescript-ssg}"
-  }
+  },
+  "github.copilot.enable": {
+    "*": false,
+    "reason": true,
+    "ocaml": true,
+    "rescript": true
+  },
 }
