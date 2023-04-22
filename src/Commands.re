@@ -38,91 +38,6 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   };
 };
 
-let build =
-    (
-      ~outputDir: string,
-      ~compileCommand: string,
-      ~logLevel: Log.level,
-      ~mode: Webpack.Mode.t,
-      ~pages: array(PageBuilder.page),
-      ~writeWebpackStatsJson=false,
-      ~minimizer: Webpack.Minimizer.t=Terser,
-      ~globalValues: array((string, string))=[||],
-      (),
-    ) => {
-  let () = GlobalValues.unsafeAdd(globalValues);
-
-  let logger = Log.makeLogger(logLevel);
-
-  let webpackPages = PageBuilder.buildPages(~outputDir, ~logger, pages);
-
-  let () = compileRescript(~compileCommand, ~logger);
-
-  let () =
-    Webpack.build(
-      ~mode,
-      ~outputDir,
-      ~logger,
-      ~writeWebpackStatsJson,
-      ~minimizer,
-      ~globalValues,
-      ~webpackPages,
-    );
-
-  ();
-};
-
-let buildWithWorkers =
-    (
-      ~outputDir: string,
-      ~compileCommand: string,
-      ~logLevel: Log.level,
-      ~mode: Webpack.Mode.t,
-      ~pages: array(PageBuilder.page),
-      ~writeWebpackStatsJson=false,
-      ~minimizer: Webpack.Minimizer.t=Terser,
-      ~globalValues: array((string, string))=[||],
-      (),
-    ) => {
-  let logger = Log.makeLogger(logLevel);
-
-  let webpackPages =
-    pages
-    ->Array.splitIntoChunks(~chunkSize=1)
-    ->Js.Array2.map((pages, ()) =>
-        pages
-        ->Js.Array2.map(page =>
-            RebuildPageWorkerHelpers.rebuildPagesWithWorker(
-              ~outputDir,
-              ~logger,
-              ~globalValues,
-              [|page|],
-            )
-          )
-        ->Js.Promise.all
-        ->Promise.map(result => Array.flat1(result))
-      )
-    ->Promise.seqRun
-    ->Promise.map(result => Array.flat1(result));
-
-  webpackPages
-  ->Promise.map(webpackPages => {
-      let () = compileRescript(~compileCommand, ~logger);
-      let () =
-        Webpack.build(
-          ~mode,
-          ~outputDir,
-          ~logger,
-          ~writeWebpackStatsJson,
-          ~minimizer,
-          ~globalValues,
-          ~webpackPages,
-        );
-      ();
-    })
-  ->ignore;
-};
-
 let start =
     (
       ~outputDir: string,
@@ -150,6 +65,99 @@ let start =
       ~globalValues,
       ~webpackPages,
     );
+
+  let () = Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
+
+  ();
+};
+
+let buildPagesWithWorkers = (~pages, ~outputDir, ~logger, ~globalValues) =>
+  pages
+  ->Array.splitIntoChunks(~chunkSize=1)
+  ->Js.Array2.map((pages, ()) =>
+      pages
+      ->Js.Array2.map(page =>
+          RebuildPageWorkerHelpers.rebuildPagesWithWorker(
+            ~outputDir,
+            ~logger,
+            ~globalValues,
+            [|page|],
+          )
+        )
+      ->Js.Promise.all
+      ->Promise.map(result => Array.flat1(result))
+    )
+  ->Promise.seqRun
+  ->Promise.map(result => Array.flat1(result));
+
+let buildWithWorkers =
+    (
+      ~outputDir: string,
+      ~compileCommand: string,
+      ~logLevel: Log.level,
+      ~mode: Webpack.Mode.t,
+      ~pages: array(PageBuilder.page),
+      ~writeWebpackStatsJson=false,
+      ~minimizer: Webpack.Minimizer.t=Terser,
+      ~globalValues: array((string, string))=[||],
+      (),
+    ) => {
+  let logger = Log.makeLogger(logLevel);
+
+  let webpackPages =
+    buildPagesWithWorkers(~pages, ~outputDir, ~logger, ~globalValues);
+
+  webpackPages
+  ->Promise.map(webpackPages => {
+      let () = compileRescript(~compileCommand, ~logger);
+      let () =
+        Webpack.build(
+          ~mode,
+          ~outputDir,
+          ~logger,
+          ~writeWebpackStatsJson,
+          ~minimizer,
+          ~globalValues,
+          ~webpackPages,
+        );
+      ();
+    })
+  ->ignore;
+};
+
+let startWithWorkers =
+    (
+      ~outputDir: string,
+      ~mode: Webpack.Mode.t,
+      ~logLevel: Log.level,
+      ~pages: array(PageBuilder.page),
+      ~devServerOptions: Webpack.DevServerOptions.t,
+      ~minimizer: Webpack.Minimizer.t=Terser,
+      ~globalValues: array((string, string))=[||],
+      (),
+    ) => {
+  let () = GlobalValues.unsafeAdd(globalValues);
+
+  let logger = Log.makeLogger(logLevel);
+
+  let webpackPages =
+    buildPagesWithWorkers(~pages, ~outputDir, ~logger, ~globalValues);
+
+  webpackPages
+  ->Promise.map(webpackPages => {
+      let () =
+        Webpack.startDevServer(
+          ~devServerOptions,
+          ~mode,
+          ~logger,
+          ~outputDir,
+          ~minimizer,
+          ~globalValues,
+          ~webpackPages,
+        );
+      ();
+    })
+  ->ignore;
 
   let () = Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
 
