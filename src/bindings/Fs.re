@@ -21,4 +21,9 @@ type rmSyncOptions = {
 
 [@module "fs"] external rmSync: (string, rmSyncOptions) => unit = "rmSync";
 
+[@module "fs"]
+external appendFileSync:
+  (~path: string, ~data: string, ~options: Js.t('a)) => unit =
+  "appendFileSync";
+
 let readFileSyncAsUtf8 = path => readFileSync'(path, "utf8");

@@ -558,9 +558,9 @@ let build =
 
         if (writeWebpackStatsJson) {
           let statsJson = Webpack.Stats.toJson(stats);
-          Fs.writeFileSync(
+          BigJson.stringifyToFile(.
+            statsJson,
             Path.join2(webpackOutputDir, "stats.json"),
-            statsJson->Js.Json.stringifyAny->Belt.Option.getWithDefault(""),
           );
         };
 
