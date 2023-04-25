@@ -558,7 +558,6 @@ let build =
     (
       ~mode: Mode.t,
       ~minimizer: Minimizer.t,
-      ~writeWebpackStatsJson: bool,
       ~logger: Log.logger,
       ~outputDir,
       ~globalValues: array((string, string)),
@@ -610,16 +609,6 @@ let build =
         | false => ()
         | true =>
           logger.info(() => Js.log("[Webpack.build] Stats.hasWarnings"))
-        };
-
-        let webpackOutputDir = getWebpackOutputDir(outputDir);
-
-        if (writeWebpackStatsJson) {
-          let statsJson = Webpack.Stats.toJson(stats);
-          Fs.writeFileSync(
-            Path.join2(webpackOutputDir, "stats.json"),
-            statsJson->Js.Json.stringifyAny->Belt.Option.getWithDefault(""),
-          );
         };
 
         compiler->Webpack.close(closeError => {
