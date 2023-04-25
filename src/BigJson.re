@@ -1,9 +1,45 @@
+// The same type as in Js.Json module but with an additional Unsupported variant.
+// We need to handle fields with possible undefined or other unsupported values (JSON.stringify ignores them).
+type tagged_t =
+  | JSONFalse
+  | JSONTrue
+  | JSONNull
+  | JSONString(string)
+  | JSONNumber(float)
+  | JSONObject(Js_dict.t(Js.Json.t))
+  | JSONArray(array(Js.Json.t))
+  | Unsupported;
+
+let classify = (x: Js.Json.t): tagged_t => {
+  let typeof = Js.typeof(x);
+  if (typeof == "string") {
+    JSONString(Obj.magic(x));
+  } else if (typeof == "number") {
+    JSONNumber(Obj.magic(x));
+  } else if (typeof == "boolean") {
+    if (Obj.magic(x) == true) {
+      JSONTrue;
+    } else {
+      JSONFalse;
+    };
+  } else if (Obj.magic(x) === Js.null) {
+    JSONNull;
+  } else if (Js_array2.isArray(x)) {
+    JSONArray(Obj.magic(x));
+  } else if (typeof == "object") {
+    JSONObject(Obj.magic(x));
+  } else {
+    Unsupported;
+  };
+};
+
 let jsonStringify =
   (. json) => Js.Json.stringifyAny(json)->Belt.Option.getWithDefault("");
 
 let rec stringifyRec =
   (. json: Js.Json.t, currentDepth: int, appendToFile: (. string) => unit) => {
-    switch (Js.Json.classify(json)) {
+    switch (classify(json)) {
+    | Unsupported => ()
     | JSONFalse => appendToFile(. jsonStringify(. json))
     | JSONTrue => appendToFile(. jsonStringify(. json))
     | JSONNull => appendToFile(. jsonStringify(. json))
@@ -35,10 +71,10 @@ and stringifyObject =
     let entries = dict->Js.Dict.entries;
     let length = entries->Js.Array.length;
 
-    entries->Js.Array2.forEachi(((key, value), index) =>
-      if (Js.typeof(value) == "undefined") {
-        (); // Some weird check to make sure we don't add keys with undefined values
-      } else {
+    entries->Js.Array2.forEachi(((key, value), index) => {
+      switch (classify(value)) {
+      | Unsupported => ()
+      | _ =>
         appendToFile(. {j|"$(key)":|j});
 
         stringifyRec(. value, currentDepth + 1, appendToFile);
@@ -49,7 +85,7 @@ and stringifyObject =
           appendToFile(. ",");
         };
       }
-    );
+    });
 
     appendToFile(. "}");
   }
