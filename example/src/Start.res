@@ -5,5 +5,6 @@ let () = Commands.start(
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
   ~globalValues=Pages.globalValues,
+  ~webpackBundleAnalyzerMode=Some(Server({port: 3234})),
   (),
 )
