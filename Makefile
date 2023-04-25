@@ -59,9 +59,6 @@ format:
 	make format-reason
 	make format-rescript
 
-webpack-bundle-analyzer:
-	@$(NODE_BINS)/webpack-bundle-analyzer $(EXAMPLE_DIR)/build/public/stats.json
-
 clean-test:
 	rm -rf tests/output
 	rm -rf coverage

@@ -7,7 +7,7 @@ let () = Commands.build(
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
   ~compileCommand=Path.join2(currentDir, "../../node_modules/.bin/bsb"),
-  ~writeWebpackStatsJson=true,
   ~minimizer=TerserPluginWithEsbuild,
+  ~webpackBundleAnalyzerMode=Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
   (),
 )
