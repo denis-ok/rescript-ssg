@@ -45,6 +45,7 @@ let build =
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
       ~pages: array(PageBuilder.page),
+      ~webpackBundleAnalyzerMode=None,
       ~writeWebpackStatsJson=false,
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalValues: array((string, string))=[||],
@@ -66,6 +67,7 @@ let build =
       ~writeWebpackStatsJson,
       ~minimizer,
       ~globalValues,
+      ~webpackBundleAnalyzerMode,
       ~webpackPages,
     );
 
@@ -80,6 +82,8 @@ let start =
       ~pages: array(PageBuilder.page),
       ~devServerOptions: Webpack.DevServerOptions.t,
       ~minimizer: Webpack.Minimizer.t=Terser,
+      ~webpackBundleAnalyzerMode:
+         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
@@ -97,6 +101,7 @@ let start =
       ~outputDir,
       ~minimizer,
       ~globalValues,
+      ~webpackBundleAnalyzerMode,
       ~webpackPages,
     );
 
