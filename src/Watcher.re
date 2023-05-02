@@ -357,8 +357,8 @@ let startWatcher =
     rebuildPagesDebounced();
   };
 
-  // With rescript/bucklescript "change" event is triggered when JS file updated after compilation.
-  // But with Melange, "unlink" event is trigered.
+  // With rescript/bucklescript, "change" event is triggered when JS file updated after compilation.
+  // But with Melange, "unlink" event is triggered.
   watcher->Chokidar.onChange(filepath => {
     logger.debug(() => Js.log2("[Watcher] Chokidar.onChange: ", filepath));
     onChangeOrUnlink(filepath);
