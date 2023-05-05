@@ -38,42 +38,6 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   };
 };
 
-let start =
-    (
-      ~outputDir: string,
-      ~mode: Webpack.Mode.t,
-      ~logLevel: Log.level,
-      ~pages: array(PageBuilder.page),
-      ~devServerOptions: Webpack.DevServerOptions.t,
-      ~minimizer: Webpack.Minimizer.t=Terser,
-      ~webpackBundleAnalyzerMode:
-         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
-      ~globalValues: array((string, string))=[||],
-      (),
-    ) => {
-  let () = GlobalValues.unsafeAdd(globalValues);
-
-  let logger = Log.makeLogger(logLevel);
-
-  let webpackPages = PageBuilder.buildPages(~outputDir, ~logger, pages);
-
-  let () =
-    Webpack.startDevServer(
-      ~devServerOptions,
-      ~mode,
-      ~logger,
-      ~outputDir,
-      ~minimizer,
-      ~globalValues,
-      ~webpackBundleAnalyzerMode,
-      ~webpackPages,
-    );
-
-  let () = Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
-
-  ();
-};
-
 let buildPagesWithWorkers = (~pages, ~outputDir, ~logger, ~globalValues) =>
   pages
   ->Array.splitIntoChunks(~chunkSize=1)
@@ -93,7 +57,7 @@ let buildPagesWithWorkers = (~pages, ~outputDir, ~logger, ~globalValues) =>
   ->Promise.seqRun
   ->Promise.map(result => Array.flat1(result));
 
-let buildWithWorkers =
+let build =
     (
       ~outputDir: string,
       ~compileCommand: string,
@@ -128,7 +92,7 @@ let buildWithWorkers =
   ->ignore;
 };
 
-let startWithWorkers =
+let start =
     (
       ~outputDir: string,
       ~mode: Webpack.Mode.t,
