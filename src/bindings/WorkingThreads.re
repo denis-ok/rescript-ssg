@@ -17,6 +17,8 @@ module Worker = {
 
 [@send] external postMessage: (parentPort, 'a) => unit = "postMessage";
 
+// Compiler doesn't know what will be returned by runWorker function.
+// We need to carefully annotate the call of this function in place.
 let runWorker = (~workerModulePath, ~workerData: 'a, ~onExit: int => unit) => {
   Js.Promise.make((~resolve, ~reject) => {
     let worker = Worker.make(workerModulePath, {workerData: workerData});

@@ -1,12 +1,10 @@
 [@val] external import_: string => Js.Promise.t('a) = "import";
 
-let showPages = (pages: array(RebuildPageWorkerT.workerPage)) => {
-  pages->Js.Array2.map(page => {
-    Log.makeMinimalPrintablePageObj(
-      ~pagePath=page.path,
-      ~pageModulePath=page.modulePath,
-    )
-  });
+let showPage = (page: RebuildPageWorkerT.workerPage) => {
+  Log.makeMinimalPrintablePageObj(
+    ~pagePath=page.path,
+    ~pageModulePath=page.modulePath,
+  );
 };
 
 let workerData: RebuildPageWorkerT.workerData = WorkingThreads.workerData;
@@ -15,7 +13,7 @@ let () = GlobalValues.unsafeAdd(workerData.globalValues);
 
 let parentPort = WorkingThreads.parentPort;
 
-let pages = workerData.pages;
+let page = workerData.page;
 
 let logLevel = workerData.logLevel;
 
@@ -27,110 +25,102 @@ Js.Console.timeStart(successText);
 
 logger.info(() =>
   Js.log2(
-    "[Worker] Pages to build:\n",
-    pages->Js.Array2.map(page => PageBuilderT.PagePath.toString(page.path)),
+    "[Worker] Page to build:\n",
+    PageBuilderT.PagePath.toString(page.path),
   )
 );
 
-logger.debug(() => Js.log2("[Worker] Pages to build:\n", pages->showPages));
+logger.debug(() => Js.log2("[Worker] Page to build:\n", page->showPage));
 
-pages
-->Js.Array2.map(page => {
-    let () =
-      page.globalValues
-      ->Belt.Option.map(globalValues =>
-          GlobalValues.unsafeAddJson(globalValues)
-        )
-      ->ignore;
+let () =
+  page.globalValues
+  ->Belt.Option.map(globalValues => GlobalValues.unsafeAddJson(globalValues))
+  ->ignore;
 
-    let modulePath = page.modulePath;
-    let outputDir = page.outputDir;
+let modulePath = page.modulePath;
+let outputDir = page.outputDir;
 
+logger.debug(() => Js.log2("[Worker] Trying to import module: ", modulePath));
+
+let pageModule = import_(modulePath);
+
+let pageWrapperModule =
+  switch (page.pageWrapper) {
+  | None => Js.Promise.resolve(None)
+  | Some({modulePath, _}) =>
     logger.debug(() =>
-      Js.log2("[Worker] Trying to import module: ", modulePath)
+      Js.log2("[Worker] Trying to import wrapper module: ", modulePath)
     );
+    import_(modulePath)->Promise.map(module_ => Some(module_));
+  };
 
-    let importedModule = import_(modulePath);
+let importedModules = Js.Promise.all2((pageModule, pageWrapperModule));
 
-    let importedWrapperModule =
-      switch (page.pageWrapper) {
-      | None => Js.Promise.resolve(None)
-      | Some({modulePath, _}) =>
-        logger.debug(() =>
-          Js.log2("[Worker] Trying to import wrapper module: ", modulePath)
-        );
-        import_(modulePath)->Promise.map(module_ => Some(module_));
-      };
-
-    let modules = Js.Promise.all2((importedModule, importedWrapperModule));
-    modules->Promise.map(((module_, wrapperModule)) => {
-      let newPage: PageBuilder.page = {
-        pageWrapper: {
-          switch (page.pageWrapper, wrapperModule) {
-          | (Some({component, modulePath}), Some(wrapperModule)) =>
-            switch (component) {
-            | WrapperWithChildren =>
-              Some({
-                component:
-                  WrapperWithChildren(
-                    children =>
-                      React.createElement(
-                        wrapperModule##make,
-                        {"children": children},
-                      ),
-                  ),
-                modulePath,
-              })
-            | RebuildPageWorkerT.WrapperWithDataAndChildren({data}) =>
-              Some({
-                component:
-                  WrapperWithDataAndChildren({
-                    component: (data, children) =>
-                      React.createElement(
-                        wrapperModule##make,
-                        {"data": data, "children": children}->Obj.magic,
-                      ),
-                    data,
-                  }),
-                modulePath,
-              })
-            }
-          | _ => None
-          };
-        },
-        component: {
-          switch (page.component) {
-          | RebuildPageWorkerT.ComponentWithoutData =>
-            ComponentWithoutData(
-              React.createElement(module_##make, Js.Obj.empty()),
-            )
-          | RebuildPageWorkerT.ComponentWithData({data}) =>
-            ComponentWithData({
-              component: _propValue => {
-                React.createElement(
-                  module_##make,
-                  {"data": data}->Obj.magic,
-                );
-              },
-              data,
+importedModules
+->Promise.map(((module_, wrapperModule)) => {
+    let newPage: PageBuilder.page = {
+      pageWrapper: {
+        switch (page.pageWrapper, wrapperModule) {
+        | (Some({component, modulePath}), Some(wrapperModule)) =>
+          switch (component) {
+          | WrapperWithChildren =>
+            Some({
+              component:
+                WrapperWithChildren(
+                  children =>
+                    React.createElement(
+                      wrapperModule##make,
+                      {"children": children},
+                    ),
+                ),
+              modulePath,
             })
-          };
-        },
-        modulePath: module_##modulePath,
-        headCssFilepaths: page.headCssFilepaths,
-        path: page.path,
-        globalValues: page.globalValues,
-      };
+          | RebuildPageWorkerT.WrapperWithDataAndChildren({data}) =>
+            Some({
+              component:
+                WrapperWithDataAndChildren({
+                  component: (data, children) =>
+                    React.createElement(
+                      wrapperModule##make,
+                      {"data": data, "children": children}->Obj.magic,
+                    ),
+                  data,
+                }),
+              modulePath,
+            })
+          }
+        | _ => None
+        };
+      },
+      component: {
+        switch (page.component) {
+        | RebuildPageWorkerT.ComponentWithoutData =>
+          ComponentWithoutData(
+            React.createElement(module_##make, Js.Obj.empty()),
+          )
+        | RebuildPageWorkerT.ComponentWithData({data}) =>
+          ComponentWithData({
+            component: _propValue => {
+              React.createElement(module_##make, {"data": data}->Obj.magic);
+            },
+            data,
+          })
+        };
+      },
+      modulePath: module_##modulePath,
+      headCssFilepaths: page.headCssFilepaths,
+      path: page.path,
+      globalValues: page.globalValues,
+    };
 
-      PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, newPage);
-    });
+    PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, newPage);
   })
-->Js.Promise.all
-->Promise.map((webpackPages: array(Webpack.page)) => {
+->Promise.map((webpackPage: Webpack.page) => {
     logger.info(() => Js.Console.timeEnd(successText));
-    parentPort->WorkingThreads.postMessage(webpackPages);
+    parentPort->WorkingThreads.postMessage(webpackPage);
   })
 ->Promise.catch(error => {
+    // We don't want to stop node process is something is wrong. So we just log the error and ignore it.
     logger.info(() =>
       Js.Console.error2(
         "[Worker] [Warning] Caught error, please check: ",

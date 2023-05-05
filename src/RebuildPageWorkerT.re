@@ -29,7 +29,7 @@ type workerPage = {
 
 type workerData = {
   logLevel: Log.level,
-  pages: array(workerPage),
+  page: workerPage,
   globalValues: array((string, string)),
 };
 

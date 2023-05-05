@@ -35,25 +35,25 @@ let mapPageToPageForRebuild =
 
 let runRebuildPageWorker =
     (~onExit, ~workerData: RebuildPageWorkerT.workerData)
-    : Js.Promise.t(array(Webpack.page)) =>
+    : Js.Promise.t(Webpack.page) =>
+  // This is slightly unsafe place where we have to manually annotate output type of runWorker call
   WorkingThreads.runWorker(
     ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
     ~workerData,
     ~onExit,
   );
 
-let rebuildPagesWithWorker =
+let buildPageWithWorker =
     (
       ~outputDir: string,
       ~logger: Log.logger,
       ~globalValues: array((string, string)),
-      pages: array(PageBuilder.page),
+      page: PageBuilder.page,
     ) => {
-  let rebuildPages =
-    pages->Js.Array2.map(page => mapPageToPageForRebuild(~page, ~outputDir));
+  let rebuildPages = mapPageToPageForRebuild(~page, ~outputDir);
 
   let workerData: RebuildPageWorkerT.workerData = {
-    pages: rebuildPages,
+    page: rebuildPages,
     logLevel: logger.logLevel,
     globalValues,
   };
@@ -95,15 +95,9 @@ let buildPagesWithWorkers =
   ->Js.Array2.map((pages, ()) =>
       pages
       ->Js.Array2.map(page =>
-          rebuildPagesWithWorker(
-            ~outputDir,
-            ~logger,
-            ~globalValues,
-            [|page|],
-          )
+          buildPageWithWorker(~outputDir, ~logger, ~globalValues, page)
         )
       ->Js.Promise.all
-      ->Promise.map(result => Array.flat1(result))
     )
   ->Promise.seqRun
   ->Promise.map(result => {
