@@ -60,6 +60,7 @@ let build =
       ~logger,
       ~globalEnvValues,
       ~exitOnPageBuildError=true,
+      ~melangeOutputDir,
     );
 
   webpackPages
@@ -105,6 +106,7 @@ let start =
       ~globalEnvValues,
       ~buildWorkersCount,
       ~exitOnPageBuildError=true,
+      ~melangeOutputDir,
     );
 
   webpackPages
@@ -124,7 +126,14 @@ let start =
     })
   ->ignore;
 
-  let () = Watcher.startWatcher(~outputDir, ~logger, ~globalEnvValues, pages);
+  let () =
+    Watcher.startWatcher(
+      ~outputDir,
+      ~logger,
+      ~globalEnvValues,
+      ~melangeOutputDir,
+      pages,
+    );
 
   ();
 };

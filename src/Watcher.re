@@ -21,68 +21,6 @@ let showPages = (pages: array(PageBuilder.page)) => {
   });
 };
 
-let runRebuildPageWorker =
-    (~workerData: RebuildPageWorkerT.workerData, ~onExit) =>
-  WorkingThreads.runWorker(
-    ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
-    ~workerData,
-    ~onExit,
-  );
-
-let rebuildPagesWithWorker =
-    (
-      ~outputDir: string,
-      ~melangeOutputDir,
-      ~logger: Log.logger,
-      ~globalValues: array((string, string)),
-      pages: array(PageBuilder.page),
-    ) => {
-  let rebuildPages =
-    pages->Js.Array2.map(page => {
-      let rebuildPage: RebuildPageWorkerT.rebuildPage = {
-        pageWrapper: {
-          switch (page.pageWrapper) {
-          | None => None
-          | Some({component: WrapperWithChildren(_), modulePath}) =>
-            Some({component: WrapperWithChildren, modulePath})
-          | Some({
-              component: PageBuilder.WrapperWithDataAndChildren({data, _}),
-              modulePath,
-            }) =>
-            Some({
-              component: WrapperWithDataAndChildren({data: data}),
-              modulePath,
-            })
-          };
-        },
-        component: {
-          switch (page.component) {
-          | ComponentWithoutData(_) => ComponentWithoutData
-          | PageBuilder.ComponentWithData({data, _}) =>
-            ComponentWithData({data: data})
-          };
-        },
-        modulePath: page.modulePath,
-        outputDir,
-        headCssFilepaths: page.headCssFilepaths,
-        path: page.path,
-      };
-
-      rebuildPage;
-    });
-
-  let workerData: RebuildPageWorkerT.workerData = {
-    pages: rebuildPages,
-    logLevel: logger.logLevel,
-    globalValues,
-    melangeOutputDir,
-  };
-
-  runRebuildPageWorker(~workerData, ~onExit=exitCode => {
-    logger.debug(() => Js.log2("[Worker] Exit code:", exitCode))
-  });
-};
-
 let getModuleDependencies = (~modulePath) =>
   DependencyTree.makeList({
     filename: modulePath,
