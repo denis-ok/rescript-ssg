@@ -58,6 +58,7 @@ let build =
       ~outputDir,
       ~logger,
       ~globalValues,
+      ~exitOnPageBuildError=true,
     );
 
   webpackPages
@@ -103,6 +104,7 @@ let start =
       ~logger,
       ~globalValues,
       ~buildWorkersCount,
+      ~exitOnPageBuildError=true,
     );
 
   webpackPages

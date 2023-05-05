@@ -35,8 +35,8 @@ let mapPageToPageForRebuild =
 
 let runRebuildPageWorker =
     (~onExit, ~workerData: RebuildPageWorkerT.workerData)
-    : Js.Promise.t(Webpack.page) =>
-  // This is slightly unsafe place where we have to manually annotate output type of runWorker call
+    : RebuildPageWorker.workerOutput =>
+  // This is the place where we have to manually annotate output type of runWorker call
   WorkingThreads.runWorker(
     ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
     ~workerData,
@@ -70,6 +70,7 @@ let buildPagesWithWorkers =
       ~logger: Log.logger,
       ~globalValues: array((string, string)),
       ~buildWorkersCount: option(int),
+      ~exitOnPageBuildError: bool,
     ) => {
   let buildWorkersCount =
     switch (buildWorkersCount) {
@@ -90,18 +91,37 @@ let buildPagesWithWorkers =
   let durationLabel = "[Commands.buildPagesWithWorkers] Build finished. Duration";
   Js.Console.timeStart(durationLabel);
 
-  pages
-  ->Array.splitIntoChunks(~chunkSize=buildWorkersCount)
-  ->Js.Array2.map((pages, ()) =>
-      pages
-      ->Js.Array2.map(page =>
-          buildPageWithWorker(~outputDir, ~logger, ~globalValues, page)
-        )
-      ->Js.Promise.all
-    )
-  ->Promise.seqRun
-  ->Promise.map(result => {
-      logger.info(() => Js.Console.timeEnd(durationLabel));
-      Array.flat1(result);
-    });
+  let results =
+    pages
+    ->Array.splitIntoChunks(~chunkSize=buildWorkersCount)
+    ->Js.Array2.map((pages, ()) =>
+        pages
+        ->Js.Array2.map(page =>
+            buildPageWithWorker(~outputDir, ~logger, ~globalValues, page)
+          )
+        ->Js.Promise.all
+      )
+    ->Promise.seqRun
+    ->Promise.map(results => {
+        logger.info(() => Js.Console.timeEnd(durationLabel));
+        Array.flat1(results);
+      });
+
+  results->Promise.map(webpackPages =>
+    webpackPages->Belt.Array.keepMap(result => {
+      switch (result) {
+      | Ok(webpackPage) => Some(webpackPage)
+      | Error(path) =>
+        Js.Console.error2(
+          "[Commands.buildPagesWithWorkers] One of the pages failed to build:",
+          PageBuilderT.PagePath.toString(path),
+        );
+        if (exitOnPageBuildError) {
+          Process.exit(1);
+        } else {
+          None;
+        };
+      }
+    })
+  );
 };

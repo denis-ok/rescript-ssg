@@ -56,77 +56,87 @@ let pageWrapperModule =
 
 let importedModules = Js.Promise.all2((pageModule, pageWrapperModule));
 
-importedModules
-->Promise.map(((module_, wrapperModule)) => {
-    let newPage: PageBuilder.page = {
-      pageWrapper: {
-        switch (page.pageWrapper, wrapperModule) {
-        | (Some({component, modulePath}), Some(wrapperModule)) =>
-          switch (component) {
-          | WrapperWithChildren =>
-            Some({
-              component:
-                WrapperWithChildren(
-                  children =>
-                    React.createElement(
-                      wrapperModule##make,
-                      {"children": children},
-                    ),
-                ),
-              modulePath,
-            })
-          | RebuildPageWorkerT.WrapperWithDataAndChildren({data}) =>
-            Some({
-              component:
-                WrapperWithDataAndChildren({
-                  component: (data, children) =>
-                    React.createElement(
-                      wrapperModule##make,
-                      {"data": data, "children": children}->Obj.magic,
-                    ),
-                  data,
-                }),
-              modulePath,
-            })
-          }
-        | _ => None
-        };
-      },
-      component: {
-        switch (page.component) {
-        | RebuildPageWorkerT.ComponentWithoutData =>
-          ComponentWithoutData(
-            React.createElement(module_##make, Js.Obj.empty()),
-          )
-        | RebuildPageWorkerT.ComponentWithData({data}) =>
-          ComponentWithData({
-            component: _propValue => {
-              React.createElement(module_##make, {"data": data}->Obj.magic);
-            },
-            data,
-          })
-        };
-      },
-      modulePath: module_##modulePath,
-      headCssFilepaths: page.headCssFilepaths,
-      path: page.path,
-      globalValues: page.globalValues,
-    };
+type workerOutput = Js.Promise.t(Belt.Result.t(Webpack.page, RescriptSsg.PageBuilderT.PagePath.t));
 
-    PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, newPage);
-  })
-->Promise.map((webpackPage: Webpack.page) => {
-    logger.info(() => Js.Console.timeEnd(successText));
-    parentPort->WorkingThreads.postMessage(webpackPage);
-  })
-->Promise.catch(error => {
-    // We don't want to stop node process is something is wrong. So we just log the error and ignore it.
-    logger.info(() =>
-      Js.Console.error2(
-        "[Worker] [Warning] Caught error, please check: ",
-        error,
-      )
-    );
-    Js.Promise.resolve();
-  })
-->ignore;
+let workerOutput: workerOutput =
+  importedModules
+  ->Promise.map(((module_, wrapperModule)) => {
+      let newPage: PageBuilder.page = {
+        pageWrapper: {
+          switch (page.pageWrapper, wrapperModule) {
+          | (Some({component, modulePath}), Some(wrapperModule)) =>
+            switch (component) {
+            | WrapperWithChildren =>
+              Some({
+                component:
+                  WrapperWithChildren(
+                    children =>
+                      React.createElement(
+                        wrapperModule##make,
+                        {"children": children},
+                      ),
+                  ),
+                modulePath,
+              })
+            | RebuildPageWorkerT.WrapperWithDataAndChildren({data}) =>
+              Some({
+                component:
+                  WrapperWithDataAndChildren({
+                    component: (data, children) =>
+                      React.createElement(
+                        wrapperModule##make,
+                        {"data": data, "children": children}->Obj.magic,
+                      ),
+                    data,
+                  }),
+                modulePath,
+              })
+            }
+          | _ => None
+          };
+        },
+        component: {
+          switch (page.component) {
+          | RebuildPageWorkerT.ComponentWithoutData =>
+            ComponentWithoutData(
+              React.createElement(module_##make, Js.Obj.empty()),
+            )
+          | RebuildPageWorkerT.ComponentWithData({data}) =>
+            ComponentWithData({
+              component: _propValue => {
+                React.createElement(
+                  module_##make,
+                  {"data": data}->Obj.magic,
+                );
+              },
+              data,
+            })
+          };
+        },
+        modulePath: module_##modulePath,
+        headCssFilepaths: page.headCssFilepaths,
+        path: page.path,
+        globalValues: page.globalValues,
+      };
+
+      PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, newPage);
+    })
+  ->Promise.map((webpackPage: Webpack.page) => {
+      logger.info(() => Js.Console.timeEnd(successText));
+      let result = Belt.Result.Ok(webpackPage);
+      parentPort->WorkingThreads.postMessage(result);
+      result;
+    })
+  ->Promise.catch(error => {
+      // We don't want to immediatelly stop node process/watcher when something happened in worker.
+      // We just log the error and the caller will decide what to do.
+      logger.info(() =>
+        Js.Console.error2(
+          "[Worker] [Warning] Caught error, please check: ",
+          error,
+        )
+      );
+      let result = Belt.Result.Error(page.path);
+      parentPort->WorkingThreads.postMessage(result);
+      Js.Promise.resolve(result);
+    });

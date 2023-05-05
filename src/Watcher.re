@@ -181,6 +181,7 @@ let startWatcher =
         ~outputDir,
         ~logger,
         ~globalValues,
+        ~exitOnPageBuildError=false
       )
       ->Promise.map(_ => {
           logger.debug(() =>
