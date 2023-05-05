@@ -36,55 +36,6 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   };
 };
 
-let buildPagesWithWorkers =
-    (
-      ~pages: array(PageBuilder.page),
-      ~outputDir: string,
-      ~logger: Log.logger,
-      ~globalValues: array((string, string)),
-      ~buildWorkersCount: option(int),
-    ) => {
-  let buildWorkersCount =
-    switch (buildWorkersCount) {
-    | None =>
-      // Using 16 as some reasonable limit for workers count
-      min(NodeOs.availableParallelism(), 16)
-    | Some(buildWorkersCount) => buildWorkersCount
-    };
-
-  logger.info(() =>
-    Js.log3(
-      "[Commands.buildPagesWithWorkers] Building pages with ",
-      buildWorkersCount,
-      " workers...",
-    )
-  );
-
-  let durationLabel = "[Commands.buildPagesWithWorkers] Build finished. Duration";
-  Js.Console.timeStart(durationLabel);
-
-  pages
-  ->Array.splitIntoChunks(~chunkSize=buildWorkersCount)
-  ->Js.Array2.map((pages, ()) =>
-      pages
-      ->Js.Array2.map(page =>
-          RebuildPageWorkerHelpers.rebuildPagesWithWorker(
-            ~outputDir,
-            ~logger,
-            ~globalValues,
-            [|page|],
-          )
-        )
-      ->Js.Promise.all
-      ->Promise.map(result => Array.flat1(result))
-    )
-  ->Promise.seqRun
-  ->Promise.map(result => {
-      logger.info(() => Js.Console.timeEnd(durationLabel));
-      Array.flat1(result);
-    });
-};
-
 let build =
     (
       ~outputDir: string,
@@ -101,7 +52,7 @@ let build =
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    buildPagesWithWorkers(
+    RebuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
@@ -146,7 +97,7 @@ let start =
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    buildPagesWithWorkers(
+    RebuildPageWorkerHelpers.buildPagesWithWorkers(
       ~pages,
       ~outputDir,
       ~logger,
