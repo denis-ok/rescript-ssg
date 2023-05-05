@@ -28,6 +28,7 @@ type page = {
   modulePath: string,
   path: PageBuilderT.PagePath.t,
   headCssFilepaths: array(string),
+  globalValues: option(array((string, Js.Json.t))),
 };
 
 module PageData = {
@@ -63,6 +64,40 @@ type $(valueName)
 @module("$(relativePathToDataDir)/$(jsDataFilename)") external $(valueName): $(valueName) = "data"|j};
 };
 
+let wrapJsTextWithScriptTag = (jsText: string) => {j|<script>$(jsText)</script>|j};
+
+let globalValuesToScriptTag =
+    (globalValues: array((string, Js.Json.t))): string => {
+  globalValues
+  ->Js.Array2.map(((key, value)) => {
+      let keyS: string =
+        switch (Js.Json.stringifyAny(key)) {
+        | Some(key) => key
+        | None =>
+          Js.Console.error2(
+            "[globalValuesToScriptTag] Failed to stringify JSON (globalValues key). key:",
+            key,
+          );
+          Process.exit(1);
+        };
+      let valueS: string =
+        switch (Js.Json.stringifyAny(value)) {
+        | Some(value) => value
+        | None =>
+          Js.Console.error4(
+            "[globalValuesToScriptTag] Failed to stringify JSON (globalValues value). key:",
+            key,
+            "value:",
+            value,
+          );
+          Process.exit(1);
+        };
+      {j|globalThis[$(keyS)] = $(valueS)|j};
+    })
+  ->Js.Array2.joinWith("\n")
+  ->wrapJsTextWithScriptTag;
+};
+
 let renderReactAppTemplate =
     (
       ~importPageWrapperDataString="",
@@ -96,7 +131,12 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
 };
 
 let renderHtmlTemplate =
-    (~pageElement: React.element, ~headCssFilepaths: array(string)): string => {
+    (
+      ~pageElement: React.element,
+      ~headCssFilepaths: array(string),
+      ~globalValues: array((string, Js.Json.t)),
+    )
+    : string => {
   let html = ReactDOMServer.renderToString(pageElement);
 
   let Emotion.Server.{html: renderedHtml, css, ids} =
@@ -137,6 +177,9 @@ let renderHtmlTemplate =
   let style = helmet.style.toString();
   let bodyAttributes = helmet.bodyAttributes.toString();
 
+  let scriptTagWithGlobalValues: string =
+    globalValuesToScriptTag(globalValues);
+
   {j|<!DOCTYPE html>
 <html $(htmlAttributes)>
   <head>
@@ -149,6 +192,7 @@ let renderHtmlTemplate =
     $(style)
     $(headCssStyleTag)
     $(emotionStyleTag)
+    $(scriptTagWithGlobalValues)
   </head>
   <body $(bodyAttributes)>
     <div id="root">$(renderedHtml)</div>
@@ -364,10 +408,11 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~pageWrappersDataDir,
     );
 
-  let resultHtml =
+  let resultHtml: string =
     renderHtmlTemplate(
       ~pageElement=element,
       ~headCssFilepaths=page.headCssFilepaths,
+      ~globalValues=Belt.Option.getWithDefault(page.globalValues, [||]),
     );
 
   let resultReactApp =
