@@ -38,4 +38,5 @@ let make = (~data: option<PageContext.t>) =>
     <SharedModule.Header />
     <div className=Css.content> <h1> {"Page 1"->React.string} </h1> </div>
     <SharedModule.Footer />
+    <PerPageGlobal />
   </div>

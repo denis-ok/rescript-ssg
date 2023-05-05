@@ -1,5 +1,3 @@
-let dirname = Utils.getDirname();
-
 let uniqueStringArray = (array: array(string)) =>
   Set.fromArray(array)->Set.toArray;
 
@@ -112,7 +110,8 @@ let startWatcher =
       ~outputDir,
       ~melangeOutputDir,
       ~logger: Log.logger,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
+      ~buildWorkersCount: option(int)=?,
       pages: array(PageBuilder.page),
     )
     : unit => {
@@ -239,12 +238,14 @@ let startWatcher =
         )
       );
 
-      rebuildPagesWithWorker(
+      RebuildPageWorkerHelpers.buildPagesWithWorkers(
+        ~buildWorkersCount,
+        ~pages=pagesToRebuild,
         ~outputDir,
         ~melangeOutputDir,
         ~logger,
-        ~globalValues,
-        pagesToRebuild,
+        ~globalEnvValues,
+        ~exitOnPageBuildError=false,
       )
       ->Promise.map(_ => {
           logger.debug(() =>
@@ -361,8 +362,8 @@ let startWatcher =
     rebuildPagesDebounced();
   };
 
-  // With rescript/bucklescript "change" event is triggered when JS file updated after compilation.
-  // But with Melange, "unlink" event is trigered.
+  // With rescript/bucklescript, "change" event is triggered when JS file updated after compilation.
+  // But with Melange, "unlink" event is triggered.
   watcher->Chokidar.onChange(filepath => {
     logger.debug(() => Js.log2("[Watcher] Chokidar.onChange: ", filepath));
     onChangeOrUnlink(filepath);

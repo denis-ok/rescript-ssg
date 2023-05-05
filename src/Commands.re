@@ -1,5 +1,5 @@
 let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
-  let durationLabel = "[Commands.compileRescript] duration";
+  let durationLabel = "[Commands.compileRescript] Success! Duration";
   Js.Console.timeStart(durationLabel);
 
   logger.info(() =>
@@ -13,9 +13,7 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
       {"shell": true, "encoding": "utf8", "stdio": "inherit"},
     )
   ) {
-  | Ok () =>
-    logger.info(() => {Js.log("[Commands.compileRescript] Success!")});
-    Js.Console.timeEnd(durationLabel);
+  | Ok () => logger.info(() => Js.Console.timeEnd(durationLabel))
   | Error(JsError(error)) =>
     logger.info(() => {
       Js.Console.error2("[Commands.compileRescript] Failure! Error:", error)
@@ -48,30 +46,38 @@ let build =
       ~pages: array(PageBuilder.page),
       ~webpackBundleAnalyzerMode=None,
       ~minimizer: Webpack.Minimizer.t=Terser,
-      ~globalValues: array((string, string))=[||],
+      ~globalEnvValues: array((string, string))=[||],
+      ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let () = GlobalValues.unsafeAdd(globalValues);
-
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    PageBuilder.buildPages(~outputDir, ~melangeOutputDir, ~logger, pages);
-
-  let () = compileRescript(~compileCommand, ~logger);
-
-  let () =
-    Webpack.build(
-      ~mode,
+    RebuildPageWorkerHelpers.buildPagesWithWorkers(
+      ~buildWorkersCount,
+      ~pages,
       ~outputDir,
       ~logger,
-      ~minimizer,
-      ~globalValues,
-      ~webpackBundleAnalyzerMode,
-      ~webpackPages,
+      ~globalEnvValues,
+      ~exitOnPageBuildError=true,
     );
 
-  ();
+  webpackPages
+  ->Promise.map(webpackPages => {
+      let () = compileRescript(~compileCommand, ~logger);
+      let () =
+        Webpack.build(
+          ~mode,
+          ~outputDir,
+          ~logger,
+          ~webpackBundleAnalyzerMode,
+          ~minimizer,
+          ~globalEnvValues,
+          ~webpackPages,
+        );
+      ();
+    })
+  ->ignore;
 };
 
 let start =
@@ -82,39 +88,43 @@ let start =
       ~logLevel: Log.level,
       ~pages: array(PageBuilder.page),
       ~devServerOptions: Webpack.DevServerOptions.t,
-      ~minimizer: Webpack.Minimizer.t=Terser,
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
-      ~globalValues: array((string, string))=[||],
+      ~minimizer: Webpack.Minimizer.t=Terser,
+      ~globalEnvValues: array((string, string))=[||],
+      ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let () = GlobalValues.unsafeAdd(globalValues);
-
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    PageBuilder.buildPages(~outputDir, ~melangeOutputDir, ~logger, pages);
-
-  let () =
-    Webpack.startDevServer(
-      ~devServerOptions,
-      ~mode,
-      ~logger,
+    RebuildPageWorkerHelpers.buildPagesWithWorkers(
+      ~pages,
       ~outputDir,
-      ~minimizer,
-      ~globalValues,
-      ~webpackBundleAnalyzerMode,
-      ~webpackPages,
+      ~logger,
+      ~globalEnvValues,
+      ~buildWorkersCount,
+      ~exitOnPageBuildError=true,
     );
 
-  let () =
-    Watcher.startWatcher(
-      ~outputDir,
-      ~melangeOutputDir,
-      ~logger,
-      ~globalValues,
-      pages,
-    );
+  webpackPages
+  ->Promise.map(webpackPages => {
+      let () =
+        Webpack.startDevServer(
+          ~devServerOptions,
+          ~webpackBundleAnalyzerMode,
+          ~mode,
+          ~logger,
+          ~outputDir,
+          ~minimizer,
+          ~globalEnvValues,
+          ~webpackPages,
+        );
+      ();
+    })
+  ->ignore;
+
+  let () = Watcher.startWatcher(~outputDir, ~logger, ~globalEnvValues, pages);
 
   ();
 };

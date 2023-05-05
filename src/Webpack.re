@@ -246,7 +246,7 @@ let makeConfig =
       ~minimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir: string,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
       ~webpackPages: array(page),
     ) => {
   let entries =
@@ -312,7 +312,7 @@ let makeConfig =
           })
         });
 
-      let globalValuesPlugin = getPluginWithGlobalValues(globalValues);
+      let globalValuesPlugin = getPluginWithGlobalValues(globalEnvValues);
 
       let miniCssExtractPlugin =
         MiniCssExtractPlugin.make({
@@ -533,7 +533,7 @@ let makeCompiler =
       ~logger: Log.logger,
       ~mode: Mode.t,
       ~minimizer: Minimizer.t,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
       ~outputDir,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~webpackPages: array(page),
@@ -545,7 +545,7 @@ let makeCompiler =
       ~logger,
       ~minimizer,
       ~outputDir,
-      ~globalValues,
+      ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
       ~webpackPages,
     );
@@ -560,7 +560,7 @@ let build =
       ~minimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~webpackPages: array(page),
     ) => {
@@ -576,7 +576,7 @@ let build =
       ~logger,
       ~outputDir,
       ~minimizer,
-      ~globalValues,
+      ~globalEnvValues,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~webpackPages,
     );
@@ -632,7 +632,7 @@ let startDevServer =
       ~minimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~webpackPages: array(page),
     ) => {
@@ -647,7 +647,7 @@ let startDevServer =
       ~logger,
       ~outputDir,
       ~minimizer,
-      ~globalValues,
+      ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
       ~webpackPages,
     );
