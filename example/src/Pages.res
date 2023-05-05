@@ -4,7 +4,7 @@ let outputDir = Path.join2(currentDir, "../build")
 
 let normalizeCssFilePath = Path.join2(currentDir, "/css/normalize.css")
 
-let globalValues = [
+let globalEnvValues = [
   //
   ("process.env.ENV_VAR", Env.envVar),
   ("GLOBAL_VAR", "BAR"),

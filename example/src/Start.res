@@ -4,7 +4,7 @@ let () = Commands.start(
   ~mode=Development,
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
-  ~globalValues=Pages.globalValues,
+  ~globalEnvValues=Pages.globalEnvValues,
   ~webpackBundleAnalyzerMode=None,
   ~buildWorkersCount=1,
   (),

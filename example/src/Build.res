@@ -2,7 +2,7 @@ let currentDir = Utils.getDirname()
 
 let () = Commands.build(
   ~pages=Pages.pages,
-  ~globalValues=Pages.globalValues,
+  ~globalEnvValues=Pages.globalEnvValues,
   ~mode=Production,
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,

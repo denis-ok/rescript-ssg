@@ -47,7 +47,7 @@ let startWatcher =
     (
       ~outputDir,
       ~logger: Log.logger,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int)=?,
       pages: array(PageBuilder.page),
     )
@@ -180,8 +180,8 @@ let startWatcher =
         ~pages=pagesToRebuild,
         ~outputDir,
         ~logger,
-        ~globalValues,
-        ~exitOnPageBuildError=false
+        ~globalEnvValues,
+        ~exitOnPageBuildError=false,
       )
       ->Promise.map(_ => {
           logger.debug(() =>

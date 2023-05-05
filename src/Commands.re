@@ -45,7 +45,7 @@ let build =
       ~pages: array(PageBuilder.page),
       ~webpackBundleAnalyzerMode=None,
       ~minimizer: Webpack.Minimizer.t=Terser,
-      ~globalValues: array((string, string))=[||],
+      ~globalEnvValues: array((string, string))=[||],
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
@@ -57,7 +57,7 @@ let build =
       ~pages,
       ~outputDir,
       ~logger,
-      ~globalValues,
+      ~globalEnvValues,
       ~exitOnPageBuildError=true,
     );
 
@@ -71,7 +71,7 @@ let build =
           ~logger,
           ~webpackBundleAnalyzerMode,
           ~minimizer,
-          ~globalValues,
+          ~globalEnvValues,
           ~webpackPages,
         );
       ();
@@ -89,12 +89,10 @@ let start =
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
       ~minimizer: Webpack.Minimizer.t=Terser,
-      ~globalValues: array((string, string))=[||],
+      ~globalEnvValues: array((string, string))=[||],
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let () = GlobalValues.unsafeAdd(globalValues);
-
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
@@ -102,7 +100,7 @@ let start =
       ~pages,
       ~outputDir,
       ~logger,
-      ~globalValues,
+      ~globalEnvValues,
       ~buildWorkersCount,
       ~exitOnPageBuildError=true,
     );
@@ -117,14 +115,14 @@ let start =
           ~logger,
           ~outputDir,
           ~minimizer,
-          ~globalValues,
+          ~globalEnvValues,
           ~webpackPages,
         );
       ();
     })
   ->ignore;
 
-  let () = Watcher.startWatcher(~outputDir, ~logger, ~globalValues, pages);
+  let () = Watcher.startWatcher(~outputDir, ~logger, ~globalEnvValues, pages);
 
   ();
 };

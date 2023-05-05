@@ -30,7 +30,7 @@ type workerPage = {
 type workerData = {
   logLevel: Log.level,
   page: workerPage,
-  globalValues: array((string, string)),
+  globalEnvValues: array((string, string)),
 };
 
 let showPage = (page: workerPage) => {

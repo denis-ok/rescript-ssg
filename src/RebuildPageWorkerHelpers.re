@@ -47,7 +47,7 @@ let buildPageWithWorker =
     (
       ~outputDir: string,
       ~logger: Log.logger,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
       page: PageBuilder.page,
     ) => {
   let rebuildPages = mapPageToPageForRebuild(~page, ~outputDir);
@@ -55,7 +55,7 @@ let buildPageWithWorker =
   let workerData: RebuildPageWorkerT.workerData = {
     page: rebuildPages,
     logLevel: logger.logLevel,
-    globalValues,
+    globalEnvValues,
   };
 
   runRebuildPageWorker(~workerData, ~onExit=exitCode => {
@@ -68,7 +68,7 @@ let buildPagesWithWorkers =
       ~pages: array(PageBuilder.page),
       ~outputDir: string,
       ~logger: Log.logger,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int),
       ~exitOnPageBuildError: bool,
     ) => {
@@ -97,7 +97,7 @@ let buildPagesWithWorkers =
     ->Js.Array2.map((pages, ()) =>
         pages
         ->Js.Array2.map(page =>
-            buildPageWithWorker(~outputDir, ~logger, ~globalValues, page)
+            buildPageWithWorker(~outputDir, ~logger, ~globalEnvValues, page)
           )
         ->Js.Promise.all
       )
