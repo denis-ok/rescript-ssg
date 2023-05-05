@@ -46,6 +46,8 @@ let start =
       ~pages: array(PageBuilder.page),
       ~devServerOptions: Webpack.DevServerOptions.t,
       ~minimizer: Webpack.Minimizer.t=Terser,
+      ~webpackBundleAnalyzerMode:
+         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
       ~globalValues: array((string, string))=[||],
       (),
     ) => {
@@ -63,6 +65,7 @@ let start =
       ~outputDir,
       ~minimizer,
       ~globalValues,
+      ~webpackBundleAnalyzerMode,
       ~webpackPages,
     );
 
@@ -97,7 +100,7 @@ let buildWithWorkers =
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
       ~pages: array(PageBuilder.page),
-      ~writeWebpackStatsJson=false,
+      ~webpackBundleAnalyzerMode=None,
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalValues: array((string, string))=[||],
       (),
@@ -115,7 +118,7 @@ let buildWithWorkers =
           ~mode,
           ~outputDir,
           ~logger,
-          ~writeWebpackStatsJson,
+          ~webpackBundleAnalyzerMode,
           ~minimizer,
           ~globalValues,
           ~webpackPages,
@@ -132,6 +135,8 @@ let startWithWorkers =
       ~logLevel: Log.level,
       ~pages: array(PageBuilder.page),
       ~devServerOptions: Webpack.DevServerOptions.t,
+      ~webpackBundleAnalyzerMode:
+         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalValues: array((string, string))=[||],
       (),
@@ -148,6 +153,7 @@ let startWithWorkers =
       let () =
         Webpack.startDevServer(
           ~devServerOptions,
+          ~webpackBundleAnalyzerMode,
           ~mode,
           ~logger,
           ~outputDir,

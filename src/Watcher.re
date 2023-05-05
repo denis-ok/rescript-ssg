@@ -223,7 +223,7 @@ let startWatcher =
 
   let rebuildPagesDebounced = Debounce.debounce(~delayMs=2000, rebuildPages);
 
-  watcher->Chokidar.onChange(filepath => {
+  let onChangeOrUnlink = filepath => {
     let pagesToRebuild =
       switch (modulePathToPagesDict->Js.Dict.get(filepath)) {
       | Some(pages) =>
@@ -293,5 +293,17 @@ let startWatcher =
     );
 
     rebuildPagesDebounced();
+  };
+
+  // With rescript/bucklescript, "change" event is triggered when JS file updated after compilation.
+  // But with Melange, "unlink" event is triggered.
+  watcher->Chokidar.onChange(filepath => {
+    logger.debug(() => Js.log2("[Watcher] Chokidar.onChange: ", filepath));
+    onChangeOrUnlink(filepath);
+  });
+
+  watcher->Chokidar.onUnlink(filepath => {
+    logger.debug(() => Js.log2("[Watcher] Chokidar.onUnlink: ", filepath));
+    onChangeOrUnlink(filepath);
   });
 };

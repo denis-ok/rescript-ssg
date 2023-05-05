@@ -2,8 +2,6 @@ type chokidar;
 
 type watcher;
 
-type event;
-
 [@module "chokidar"] external chokidar: chokidar = "default";
 
 [@send] external watchFile: (chokidar, string) => watcher = "watch";
@@ -23,6 +21,8 @@ external onEventWithUnitCallback: (watcher, string, unit => unit) => unit =
 [@send] external getWatched: (watcher, unit) => array(string) = "getWatched";
 
 let onChange = (chokidar, callback) => chokidar->onEvent("change", callback);
+
+let onUnlink = (chokidar, callback) => chokidar->onEvent("unlink", callback);
 
 let onReady = (chokidar, callback) =>
   chokidar->onEventWithUnitCallback("ready", callback);

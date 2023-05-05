@@ -5,5 +5,6 @@ let () = Commands.startWithWorkers(
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
   ~globalValues=Pages.globalValues,
+  ~webpackBundleAnalyzerMode=None,
   (),
 )
