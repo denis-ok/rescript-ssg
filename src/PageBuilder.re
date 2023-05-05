@@ -28,7 +28,7 @@ type page = {
   modulePath: string,
   path: PageBuilderT.PagePath.t,
   headCssFilepaths: array(string),
-  globalValues: option(array((string, string))),
+  globalValues: option(array((string, Js.Json.t))),
 };
 
 module PageData = {
@@ -67,7 +67,7 @@ type $(valueName)
 let wrapJsTextWithScriptTag = (jsText: string) => {j|<script>$(jsText)</script>|j};
 
 let globalValuesToScriptTag =
-    (globalValues: array((string, string))): string => {
+    (globalValues: array((string, Js.Json.t))): string => {
   globalValues
   ->Js.Array2.map(((key, value)) => {
       let keyS = Js.Json.stringifyAny(key);
@@ -114,7 +114,7 @@ let renderHtmlTemplate =
     (
       ~pageElement: React.element,
       ~headCssFilepaths: array(string),
-      ~globalValues: array((string, string)),
+      ~globalValues: array((string, Js.Json.t)),
     )
     : string => {
   let html = ReactDOMServer.renderToString(pageElement);

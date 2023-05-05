@@ -11,15 +11,25 @@ let globalValues = [
 ]
 
 let pageIndex: PageBuilder.page = {
-  pageWrapper: Some({
-    component: WrapperWithChildren(children => <Wrapper> children </Wrapper>),
-    modulePath: Wrapper.modulePath,
-  }),
-  component: ComponentWithoutData(<Index />),
-  modulePath: Index.modulePath,
-  headCssFilepaths: [normalizeCssFilePath],
-  path: Root,
-  globalValues: Some([("PER_PAGE_GLOBAL", "INDEX")]),
+  let jsonExample =
+    [("string", "hello"->Js.Json.string), ("int", 2.->Js.Json.number)]
+    ->Js.Dict.fromArray
+    ->Js.Json.object_
+
+  {
+    pageWrapper: Some({
+      component: WrapperWithChildren(children => <Wrapper> children </Wrapper>),
+      modulePath: Wrapper.modulePath,
+    }),
+    component: ComponentWithoutData(<Index />),
+    modulePath: Index.modulePath,
+    headCssFilepaths: [normalizeCssFilePath],
+    path: Root,
+    globalValues: Some([
+      ("PER_PAGE_GLOBAL_1", "INDEX"->Js.Json.string),
+      ("PER_PAGE_GLOBAL_2", jsonExample),
+    ]),
+  }
 }
 
 let page1: PageBuilder.page = {
@@ -45,7 +55,7 @@ let page1: PageBuilder.page = {
   modulePath: Page1.modulePath,
   headCssFilepaths: [],
   path: Path(["page1"]),
-  globalValues: Some([("PER_PAGE_GLOBAL", "PAGE1")]),
+  globalValues: Some([("PER_PAGE_GLOBAL_1", "PAGE1"->Js.Json.string)]),
 }
 
 let page11: PageBuilder.page = {

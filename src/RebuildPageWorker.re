@@ -38,7 +38,9 @@ pages
 ->Js.Array2.map(page => {
     let () =
       page.globalValues
-      ->Belt.Option.map(globalValues => GlobalValues.unsafeAdd(globalValues))
+      ->Belt.Option.map(globalValues =>
+          GlobalValues.unsafeAddJson(globalValues)
+        )
       ->ignore;
 
     let modulePath = page.modulePath;

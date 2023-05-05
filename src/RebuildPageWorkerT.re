@@ -24,7 +24,7 @@ type workerPage = {
   outputDir: string,
   headCssFilepaths: array(string),
   path: PageBuilderT.PagePath.t,
-  globalValues: option(array((string, string))),
+  globalValues: option(array((string, Js.Json.t))),
 };
 
 type workerData = {
