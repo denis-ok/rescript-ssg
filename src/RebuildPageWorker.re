@@ -54,9 +54,7 @@ let pageWrapperModule =
 let importedModules = Js.Promise.all2((pageModule, pageWrapperModule));
 
 type workerOutput =
-  Js.Promise.t(
-    Belt.Result.t(Webpack.page, RescriptSsg.PageBuilderT.PagePath.t),
-  );
+  Js.Promise.t(Belt.Result.t(Webpack.page, PageBuilderT.PagePath.t));
 
 let workerOutput: workerOutput =
   importedModules
