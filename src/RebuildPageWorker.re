@@ -9,18 +9,13 @@ let showPage = (page: RebuildPageWorkerT.workerPage) => {
 
 let workerData: RebuildPageWorkerT.workerData = WorkingThreads.workerData;
 
-let () = GlobalValues.unsafeAdd(workerData.globalEnvValues);
-
 let parentPort = WorkingThreads.parentPort;
 
 let page = workerData.page;
 
-let logLevel = workerData.logLevel;
-
-let logger = Log.makeLogger(logLevel);
+let logger = Log.makeLogger(workerData.logLevel);
 
 let successText = "[Worker] Pages build success. Duration";
-
 Js.Console.timeStart(successText);
 
 logger.info(() =>
@@ -32,17 +27,19 @@ logger.info(() =>
 
 logger.debug(() => Js.log2("[Worker] Page to build:\n", page->showPage));
 
+let () = GlobalValues.unsafeAdd(workerData.globalEnvValues);
+
 let () =
   page.globalValues
-  ->Belt.Option.map(globalValues => GlobalValues.unsafeAddJson(globalValues))
-  ->ignore;
+  ->Belt.Option.forEach(globalValues =>
+      GlobalValues.unsafeAddJson(globalValues)
+    );
 
-let modulePath = page.modulePath;
-let outputDir = page.outputDir;
+logger.debug(() =>
+  Js.log2("[Worker] Trying to import module: ", page.modulePath)
+);
 
-logger.debug(() => Js.log2("[Worker] Trying to import module: ", modulePath));
-
-let pageModule = import_(modulePath);
+let pageModule = import_(page.modulePath);
 
 let pageWrapperModule =
   switch (page.pageWrapper) {
@@ -122,7 +119,11 @@ let workerOutput: workerOutput =
         globalValues: page.globalValues,
       };
 
-      PageBuilder.buildPageHtmlAndReactApp(~outputDir, ~logger, newPage);
+      PageBuilder.buildPageHtmlAndReactApp(
+        ~outputDir=page.outputDir,
+        ~logger,
+        newPage,
+      );
     })
   ->Promise.map((webpackPage: Webpack.page) => {
       logger.info(() => Js.Console.timeEnd(successText));
