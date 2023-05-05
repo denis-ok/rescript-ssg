@@ -70,8 +70,28 @@ let globalValuesToScriptTag =
     (globalValues: array((string, Js.Json.t))): string => {
   globalValues
   ->Js.Array2.map(((key, value)) => {
-      let keyS = Js.Json.stringifyAny(key);
-      let valueS = Js.Json.stringifyAny(value);
+      let keyS: string =
+        switch (Js.Json.stringifyAny(key)) {
+        | Some(key) => key
+        | None =>
+          Js.Console.error2(
+            "[globalValuesToScriptTag] Failed to stringify JSON (globalValues key). key:",
+            key,
+          );
+          Process.exit(1);
+        };
+      let valueS: string =
+        switch (Js.Json.stringifyAny(value)) {
+        | Some(value) => value
+        | None =>
+          Js.Console.error4(
+            "[globalValuesToScriptTag] Failed to stringify JSON (globalValues value). key:",
+            key,
+            "value:",
+            value,
+          );
+          Process.exit(1);
+        };
       {j|globalThis[$(keyS)] = $(valueS)|j};
     })
   ->Js.Array2.joinWith("\n")
