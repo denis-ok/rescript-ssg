@@ -6,5 +6,6 @@ let () = Commands.start(
   ~logLevel=Info,
   ~globalValues=Pages.globalValues,
   ~webpackBundleAnalyzerMode=None,
+  ~buildWorkersCount=1,
   (),
 )

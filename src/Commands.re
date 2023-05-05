@@ -1,5 +1,5 @@
 let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
-  let durationLabel = "[Commands.compileRescript] duration";
+  let durationLabel = "[Commands.compileRescript] Success! Duration";
   Js.Console.timeStart(durationLabel);
 
   logger.info(() =>
@@ -13,9 +13,7 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
       {"shell": true, "encoding": "utf8", "stdio": "inherit"},
     )
   ) {
-  | Ok () =>
-    logger.info(() => {Js.log("[Commands.compileRescript] Success!")});
-    Js.Console.timeEnd(durationLabel);
+  | Ok () => logger.info(() => Js.Console.timeEnd(durationLabel))
   | Error(JsError(error)) =>
     logger.info(() => {
       Js.Console.error2("[Commands.compileRescript] Failure! Error:", error)
@@ -38,9 +36,35 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   };
 };
 
-let buildPagesWithWorkers = (~pages, ~outputDir, ~logger, ~globalValues) =>
+let buildPagesWithWorkers =
+    (
+      ~pages: array(PageBuilder.page),
+      ~outputDir: string,
+      ~logger: Log.logger,
+      ~globalValues: array((string, string)),
+      ~buildWorkersCount: option(int),
+    ) => {
+  let buildWorkersCount =
+    switch (buildWorkersCount) {
+    | None =>
+      // Using 16 as some reasonable limit for workers count
+      min(NodeOs.availableParallelism(), 16)
+    | Some(buildWorkersCount) => buildWorkersCount
+    };
+
+  logger.info(() =>
+    Js.log3(
+      "[Commands.buildPagesWithWorkers] Building pages with ",
+      buildWorkersCount,
+      " workers...",
+    )
+  );
+
+  let durationLabel = "[Commands.buildPagesWithWorkers] Build finished. Duration";
+  Js.Console.timeStart(durationLabel);
+
   pages
-  ->Array.splitIntoChunks(~chunkSize=1)
+  ->Array.splitIntoChunks(~chunkSize=buildWorkersCount)
   ->Js.Array2.map((pages, ()) =>
       pages
       ->Js.Array2.map(page =>
@@ -55,7 +79,11 @@ let buildPagesWithWorkers = (~pages, ~outputDir, ~logger, ~globalValues) =>
       ->Promise.map(result => Array.flat1(result))
     )
   ->Promise.seqRun
-  ->Promise.map(result => Array.flat1(result));
+  ->Promise.map(result => {
+      logger.info(() => Js.Console.timeEnd(durationLabel));
+      Array.flat1(result);
+    });
+};
 
 let build =
     (
@@ -67,12 +95,19 @@ let build =
       ~webpackBundleAnalyzerMode=None,
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalValues: array((string, string))=[||],
+      ~buildWorkersCount: option(int)=?,
       (),
     ) => {
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    buildPagesWithWorkers(~pages, ~outputDir, ~logger, ~globalValues);
+    buildPagesWithWorkers(
+      ~buildWorkersCount,
+      ~pages,
+      ~outputDir,
+      ~logger,
+      ~globalValues,
+    );
 
   webpackPages
   ->Promise.map(webpackPages => {
@@ -103,6 +138,7 @@ let start =
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalValues: array((string, string))=[||],
+      ~buildWorkersCount: option(int)=?,
       (),
     ) => {
   let () = GlobalValues.unsafeAdd(globalValues);
@@ -110,7 +146,13 @@ let start =
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    buildPagesWithWorkers(~pages, ~outputDir, ~logger, ~globalValues);
+    buildPagesWithWorkers(
+      ~pages,
+      ~outputDir,
+      ~logger,
+      ~globalValues,
+      ~buildWorkersCount,
+    );
 
   webpackPages
   ->Promise.map(webpackPages => {

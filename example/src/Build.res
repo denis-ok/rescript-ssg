@@ -9,5 +9,7 @@ let () = Commands.build(
   ~compileCommand=Path.join2(currentDir, "../../node_modules/.bin/rescript"),
   ~minimizer=TerserPluginWithEsbuild,
   ~webpackBundleAnalyzerMode=Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
+  // buildWorkersCount=1 makes pages build sequental to make console output readable
+  ~buildWorkersCount=1,
   (),
 )
