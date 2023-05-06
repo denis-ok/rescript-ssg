@@ -7,9 +7,9 @@ let showPage = (page: RebuildPageWorkerT.workerPage) => {
   );
 };
 
-let workerData: RebuildPageWorkerT.workerData = WorkingThreads.workerData;
+let workerData: RebuildPageWorkerT.workerData = WorkerThreads.workerData;
 
-let parentPort = WorkingThreads.parentPort;
+let parentPort = WorkerThreads.parentPort;
 
 let page = workerData.page;
 
@@ -126,7 +126,7 @@ let workerOutput: workerOutput =
   ->Promise.map((webpackPage: Webpack.page) => {
       logger.info(() => Js.Console.timeEnd(successText));
       let result = Belt.Result.Ok(webpackPage);
-      parentPort->WorkingThreads.postMessage(result);
+      parentPort->WorkerThreads.postMessage(result);
       result;
     })
   ->Promise.catch(error => {
@@ -139,6 +139,6 @@ let workerOutput: workerOutput =
         )
       );
       let result = Belt.Result.Error(page.path);
-      parentPort->WorkingThreads.postMessage(result);
+      parentPort->WorkerThreads.postMessage(result);
       Js.Promise.resolve(result);
     });
