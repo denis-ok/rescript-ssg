@@ -18,7 +18,7 @@ start-rescript:
 	$(NODE_BINS)/rescript build -w
 
 build-example:
-	ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
+	RESCRIPT_SSG_ASSET_PREFIX=LALA ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
 
 start-example:
 	ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
