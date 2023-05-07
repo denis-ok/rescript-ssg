@@ -37,7 +37,7 @@ let runRebuildPageWorker =
     (~onExit, ~workerData: RebuildPageWorkerT.workerData)
     : RebuildPageWorker.workerOutput =>
   // This is the place where we have to manually annotate output type of runWorker call
-  WorkingThreads.runWorker(
+  WorkerThreads.runWorker(
     ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
     ~workerData,
     ~onExit,

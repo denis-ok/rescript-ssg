@@ -9,3 +9,5 @@ type process;
 let exit = int => process->exit'(int);
 
 let getArgs = () => process->argv;
+
+[@val] external env: Js.Dict.t(string) = "process.env";
