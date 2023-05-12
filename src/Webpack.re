@@ -257,7 +257,9 @@ let makeConfig =
     ->Js.Dict.fromArray;
 
   let assetPrefix =
-    EnvParams.assetPrefix->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;
+    EnvParams.assetPrefix
+    ->Utils.maybeAddSlashPrefix
+    ->Utils.maybeAddSlashSuffix;
 
   let shouldMinimize = mode == Production;
 
