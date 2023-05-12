@@ -412,7 +412,7 @@ let buildPageHtmlAndReactApp =
   let pageWrappersDataDir =
     Path.join2(intermediateFilesOutputDir, pageWrappersDataDirname);
 
-  logger.info(() =>
+  logger.debug(() =>
     Js.log(
       {j|[PageBuilder.buildPageHtmlAndReactApp] Building page module: $(moduleName), page path: $(pagePath)|j},
     )

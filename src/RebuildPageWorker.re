@@ -15,15 +15,16 @@ let page = workerData.page;
 
 let logger = Log.makeLogger(workerData.logLevel);
 
-let successText = "[Worker] Pages build success. Duration";
+let successText = "[Worker] Page build success. Duration";
 Js.Console.timeStart(successText);
 
-logger.info(() =>
-  Js.log2(
-    "[Worker] Page to build:\n",
-    PageBuilderT.PagePath.toString(page.path),
-  )
-);
+logger.info(() => {
+  let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
+  let pagePath: string = page.path->PageBuilderT.PagePath.toString;
+  Js.log(
+    {j|[Worker] Building page module: $(moduleName), page path: $(pagePath)|j},
+  );
+});
 
 logger.debug(() => Js.log2("[Worker] Page to build:\n", page->showPage));
 
