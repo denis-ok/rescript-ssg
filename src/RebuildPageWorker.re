@@ -15,12 +15,12 @@ let page = workerData.page;
 
 let logger = Log.makeLogger(workerData.logLevel);
 
-let successText = "[Worker] Pages build success. Duration";
+let successText = "[Worker] Page build success. Duration";
 Js.Console.timeStart(successText);
 
 logger.info(() =>
   Js.log2(
-    "[Worker] Page to build:\n",
+    "[Worker] Page to build:",
     PageBuilderT.PagePath.toString(page.path),
   )
 );
