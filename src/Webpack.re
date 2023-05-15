@@ -26,6 +26,52 @@ module TerserPlugin = {
   external esbuildMinify: minifier = "esbuildMinify";
 };
 
+module WebpackBundleAnalyzerPlugin = {
+  // https://github.com/webpack-contrib/webpack-bundle-analyzer#options-for-plugin
+
+  type analyzerMode = [ | `server | `static | `json | `disabled];
+
+  type options = {
+    analyzerMode,
+    reportFilename: option(string),
+    openAnalyzer: bool,
+    analyzerPort: option(int),
+  };
+
+  [@module "webpack-bundle-analyzer"] [@new]
+  external make': options => webpackPlugin = "BundleAnalyzerPlugin";
+
+  module Mode = {
+    // This module contains an interface that is exposed by rescript-ssg
+    type staticModeOptions = {reportHtmlFilepath: string};
+
+    type serverModeOptions = {port: int};
+
+    type t =
+      | Static(staticModeOptions)
+      | Server(serverModeOptions);
+
+    let makeOptions = (mode: t) => {
+      switch (mode) {
+      | Static({reportHtmlFilepath}) => {
+          analyzerMode: `static,
+          reportFilename: Some(reportHtmlFilepath),
+          openAnalyzer: false,
+          analyzerPort: None,
+        }
+      | Server({port}) => {
+          analyzerMode: `server,
+          reportFilename: None,
+          openAnalyzer: false,
+          analyzerPort: Some(port),
+        }
+      };
+    };
+  };
+
+  let make = (mode: Mode.t) => mode->Mode.makeOptions->make';
+};
+
 [@new] [@module "webpack"] [@scope "default"]
 external definePlugin: Js.Dict.t(string) => webpackPlugin = "DefinePlugin";
 
@@ -194,12 +240,13 @@ let dynamicPageSegmentPrefix = "dynamic__";
 
 let makeConfig =
     (
+      ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~devServerOptions: option(DevServerOptions.t),
       ~mode: Mode.t,
       ~minimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir: string,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
       ~webpackPages: array(page),
     ) => {
   let entries =
@@ -210,9 +257,9 @@ let makeConfig =
     ->Js.Dict.fromArray;
 
   let assetPrefix =
-    CliArgs.assetPrefix
-    ->PathUtils.maybeAddSlashPrefix
-    ->PathUtils.maybeAddSlashSuffix;
+    EnvParams.assetPrefix
+    ->Utils.maybeAddSlashPrefix
+    ->Utils.maybeAddSlashSuffix;
 
   let shouldMinimize = mode == Production;
 
@@ -267,7 +314,7 @@ let makeConfig =
           })
         });
 
-      let globalValuesPlugin = getPluginWithGlobalValues(globalValues);
+      let globalValuesPlugin = getPluginWithGlobalValues(globalEnvValues);
 
       let miniCssExtractPlugin =
         MiniCssExtractPlugin.make({
@@ -275,10 +322,17 @@ let makeConfig =
             NodeLoader.webpackAssetsDir ++ "/" ++ "[name]_[chunkhash].css",
         });
 
+      let webpackBundleAnalyzerPlugin =
+        switch (webpackBundleAnalyzerMode) {
+        | None => [||]
+        | Some(mode) => [|WebpackBundleAnalyzerPlugin.make(mode)|]
+        };
+
       Js.Array2.concat(
         htmlWebpackPlugins,
         [|miniCssExtractPlugin, globalValuesPlugin|],
-      );
+      )
+      ->Js.Array2.concat(webpackBundleAnalyzerPlugin);
     },
     // Explicitly disable source maps in dev mode
     "devtool": false,
@@ -481,8 +535,9 @@ let makeCompiler =
       ~logger: Log.logger,
       ~mode: Mode.t,
       ~minimizer: Minimizer.t,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
       ~outputDir,
+      ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~webpackPages: array(page),
     ) => {
   let config =
@@ -492,7 +547,8 @@ let makeCompiler =
       ~logger,
       ~minimizer,
       ~outputDir,
-      ~globalValues,
+      ~globalEnvValues,
+      ~webpackBundleAnalyzerMode,
       ~webpackPages,
     );
   // TODO handle errors when we make compiler
@@ -504,10 +560,10 @@ let build =
     (
       ~mode: Mode.t,
       ~minimizer: Minimizer.t,
-      ~writeWebpackStatsJson: bool,
       ~logger: Log.logger,
       ~outputDir,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
+      ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~webpackPages: array(page),
     ) => {
   let durationLabel = "[Webpack.build] duration";
@@ -522,7 +578,8 @@ let build =
       ~logger,
       ~outputDir,
       ~minimizer,
-      ~globalValues,
+      ~globalEnvValues,
+      ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~webpackPages,
     );
 
@@ -556,16 +613,6 @@ let build =
           logger.info(() => Js.log("[Webpack.build] Stats.hasWarnings"))
         };
 
-        let webpackOutputDir = getWebpackOutputDir(outputDir);
-
-        if (writeWebpackStatsJson) {
-          let statsJson = Webpack.Stats.toJson(stats);
-          Fs.writeFileSync(
-            Path.join2(webpackOutputDir, "stats.json"),
-            statsJson->Js.Json.stringifyAny->Belt.Option.getWithDefault(""),
-          );
-        };
-
         compiler->Webpack.close(closeError => {
           switch (Js.Nullable.toOption(closeError)) {
           | None => Js.Console.timeEnd(durationLabel)
@@ -587,7 +634,8 @@ let startDevServer =
       ~minimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
+      ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~webpackPages: array(page),
     ) => {
   logger.info(() => Js.log("[Webpack] Starting dev server..."));
@@ -601,7 +649,8 @@ let startDevServer =
       ~logger,
       ~outputDir,
       ~minimizer,
-      ~globalValues,
+      ~globalEnvValues,
+      ~webpackBundleAnalyzerMode,
       ~webpackPages,
     );
 

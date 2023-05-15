@@ -4,21 +4,32 @@ let outputDir = Path.join2(currentDir, "../build")
 
 let normalizeCssFilePath = Path.join2(currentDir, "/css/normalize.css")
 
-let globalValues = [
+let globalEnvValues = [
   //
   ("process.env.ENV_VAR", Env.envVar),
   ("GLOBAL_VAR", "BAR"),
 ]
 
 let pageIndex: PageBuilder.page = {
-  pageWrapper: Some({
-    component: WrapperWithChildren(children => <Wrapper> children </Wrapper>),
-    modulePath: Wrapper.modulePath,
-  }),
-  component: ComponentWithoutData(<Index />),
-  modulePath: Index.modulePath,
-  headCssFilepaths: [normalizeCssFilePath],
-  path: Root,
+  let jsonExample =
+    [("string", "hello"->Js.Json.string), ("int", 2.->Js.Json.number)]
+    ->Js.Dict.fromArray
+    ->Js.Json.object_
+
+  {
+    pageWrapper: Some({
+      component: WrapperWithChildren(children => <Wrapper> children </Wrapper>),
+      modulePath: Wrapper.modulePath,
+    }),
+    component: ComponentWithoutData(<Index />),
+    modulePath: Index.modulePath,
+    headCssFilepaths: [normalizeCssFilePath],
+    path: Root,
+    globalValues: Some([
+      ("PER_PAGE_GLOBAL_1", "INDEX"->Js.Json.string),
+      ("PER_PAGE_GLOBAL_2", jsonExample),
+    ]),
+  }
 }
 
 let page1: PageBuilder.page = {
@@ -44,6 +55,7 @@ let page1: PageBuilder.page = {
   modulePath: Page1.modulePath,
   headCssFilepaths: [],
   path: Path(["page1"]),
+  globalValues: Some([("PER_PAGE_GLOBAL_1", "PAGE1"->Js.Json.string)]),
 }
 
 let page11: PageBuilder.page = {
@@ -63,6 +75,7 @@ let page11: PageBuilder.page = {
   modulePath: Page1.modulePath,
   headCssFilepaths: [],
   path: Path(["page11"]),
+  globalValues: None,
 }
 
 let page2: PageBuilder.page = {
@@ -71,6 +84,7 @@ let page2: PageBuilder.page = {
   modulePath: Page2.modulePath,
   headCssFilepaths: [],
   path: Path(["page2"]),
+  globalValues: None,
 }
 
 let page1Dynamic: PageBuilder.page = {
@@ -79,6 +93,7 @@ let page1Dynamic: PageBuilder.page = {
   modulePath: PageDynamic.modulePath,
   headCssFilepaths: [],
   path: Path(["page1", "dynamic__id"]),
+  globalValues: None,
 }
 
 let languages = ["en", "ru"]

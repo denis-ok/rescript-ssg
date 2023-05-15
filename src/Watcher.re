@@ -1,5 +1,3 @@
-let dirname = Utils.getDirname();
-
 let uniqueStringArray = (array: array(string)) =>
   Set.fromArray(array)->Set.toArray;
 
@@ -20,68 +18,6 @@ let showPages = (pages: array(PageBuilder.page)) => {
       ~pagePath=page.path,
       ~pageModulePath=page.modulePath,
     )
-  });
-};
-
-let runRebuildPageWorker =
-    (~workerData: RebuildPageWorkerT.workerData, ~onExit) =>
-  WorkingThreads.runWorker(
-    ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
-    ~workerData,
-    ~onExit,
-  );
-
-let rebuildPagesWithWorker =
-    (
-      ~outputDir: string,
-      ~melangeOutputDir,
-      ~logger: Log.logger,
-      ~globalValues: array((string, string)),
-      pages: array(PageBuilder.page),
-    ) => {
-  let rebuildPages =
-    pages->Js.Array2.map(page => {
-      let rebuildPage: RebuildPageWorkerT.rebuildPage = {
-        pageWrapper: {
-          switch (page.pageWrapper) {
-          | None => None
-          | Some({component: WrapperWithChildren(_), modulePath}) =>
-            Some({component: WrapperWithChildren, modulePath})
-          | Some({
-              component: PageBuilder.WrapperWithDataAndChildren({data, _}),
-              modulePath,
-            }) =>
-            Some({
-              component: WrapperWithDataAndChildren({data: data}),
-              modulePath,
-            })
-          };
-        },
-        component: {
-          switch (page.component) {
-          | ComponentWithoutData(_) => ComponentWithoutData
-          | PageBuilder.ComponentWithData({data, _}) =>
-            ComponentWithData({data: data})
-          };
-        },
-        modulePath: page.modulePath,
-        outputDir,
-        headCssFilepaths: page.headCssFilepaths,
-        path: page.path,
-      };
-
-      rebuildPage;
-    });
-
-  let workerData: RebuildPageWorkerT.workerData = {
-    pages: rebuildPages,
-    logLevel: logger.logLevel,
-    globalValues,
-    melangeOutputDir,
-  };
-
-  runRebuildPageWorker(~workerData, ~onExit=exitCode => {
-    logger.debug(() => Js.log2("[Worker] Exit code:", exitCode))
   });
 };
 
@@ -112,7 +48,8 @@ let startWatcher =
       ~outputDir,
       ~melangeOutputDir,
       ~logger: Log.logger,
-      ~globalValues: array((string, string)),
+      ~globalEnvValues: array((string, string)),
+      ~buildWorkersCount: option(int)=?,
       pages: array(PageBuilder.page),
     )
     : unit => {
@@ -239,12 +176,14 @@ let startWatcher =
         )
       );
 
-      rebuildPagesWithWorker(
+      RebuildPageWorkerHelpers.buildPagesWithWorkers(
+        ~buildWorkersCount,
+        ~pages=pagesToRebuild,
         ~outputDir,
         ~melangeOutputDir,
         ~logger,
-        ~globalValues,
-        pagesToRebuild,
+        ~globalEnvValues,
+        ~exitOnPageBuildError=false,
       )
       ->Promise.map(_ => {
           logger.debug(() =>
@@ -289,7 +228,7 @@ let startWatcher =
 
   let rebuildPagesDebounced = Debounce.debounce(~delayMs=2000, rebuildPages);
 
-  watcher->Chokidar.onChange(filepath => {
+  let onChangeOrUnlink = filepath => {
     let pagesToRebuild =
       switch (modulePathToPagesDict->Js.Dict.get(filepath)) {
       | Some(pages) =>
@@ -359,5 +298,17 @@ let startWatcher =
     );
 
     rebuildPagesDebounced();
+  };
+
+  // With rescript/bucklescript, "change" event is triggered when JS file updated after compilation.
+  // But with Melange, "unlink" event is triggered.
+  watcher->Chokidar.onChange(filepath => {
+    logger.debug(() => Js.log2("[Watcher] Chokidar.onChange: ", filepath));
+    onChangeOrUnlink(filepath);
+  });
+
+  watcher->Chokidar.onUnlink(filepath => {
+    logger.debug(() => Js.log2("[Watcher] Chokidar.onUnlink: ", filepath));
+    onChangeOrUnlink(filepath);
   });
 };

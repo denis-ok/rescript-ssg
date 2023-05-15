@@ -18,7 +18,7 @@ start-rescript:
 	$(NODE_BINS)/bsb -make-world -w
 
 build-example:
-	ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
+	RESCRIPT_SSG_ASSET_PREFIX=LALA ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
 
 start-example:
 	ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
@@ -58,9 +58,6 @@ format-rescript:
 format:
 	make format-reason
 	make format-rescript
-
-webpack-bundle-analyzer:
-	@$(NODE_BINS)/webpack-bundle-analyzer $(EXAMPLE_DIR)/build/public/stats.json
 
 clean-test:
 	rm -rf tests/output

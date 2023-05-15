@@ -1,62 +1,67 @@
 [@val] external import_: string => Js.Promise.t('a) = "import";
 
-let showPages = (pages: array(RebuildPageWorkerT.rebuildPage)) => {
-  pages->Js.Array2.map(page => {
-    Log.makeMinimalPrintablePageObj(
-      ~pagePath=page.path,
-      ~pageModulePath=page.modulePath,
-    )
-  });
+let showPage = (page: RebuildPageWorkerT.workerPage) => {
+  Log.makeMinimalPrintablePageObj(
+    ~pagePath=page.path,
+    ~pageModulePath=page.modulePath,
+  );
 };
 
-let workerData: RebuildPageWorkerT.workerData = WorkingThreads.workerData;
+let workerData: RebuildPageWorkerT.workerData = WorkerThreads.workerData;
 
-let () = GlobalValues.unsafeAdd(workerData.globalValues);
+let parentPort = WorkerThreads.parentPort;
 
-let parentPort = WorkingThreads.parentPort;
+let page = workerData.page;
 
-let pages = workerData.pages;
+let logger = Log.makeLogger(workerData.logLevel);
 
-let logLevel = workerData.logLevel;
-let melangeOutputDir = workerData.melangeOutputDir;
+let pagePath: string = page.path->PageBuilderT.PagePath.toString;
 
-let logger = Log.makeLogger(logLevel);
+let successText = {j|[Worker] Page: $(pagePath), build success. Duration|j};
 
-let durationLabel = "[RebuildPageWorker] duration";
+Js.Console.timeStart(successText);
 
-Js.Console.timeStart(durationLabel);
+logger.info(() => {
+  let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
+  Js.log(
+    {j|[Worker] Building page module: $(moduleName), page path: $(pagePath)|j},
+  );
+});
 
-logger.info(() =>
-  Js.log2(
-    "[Worker] Rebuilding pages:\n",
-    pages->Js.Array2.map(page => PageBuilderT.PagePath.toString(page.path)),
-  )
+logger.debug(() => Js.log2("[Worker] Page to build:\n", page->showPage));
+
+let () = GlobalValues.unsafeAdd(workerData.globalEnvValues);
+
+let () =
+  page.globalValues
+  ->Belt.Option.forEach(globalValues =>
+      GlobalValues.unsafeAddJson(globalValues)
+    );
+
+logger.debug(() =>
+  Js.log2("[Worker] Trying to import module: ", page.modulePath)
 );
 
-logger.debug(() => Js.log2("[Worker] Rebuilding pages:\n", pages->showPages));
+let pageModule = import_(page.modulePath);
 
-pages
-->Js.Array2.map(page => {
-    let modulePath = page.modulePath;
-    let outputDir = page.outputDir;
-
+let pageWrapperModule =
+  switch (page.pageWrapper) {
+  | None => Js.Promise.resolve(None)
+  | Some({modulePath, _}) =>
     logger.debug(() =>
-      Js.log2("[Worker] Trying to import module: ", modulePath)
+      Js.log2("[Worker] Trying to import wrapper module: ", modulePath)
     );
-    let importedModule = import_(modulePath);
+    import_(modulePath)->Promise.map(module_ => Some(module_));
+  };
 
-    let importedWrapperModule =
-      switch (page.pageWrapper) {
-      | None => Js.Promise.resolve(None)
-      | Some({modulePath, _}) =>
-        logger.debug(() =>
-          Js.log2("[Worker] Trying to import wrapper module: ", modulePath)
-        );
-        import_(modulePath)->Promise.map(module_ => Some(module_));
-      };
+let importedModules = Js.Promise.all2((pageModule, pageWrapperModule));
 
-    let modules = Js.Promise.all2((importedModule, importedWrapperModule));
-    modules->Promise.map(((module_, wrapperModule)) => {
+type workerOutput =
+  Js.Promise.t(Belt.Result.t(Webpack.page, PageBuilderT.PagePath.t));
+
+let workerOutput: workerOutput =
+  importedModules
+  ->Promise.map(((module_, wrapperModule)) => {
       let newPage: PageBuilder.page = {
         pageWrapper: {
           switch (page.pageWrapper, wrapperModule) {
@@ -112,32 +117,32 @@ pages
         modulePath: module_##modulePath,
         headCssFilepaths: page.headCssFilepaths,
         path: page.path,
+        globalValues: page.globalValues,
       };
 
       PageBuilder.buildPageHtmlAndReactApp(
-        ~outputDir,
-        ~melangeOutputDir,
+        ~outputDir=page.outputDir,
+        ~melangeOutputDir=workerData.melangeOutputDir,
         ~logger,
         newPage,
       );
+    })
+  ->Promise.map((webpackPage: Webpack.page) => {
+      logger.info(() => Js.Console.timeEnd(successText));
+      let result = Belt.Result.Ok(webpackPage);
+      parentPort->WorkerThreads.postMessage(result);
+      result;
+    })
+  ->Promise.catch(error => {
+      // We don't want to immediatelly stop node process/watcher when something happened in worker.
+      // We just log the error and the caller will decide what to do.
+      logger.info(() =>
+        Js.Console.error2(
+          "[Worker] [Warning] Caught error, please check: ",
+          error,
+        )
+      );
+      let result = Belt.Result.Error(page.path);
+      parentPort->WorkerThreads.postMessage(result);
+      Js.Promise.resolve(result);
     });
-  })
-->Js.Promise.all
-->Promise.map((_: array(Webpack.page)) => {
-    logger.info(() => {
-      Js.log("[Worker] Pages rebuild success, job finished.");
-      Js.Console.timeEnd(durationLabel);
-    });
-
-    parentPort->WorkingThreads.postMessage(true);
-  })
-->Promise.catch(error => {
-    logger.info(() =>
-      Js.Console.error2(
-        "[Worker] [Warning] Caught error, please check: ",
-        error,
-      )
-    );
-    Js.Promise.resolve();
-  })
-->ignore;
