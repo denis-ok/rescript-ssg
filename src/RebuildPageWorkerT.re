@@ -25,6 +25,7 @@ type workerPage = {
   headCssFilepaths: array(string),
   path: PageBuilderT.PagePath.t,
   globalValues: option(array((string, Js.Json.t))),
+  allowDarkMode: bool,
 };
 
 type workerData = {
