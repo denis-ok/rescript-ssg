@@ -30,7 +30,7 @@ let mapPageToPageForRebuild =
     headCssFilepaths: page.headCssFilepaths,
     path: page.path,
     globalValues: page.globalValues,
-    allowDarkMode: page.allowDarkMode,
+    scripts: page.scripts,
   };
 };
 
