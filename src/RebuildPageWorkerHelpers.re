@@ -30,6 +30,8 @@ let mapPageToPageForRebuild =
     headCssFilepaths: page.headCssFilepaths,
     path: page.path,
     globalValues: page.globalValues,
+    headScripts: page.headScripts,
+    bodyScripts: page.bodyScripts,
   };
 };
 

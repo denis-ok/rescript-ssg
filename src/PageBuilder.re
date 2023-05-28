@@ -42,6 +42,8 @@ type page = {
   path: PageBuilderT.PagePath.t,
   headCssFilepaths: array(string),
   globalValues: option(array((string, Js.Json.t))),
+  headScripts: array(string),
+  bodyScripts: array(string),
 };
 
 module PageData = {
@@ -143,11 +145,19 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   modulePrefix ++ moduleName ++ "App";
 };
 
+let groupScripts = scripts =>
+  switch (scripts) {
+  | [||] => ""
+  | scripts => "<script>" ++ scripts->Js.Array2.joinWith("\n") ++ "</script>"
+  };
+
 let renderHtmlTemplate =
     (
       ~pageElement: React.element,
       ~headCssFilepaths: array(string),
       ~globalValues: array((string, Js.Json.t)),
+      ~headScripts: array(string),
+      ~bodyScripts: array(string),
     )
     : string => {
   let html = ReactDOMServer.renderToString(pageElement);
@@ -189,9 +199,10 @@ let renderHtmlTemplate =
   let noscript = helmet.noscript.toString();
   let style = helmet.style.toString();
   let bodyAttributes = helmet.bodyAttributes.toString();
-
   let scriptTagWithGlobalValues: string =
     globalValuesToScriptTag(globalValues);
+  let headScript: string = headScripts->groupScripts;
+  let bodyScript: string = bodyScripts->groupScripts;
 
   {j|<!DOCTYPE html>
 <html $(htmlAttributes)>
@@ -206,8 +217,10 @@ let renderHtmlTemplate =
     $(headCssStyleTag)
     $(emotionStyleTag)
     $(scriptTagWithGlobalValues)
+    $(headScript)
   </head>
   <body $(bodyAttributes)>
+    $(bodyScript)
     <div id="root">$(renderedHtml)</div>
   </body>
 </html>
@@ -444,6 +457,8 @@ let buildPageHtmlAndReactApp =
       ~pageElement=element,
       ~headCssFilepaths=page.headCssFilepaths,
       ~globalValues=Belt.Option.getWithDefault(page.globalValues, [||]),
+      ~headScripts=page.headScripts,
+      ~bodyScripts=page.bodyScripts,
     );
 
   let resultReactApp =
