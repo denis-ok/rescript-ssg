@@ -22,6 +22,15 @@ type pageWrapper = {
   modulePath: string,
 };
 
+type location =
+  | Head
+  | Body;
+
+type script = {
+  location,
+  text: string,
+};
+
 type page = {
   pageWrapper: option(pageWrapper),
   component,
@@ -29,6 +38,7 @@ type page = {
   path: PageBuilderT.PagePath.t,
   headCssFilepaths: array(string),
   globalValues: option(array((string, Js.Json.t))),
+  scripts: array(script),
 };
 
 module PageData = {
@@ -135,6 +145,7 @@ let renderHtmlTemplate =
       ~pageElement: React.element,
       ~headCssFilepaths: array(string),
       ~globalValues: array((string, Js.Json.t)),
+      ~scripts: array(script),
     )
     : string => {
   let html = ReactDOMServer.renderToString(pageElement);
@@ -166,6 +177,24 @@ let renderHtmlTemplate =
     | Some(css) => "<style>" ++ css ++ "</style>"
     };
 
+  let groupScripts = scripts =>
+    switch (scripts) {
+    | [||] => ""
+    | scripts =>
+      "<script>"
+      ++ scripts->Js.Array2.map(({text}) => text)->Js.Array2.joinWith("\n")
+      ++ "</script>"
+    };
+
+  let (headScript, bodyScript) = (
+    scripts
+    ->Js.Array2.filter(({location}) => location == Head)
+    ->groupScripts,
+    scripts
+    ->Js.Array2.filter(({location}) => location == Body)
+    ->groupScripts,
+  );
+
   let helmet = ReactHelmet.renderStatic();
 
   let htmlAttributes = helmet.htmlAttributes.toString();
@@ -193,8 +222,10 @@ let renderHtmlTemplate =
     $(headCssStyleTag)
     $(emotionStyleTag)
     $(scriptTagWithGlobalValues)
+    $(headScript)
   </head>
   <body $(bodyAttributes)>
+    $(bodyScript)
     <div id="root">$(renderedHtml)</div>
   </body>
 </html>
@@ -413,6 +444,7 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~pageElement=element,
       ~headCssFilepaths=page.headCssFilepaths,
       ~globalValues=Belt.Option.getWithDefault(page.globalValues, [||]),
+      ~scripts=page.scripts,
     );
 
   let resultReactApp =

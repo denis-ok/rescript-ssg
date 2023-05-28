@@ -118,6 +118,7 @@ let workerOutput: workerOutput =
         headCssFilepaths: page.headCssFilepaths,
         path: page.path,
         globalValues: page.globalValues,
+        scripts: page.scripts,
       };
 
       PageBuilder.buildPageHtmlAndReactApp(
