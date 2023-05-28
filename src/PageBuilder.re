@@ -22,15 +22,6 @@ type pageWrapper = {
   modulePath: string,
 };
 
-type location =
-  | Head
-  | Body;
-
-type script = {
-  location,
-  text: string,
-};
-
 type page = {
   pageWrapper: option(pageWrapper),
   component,
@@ -38,7 +29,8 @@ type page = {
   path: PageBuilderT.PagePath.t,
   headCssFilepaths: array(string),
   globalValues: option(array((string, Js.Json.t))),
-  scripts: array(script),
+  headScripts: array(string),
+  bodyScripts: array(string),
 };
 
 module PageData = {
@@ -140,12 +132,19 @@ let makeReactAppModuleName = (~pagePath, ~moduleName) => {
   modulePrefix ++ moduleName ++ "App";
 };
 
+let groupScripts = scripts =>
+  switch (scripts) {
+  | [||] => ""
+  | scripts => "<script>" ++ scripts->Js.Array2.joinWith("\n") ++ "</script>"
+  };
+
 let renderHtmlTemplate =
     (
       ~pageElement: React.element,
       ~headCssFilepaths: array(string),
       ~globalValues: array((string, Js.Json.t)),
-      ~scripts: array(script),
+      ~headScripts: array(string),
+      ~bodyScripts: array(string),
     )
     : string => {
   let html = ReactDOMServer.renderToString(pageElement);
@@ -177,24 +176,6 @@ let renderHtmlTemplate =
     | Some(css) => "<style>" ++ css ++ "</style>"
     };
 
-  let groupScripts = scripts =>
-    switch (scripts) {
-    | [||] => ""
-    | scripts =>
-      "<script>"
-      ++ scripts->Js.Array2.map(({text}) => text)->Js.Array2.joinWith("\n")
-      ++ "</script>"
-    };
-
-  let (headScript, bodyScript) = (
-    scripts
-    ->Js.Array2.filter(({location}) => location == Head)
-    ->groupScripts,
-    scripts
-    ->Js.Array2.filter(({location}) => location == Body)
-    ->groupScripts,
-  );
-
   let helmet = ReactHelmet.renderStatic();
 
   let htmlAttributes = helmet.htmlAttributes.toString();
@@ -205,9 +186,10 @@ let renderHtmlTemplate =
   let noscript = helmet.noscript.toString();
   let style = helmet.style.toString();
   let bodyAttributes = helmet.bodyAttributes.toString();
-
   let scriptTagWithGlobalValues: string =
     globalValuesToScriptTag(globalValues);
+  let headScript: string = headScripts->groupScripts;
+  let bodyScript: string = bodyScripts->groupScripts;
 
   {j|<!DOCTYPE html>
 <html $(htmlAttributes)>
@@ -444,7 +426,8 @@ let buildPageHtmlAndReactApp = (~outputDir, ~logger: Log.logger, page: page) => 
       ~pageElement=element,
       ~headCssFilepaths=page.headCssFilepaths,
       ~globalValues=Belt.Option.getWithDefault(page.globalValues, [||]),
-      ~scripts=page.scripts,
+      ~headScripts=page.headScripts,
+      ~bodyScripts=page.bodyScripts,
     );
 
   let resultReactApp =

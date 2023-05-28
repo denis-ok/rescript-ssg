@@ -102,6 +102,8 @@ module BuildPageHtmlAndReactApp = {
       headCssFilepaths: [],
       path: Root,
       globalValues: None,
+      headScripts: [],
+      bodyScripts: [],
     }
 
     let expectedAppContent = `
@@ -126,6 +128,8 @@ switch ReactDOM.querySelector("#root") {
       headCssFilepaths: [],
       path: Root,
       globalValues: None,
+      headScripts: [],
+      bodyScripts: [],
     }
 
     let expectedAppContent = `
@@ -158,6 +162,8 @@ switch ReactDOM.querySelector("#root") {
       headCssFilepaths: [],
       path: Root,
       globalValues: None,
+      headScripts: [],
+      bodyScripts: [],
     }
 
     let expectedAppContent = `
@@ -207,6 +213,8 @@ switch ReactDOM.querySelector("#root") {
       headCssFilepaths: [],
       path: Root,
       globalValues: None,
+      headScripts: [],
+      bodyScripts: [],
     }
 
     let expectedAppContent = `

@@ -29,6 +29,8 @@ let pageIndex: PageBuilder.page = {
       ("PER_PAGE_GLOBAL_1", "INDEX"->Js.Json.string),
       ("PER_PAGE_GLOBAL_2", jsonExample),
     ]),
+    headScripts: [],
+    bodyScripts: [],
   }
 }
 
@@ -56,6 +58,8 @@ let page1: PageBuilder.page = {
   headCssFilepaths: [],
   path: Path(["page1"]),
   globalValues: Some([("PER_PAGE_GLOBAL_1", "PAGE1"->Js.Json.string)]),
+  headScripts: [],
+  bodyScripts: [],
 }
 
 let page11: PageBuilder.page = {
@@ -76,6 +80,8 @@ let page11: PageBuilder.page = {
   headCssFilepaths: [],
   path: Path(["page11"]),
   globalValues: None,
+  headScripts: [],
+  bodyScripts: [],
 }
 
 let page2: PageBuilder.page = {
@@ -85,6 +91,8 @@ let page2: PageBuilder.page = {
   headCssFilepaths: [],
   path: Path(["page2"]),
   globalValues: None,
+  headScripts: [],
+  bodyScripts: [],
 }
 
 let page1Dynamic: PageBuilder.page = {
@@ -94,6 +102,8 @@ let page1Dynamic: PageBuilder.page = {
   headCssFilepaths: [],
   path: Path(["page1", "dynamic__id"]),
   globalValues: None,
+  headScripts: [],
+  bodyScripts: [],
 }
 
 let languages = ["en", "ru"]
