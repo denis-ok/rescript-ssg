@@ -52,7 +52,7 @@ let build =
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    RebuildPageWorkerHelpers.buildPagesWithWorkers(
+    BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
@@ -96,7 +96,7 @@ let start =
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    RebuildPageWorkerHelpers.buildPagesWithWorkers(
+    BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~pages,
       ~outputDir,
       ~logger,

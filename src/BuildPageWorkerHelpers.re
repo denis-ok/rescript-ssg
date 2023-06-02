@@ -1,7 +1,7 @@
 let dirname = Utils.getDirname();
 
 let mapPageToPageForRebuild =
-    (~page: PageBuilder.page, ~outputDir): RebuildPageWorkerT.workerPage => {
+    (~page: PageBuilder.page, ~outputDir): BuildPageWorkerT.workerPage => {
   {
     pageWrapper: {
       switch (page.pageWrapper) {
@@ -35,12 +35,12 @@ let mapPageToPageForRebuild =
   };
 };
 
-let runRebuildPageWorker =
-    (~onExit, ~workerData: RebuildPageWorkerT.workerData)
-    : RebuildPageWorker.workerOutput =>
+let runBuildPageWorker =
+    (~onExit, ~workerData: BuildPageWorkerT.workerData)
+    : BuildPageWorker.workerOutput =>
   // This is the place where we have to manually annotate output type of runWorker call
   WorkerThreads.runWorker(
-    ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
+    ~workerModulePath=Path.join2(dirname, "BuildPageWorker.bs.js"),
     ~workerData,
     ~onExit,
   );
@@ -54,13 +54,13 @@ let buildPageWithWorker =
     ) => {
   let rebuildPages = mapPageToPageForRebuild(~page, ~outputDir);
 
-  let workerData: RebuildPageWorkerT.workerData = {
+  let workerData: BuildPageWorkerT.workerData = {
     page: rebuildPages,
     logLevel: logger.logLevel,
     globalEnvValues,
   };
 
-  runRebuildPageWorker(~workerData, ~onExit=exitCode => {
+  runBuildPageWorker(~workerData, ~onExit=exitCode => {
     logger.debug(() => Js.log2("[Worker] Exit code:", exitCode))
   });
 };

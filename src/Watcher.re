@@ -175,7 +175,7 @@ let startWatcher =
         )
       );
 
-      RebuildPageWorkerHelpers.buildPagesWithWorkers(
+      BuildPageWorkerHelpers.buildPagesWithWorkers(
         ~buildWorkersCount,
         ~pages=pagesToRebuild,
         ~outputDir,
