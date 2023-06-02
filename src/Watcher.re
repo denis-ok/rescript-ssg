@@ -224,7 +224,7 @@ let startWatcher =
     };
   };
 
-  let rebuildPagesDebounced = Debounce.debounce(~delayMs=2000, rebuildPages);
+  let rebuildPagesDebounced = Debounce.debounce(~delayMs=1000, rebuildPages);
 
   let onChangeOrUnlink = filepath => {
     let pagesToRebuild =
