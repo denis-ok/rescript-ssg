@@ -1,7 +1,7 @@
 let dirname = Utils.getDirname();
 
 let mapPageToPageForRebuild =
-    (~page: PageBuilder.page, ~outputDir): RebuildPageWorkerT.workerPage => {
+    (~page: PageBuilder.page): BuildPageWorkerT.workerPage => {
   {
     pageWrapper: {
       switch (page.pageWrapper) {
@@ -26,7 +26,6 @@ let mapPageToPageForRebuild =
       };
     },
     modulePath: page.modulePath,
-    outputDir,
     headCssFilepaths: page.headCssFilepaths,
     path: page.path,
     globalValues: page.globalValues,
@@ -35,12 +34,12 @@ let mapPageToPageForRebuild =
   };
 };
 
-let runRebuildPageWorker =
-    (~onExit, ~workerData: RebuildPageWorkerT.workerData)
-    : RebuildPageWorker.workerOutput =>
+let runBuildPageWorker =
+    (~onExit, ~workerData: BuildPageWorkerT.workerData)
+    : BuildPageWorker.workerOutput =>
   // This is the place where we have to manually annotate output type of runWorker call
   WorkerThreads.runWorker(
-    ~workerModulePath=Path.join2(dirname, "RebuildPageWorker.bs.js"),
+    ~workerModulePath=Path.join2(dirname, "BuildPageWorker.bs.js"),
     ~workerData,
     ~onExit,
   );
@@ -48,21 +47,24 @@ let runRebuildPageWorker =
 let buildPageWithWorker =
     (
       ~outputDir: string,
+      ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
       ~melangeOutputDir,
       page: PageBuilder.page,
     ) => {
-  let rebuildPages = mapPageToPageForRebuild(~page, ~outputDir);
+  let rebuildPages = mapPageToPageForRebuild(~page);
 
-  let workerData: RebuildPageWorkerT.workerData = {
+  let workerData: BuildPageWorkerT.workerData = {
+    outputDir,
+    melangeOutputDir,
     page: rebuildPages,
     logLevel: logger.logLevel,
     globalEnvValues,
     melangeOutputDir,
   };
 
-  runRebuildPageWorker(~workerData, ~onExit=exitCode => {
+  runBuildPageWorker(~workerData, ~onExit=exitCode => {
     logger.debug(() => Js.log2("[Worker] Exit code:", exitCode))
   });
 };
@@ -71,6 +73,7 @@ let buildPagesWithWorkers =
     (
       ~pages: array(PageBuilder.page),
       ~outputDir: string,
+      ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int),
@@ -102,7 +105,13 @@ let buildPagesWithWorkers =
     ->Js.Array2.map((pages, ()) =>
         pages
         ->Js.Array2.map(page =>
-            buildPageWithWorker(~outputDir, ~logger, ~globalEnvValues, ~melangeOutputDir, page)
+            buildPageWithWorker(
+              ~outputDir,
+              ~melangeOutputDir,
+              ~logger,
+              ~globalEnvValues,
+              page,
+            )
           )
         ->Js.Promise.all
       )

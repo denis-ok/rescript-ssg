@@ -398,7 +398,7 @@ let processPageComponentWithWrapper =
 
 let buildPageHtmlAndReactApp =
     (
-      ~outputDir,
+      ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       page: page,
@@ -534,7 +534,12 @@ let checkPageDuplicates = (pages: array(page)) => {
 };
 
 let buildPages =
-    (~outputDir, ~melangeOutputDir, ~logger: Log.logger, pages: array(page)) => {
+    (
+      ~outputDir,
+      ~melangeOutputDir: option(string),
+      ~logger: Log.logger,
+      pages: array(page),
+    ) => {
   checkPageDuplicates(pages);
 
   let durationLabel = "[PageBuilder.buildPages] duration";

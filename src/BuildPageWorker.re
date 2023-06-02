@@ -1,13 +1,13 @@
 [@val] external import_: string => Js.Promise.t('a) = "import";
 
-let showPage = (page: RebuildPageWorkerT.workerPage) => {
+let showPage = (page: BuildPageWorkerT.workerPage) => {
   Log.makeMinimalPrintablePageObj(
     ~pagePath=page.path,
     ~pageModulePath=page.modulePath,
   );
 };
 
-let workerData: RebuildPageWorkerT.workerData = WorkerThreads.workerData;
+let workerData: BuildPageWorkerT.workerData = WorkerThreads.workerData;
 
 let parentPort = WorkerThreads.parentPort;
 
@@ -79,7 +79,7 @@ let workerOutput: workerOutput =
                   ),
                 modulePath,
               })
-            | RebuildPageWorkerT.WrapperWithDataAndChildren({data}) =>
+            | BuildPageWorkerT.WrapperWithDataAndChildren({data}) =>
               Some({
                 component:
                   WrapperWithDataAndChildren({
@@ -98,11 +98,11 @@ let workerOutput: workerOutput =
         },
         component: {
           switch (page.component) {
-          | RebuildPageWorkerT.ComponentWithoutData =>
+          | BuildPageWorkerT.ComponentWithoutData =>
             ComponentWithoutData(
               React.createElement(module_##make, Js.Obj.empty()),
             )
-          | RebuildPageWorkerT.ComponentWithData({data}) =>
+          | BuildPageWorkerT.ComponentWithData({data}) =>
             ComponentWithData({
               component: _propValue => {
                 React.createElement(
@@ -123,7 +123,7 @@ let workerOutput: workerOutput =
       };
 
       PageBuilder.buildPageHtmlAndReactApp(
-        ~outputDir=page.outputDir,
+        ~outputDir=workerData.outputDir,
         ~melangeOutputDir=workerData.melangeOutputDir,
         ~logger,
         newPage,

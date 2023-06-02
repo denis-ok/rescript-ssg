@@ -53,10 +53,11 @@ let build =
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    RebuildPageWorkerHelpers.buildPagesWithWorkers(
+    BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
+      ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
       ~exitOnPageBuildError=true,
@@ -99,9 +100,10 @@ let start =
   let logger = Log.makeLogger(logLevel);
 
   let webpackPages =
-    RebuildPageWorkerHelpers.buildPagesWithWorkers(
+    BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~pages,
       ~outputDir,
+      ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
       ~buildWorkersCount,
@@ -129,9 +131,9 @@ let start =
   let () =
     Watcher.startWatcher(
       ~outputDir,
+      ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
-      ~melangeOutputDir,
       pages,
     );
 

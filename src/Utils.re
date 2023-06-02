@@ -4,6 +4,8 @@ type jsError;
 
 [@get] external getStack: jsError => string = "stack";
 
+[@bs.val] external window: _ = "window";
+
 // Commented to avoid error in webpack
 // @module("path") external dirnameFromFilepath: string => string = "dirname"
 
@@ -35,7 +37,12 @@ let getFilepathFromError = jsError => {
   };
 };
 
-let getFilepath = () => makeError()->getFilepathFromError;
+let getFilepath = () =>
+  switch (Js.typeof(window) == "undefined") {
+  // Get filepath only in node
+  | false => ""
+  | true => makeError()->getFilepathFromError
+  };
 
 let getDirname = () => makeError()->getFilepathFromError->dirnameFromFilepath;
 

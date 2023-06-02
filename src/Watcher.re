@@ -45,8 +45,8 @@ let getModuleDependencies = (~modulePath) =>
 
 let startWatcher =
     (
-      ~outputDir,
-      ~melangeOutputDir,
+      ~outputDir: string,
+      ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int)=?,
@@ -176,7 +176,7 @@ let startWatcher =
         )
       );
 
-      RebuildPageWorkerHelpers.buildPagesWithWorkers(
+      BuildPageWorkerHelpers.buildPagesWithWorkers(
         ~buildWorkersCount,
         ~pages=pagesToRebuild,
         ~outputDir,
@@ -226,7 +226,7 @@ let startWatcher =
     };
   };
 
-  let rebuildPagesDebounced = Debounce.debounce(~delayMs=2000, rebuildPages);
+  let rebuildPagesDebounced = Debounce.debounce(~delayMs=1000, rebuildPages);
 
   let onChangeOrUnlink = filepath => {
     let pagesToRebuild =
