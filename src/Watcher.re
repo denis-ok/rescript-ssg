@@ -45,7 +45,8 @@ let getModuleDependencies = (~modulePath) =>
 
 let startWatcher =
     (
-      ~outputDir,
+      ~outputDir: string,
+      ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int)=?,
@@ -179,6 +180,7 @@ let startWatcher =
         ~buildWorkersCount,
         ~pages=pagesToRebuild,
         ~outputDir,
+        ~melangeOutputDir,
         ~logger,
         ~globalEnvValues,
         ~exitOnPageBuildError=false,

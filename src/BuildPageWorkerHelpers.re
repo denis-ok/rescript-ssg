@@ -48,6 +48,7 @@ let runBuildPageWorker =
 let buildPageWithWorker =
     (
       ~outputDir: string,
+      ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
       page: PageBuilder.page,
@@ -58,6 +59,7 @@ let buildPageWithWorker =
     page: rebuildPages,
     logLevel: logger.logLevel,
     globalEnvValues,
+    melangeOutputDir,
   };
 
   runBuildPageWorker(~workerData, ~onExit=exitCode => {
@@ -69,6 +71,7 @@ let buildPagesWithWorkers =
     (
       ~pages: array(PageBuilder.page),
       ~outputDir: string,
+      ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int),
@@ -99,7 +102,13 @@ let buildPagesWithWorkers =
     ->Js.Array2.map((pages, ()) =>
         pages
         ->Js.Array2.map(page =>
-            buildPageWithWorker(~outputDir, ~logger, ~globalEnvValues, page)
+            buildPageWithWorker(
+              ~outputDir,
+              ~melangeOutputDir,
+              ~logger,
+              ~globalEnvValues,
+              page,
+            )
           )
         ->Js.Promise.all
       )

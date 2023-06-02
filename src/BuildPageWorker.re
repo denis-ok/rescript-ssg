@@ -124,6 +124,7 @@ let workerOutput: workerOutput =
 
       PageBuilder.buildPageHtmlAndReactApp(
         ~outputDir=page.outputDir,
+        ~melangeOutputDir=workerData.melangeOutputDir,
         ~logger,
         newPage,
       );

@@ -39,6 +39,7 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
 let build =
     (
       ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
       ~compileCommand: string,
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
@@ -56,6 +57,7 @@ let build =
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
+      ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
       ~exitOnPageBuildError=true,
@@ -82,6 +84,7 @@ let build =
 let start =
     (
       ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
       ~mode: Webpack.Mode.t,
       ~logLevel: Log.level,
       ~pages: array(PageBuilder.page),
@@ -99,6 +102,7 @@ let start =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~pages,
       ~outputDir,
+      ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
       ~buildWorkersCount,
@@ -122,7 +126,14 @@ let start =
     })
   ->ignore;
 
-  let () = Watcher.startWatcher(~outputDir, ~logger, ~globalEnvValues, pages);
+  let () =
+    Watcher.startWatcher(
+      ~outputDir,
+      ~melangeOutputDir,
+      ~logger,
+      ~globalEnvValues,
+      pages,
+    );
 
   ();
 };
