@@ -123,7 +123,7 @@ let workerOutput: workerOutput =
       };
 
       PageBuilder.buildPageHtmlAndReactApp(
-        ~outputDir=page.outputDir,
+        ~outputDir=workerData.outputDir,
         ~melangeOutputDir=workerData.melangeOutputDir,
         ~logger,
         newPage,

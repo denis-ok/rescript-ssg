@@ -21,7 +21,6 @@ type workerPage = {
   pageWrapper: option(pageWrapper),
   component,
   modulePath: string,
-  outputDir: string,
   headCssFilepaths: array(string),
   path: PageBuilderT.PagePath.t,
   globalValues: option(array((string, Js.Json.t))),
@@ -30,10 +29,11 @@ type workerPage = {
 };
 
 type workerData = {
+  outputDir: string,
+  melangeOutputDir: option(string),
   logLevel: Log.level,
   page: workerPage,
   globalEnvValues: array((string, string)),
-  melangeOutputDir: option(string),
 };
 
 let showPage = (page: workerPage) => {

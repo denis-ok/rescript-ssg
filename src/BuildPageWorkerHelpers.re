@@ -1,7 +1,7 @@
 let dirname = Utils.getDirname();
 
 let mapPageToPageForRebuild =
-    (~page: PageBuilder.page, ~outputDir): BuildPageWorkerT.workerPage => {
+    (~page: PageBuilder.page): BuildPageWorkerT.workerPage => {
   {
     pageWrapper: {
       switch (page.pageWrapper) {
@@ -26,7 +26,6 @@ let mapPageToPageForRebuild =
       };
     },
     modulePath: page.modulePath,
-    outputDir,
     headCssFilepaths: page.headCssFilepaths,
     path: page.path,
     globalValues: page.globalValues,
@@ -53,13 +52,14 @@ let buildPageWithWorker =
       ~globalEnvValues: array((string, string)),
       page: PageBuilder.page,
     ) => {
-  let rebuildPages = mapPageToPageForRebuild(~page, ~outputDir);
+  let rebuildPages = mapPageToPageForRebuild(~page);
 
   let workerData: BuildPageWorkerT.workerData = {
+    outputDir,
+    melangeOutputDir,
     page: rebuildPages,
     logLevel: logger.logLevel,
     globalEnvValues,
-    melangeOutputDir,
   };
 
   runBuildPageWorker(~workerData, ~onExit=exitCode => {
