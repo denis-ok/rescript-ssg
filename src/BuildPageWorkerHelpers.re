@@ -50,7 +50,6 @@ let buildPageWithWorker =
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
-      ~melangeOutputDir,
       page: PageBuilder.page,
     ) => {
   let rebuildPages = mapPageToPageForRebuild(~page);
@@ -61,7 +60,6 @@ let buildPageWithWorker =
     page: rebuildPages,
     logLevel: logger.logLevel,
     globalEnvValues,
-    melangeOutputDir,
   };
 
   runBuildPageWorker(~workerData, ~onExit=exitCode => {
@@ -78,7 +76,6 @@ let buildPagesWithWorkers =
       ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int),
       ~exitOnPageBuildError: bool,
-      ~melangeOutputDir,
     ) => {
   let buildWorkersCount =
     switch (buildWorkersCount) {
