@@ -7,6 +7,12 @@ NODE_BINS = node_modules/.bin
 
 EXAMPLE_DIR = example
 
+RESCRIPT_SSG_BIN = ./src/js/bin.mjs
+
+COMMANDS_DIR = $(EXAMPLE_DIR)/src/commands
+
+BUILD_COMMAND_WITHOUT_FILE = RESCRIPT_SSG_ASSET_PREFIX=LALA ENV_VAR=FOO $(RESCRIPT_SSG_BIN)
+
 clean-rescript:
 	$(NODE_BINS)/rescript clean -with-deps
 
@@ -18,19 +24,22 @@ start-rescript:
 	$(NODE_BINS)/rescript build -w
 
 build-example:
-	RESCRIPT_SSG_ASSET_PREFIX=LALA ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Build.bs.js
+	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/Build.bs.js
 
 start-example:
-	ENV_VAR=FOO ./src/js/bin.mjs $(EXAMPLE_DIR)/src/Start.bs.js
+	ENV_VAR=FOO $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/Start.bs.js
 
 serve-example:
 	$(NODE_BINS)/serve -l 3005 $(EXAMPLE_DIR)/build/public
 
-clean:
+clean-example:
 	rm -rf $(EXAMPLE_DIR)/build
 	mkdir $(EXAMPLE_DIR)/build
+
+clean:
 	make clean-test
 	make clean-rescript
+	make clean-example
 
 build: clean
 	make build-rescript
@@ -39,7 +48,14 @@ build: clean
 build-ci: clean
 	make build-rescript
 	make test
-	make build-example
+	make clean-test
+	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithTerser.bs.js
+	make clean-example
+	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithEsbuildPlugin.bs.js
+	make clean-example
+	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithTerserPluginWithEsbuild.bs.js
+	make clean-example
+	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithTerserPluginWithSwc.bs.js
 
 start: clean build-rescript
 	make -j 2 start-rescript start-example
