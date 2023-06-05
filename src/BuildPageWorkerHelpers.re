@@ -67,6 +67,8 @@ let buildPageWithWorker =
   });
 };
 
+let defaultWorkersCount = 16;
+
 let buildPagesWithWorkers =
     (
       ~pages: array(PageBuilder.page),
@@ -80,8 +82,10 @@ let buildPagesWithWorkers =
   let buildWorkersCount =
     switch (buildWorkersCount) {
     | None =>
-      // Using 16 as some reasonable limit for workers count
-      min(NodeOs.availableParallelism(), 16)
+      switch (NodeOs.availableParallelism) {
+      | None => defaultWorkersCount
+      | Some(f) => min(f(), defaultWorkersCount)
+      }
     | Some(buildWorkersCount) => buildWorkersCount
     };
 
