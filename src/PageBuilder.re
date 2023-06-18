@@ -122,14 +122,14 @@ let dataPropName = "data";
 let getIntermediateFilesOutputDir = (~outputDir) =>
   Path.join2(outputDir, "temp");
 
-let makeReactAppModuleName = (~pagePath, ~moduleName) => {
+let pagePathToPageAppModuleName = (~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
     ->Js.String2.replaceByRe([%re {|/\//g|}], "")
     ->Js.String2.replaceByRe([%re {|/-/g|}], "")
     ->Js.String2.replaceByRe([%re {|/\./g|}], "");
 
-  modulePrefix ++ moduleName ++ "App";
+  modulePrefix ++ moduleName ++ "__PageApp";
 };
 
 let groupScripts = scripts =>
@@ -457,7 +457,7 @@ let buildPageHtmlAndReactApp =
       elementString,
     );
 
-  let pageAppModuleName = makeReactAppModuleName(~pagePath, ~moduleName);
+  let pageAppModuleName = pagePathToPageAppModuleName(~pagePath, ~moduleName);
 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
 
