@@ -11,7 +11,11 @@ module Local = {
 let make = () => {
   <div>
     <SharedModule.Header />
-    <WithHydration moduleName="SharedModule.Footer"> <SharedModule.Footer /> </WithHydration>
-    <WithHydration moduleName="PageWithPartialHydration.Local"> <Local /> </WithHydration>
+    <PartialHydration.WithHydration moduleName="SharedModule.Footer">
+      <SharedModule.Footer />
+    </PartialHydration.WithHydration>
+    <PartialHydration.WithHydration moduleName="PageWithPartialHydration.Local">
+      <Local />
+    </PartialHydration.WithHydration>
   </div>
 }

@@ -122,20 +122,6 @@ switch ReactDOM.querySelector("#root") {
 |j};
 };
 
-let renderReactAppTemplateWithPartialHydration =
-    (modulesWithHydration: array(string)) => {
-  modulesWithHydration
-  ->Js.Array2.map(moduleName => {
-      {j|
-switch ReactDOM.querySelector("#hydrated__$(moduleName)") {
-| Some(root) => ReactDOM.hydrate(<$(moduleName) />, root)
-| None => ()
-}
-|j}
-    })
-  ->Js.Array2.joinWith("\n");
-};
-
 let dataPropName = "data";
 
 let getIntermediateFilesOutputDir = (~outputDir) =>
@@ -169,9 +155,10 @@ let renderHtmlTemplate =
     )
     : string => {
   let pageElement =
-    <WithHydrationContext.Provider modulesWithHydration__Mutable>
+    <PartialHydration.WithHydrationContext.Provider
+      modulesWithHydration__Mutable>
       pageElement
-    </WithHydrationContext.Provider>;
+    </PartialHydration.WithHydrationContext.Provider>;
 
   let html = ReactDOMServer.renderToString(pageElement);
 
@@ -489,9 +476,7 @@ let buildPageHtmlAndReactApp =
         elementString,
       )
     | Partial =>
-      renderReactAppTemplateWithPartialHydration(
-        modulesWithHydration__Mutable,
-      )
+      PartialHydration.renderReactAppTemplate(~modulesWithHydration__Mutable)
     };
 
   let pageAppModuleName =
