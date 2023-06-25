@@ -110,6 +110,7 @@ module BuildPageHtmlAndReactApp = {
 
   module SimplePage = {
     let page: PageBuilder.page = {
+      hydration: Full,
       pageWrapper: None,
       component: ComponentWithoutData(<TestPage />),
       modulePath: TestPage.modulePath,
@@ -133,6 +134,7 @@ switch ReactDOM.querySelector("#root") {
 
   module PageWithWrapper = {
     let page: PageBuilder.page = {
+      hydration: Full,
       pageWrapper: Some({
         component: WrapperWithChildren(children => <TestWrapper> children </TestWrapper>),
         modulePath: TestWrapper.modulePath,
@@ -159,6 +161,7 @@ switch ReactDOM.querySelector("#root") {
 
   module PageWithData = {
     let page: PageBuilder.page = {
+      hydration: Full,
       pageWrapper: None,
       component: ComponentWithData({
         component: data => <TestPageWithData data />,
@@ -196,6 +199,7 @@ switch ReactDOM.querySelector("#root") {
 
   module PageWrapperWithDataAndPageWithData = {
     let page: PageBuilder.page = {
+      hydration: Full,
       pageWrapper: Some({
         component: WrapperWithDataAndChildren({
           component: (data, children) => <TestWrapperWithData data> children </TestWrapperWithData>,

@@ -63,6 +63,7 @@ let workerOutput: workerOutput =
   importedModules
   ->Promise.map(((module_, wrapperModule)) => {
       let newPage: PageBuilder.page = {
+        hydration: page.hydration,
         pageWrapper: {
           switch (page.pageWrapper, wrapperModule) {
           | (Some({component, modulePath}), Some(wrapperModule)) =>
