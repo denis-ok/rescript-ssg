@@ -146,6 +146,7 @@ let groupScripts = scripts =>
 
 let renderHtmlTemplate =
     (
+      ~hydration: hydration,
       ~modulesWithHydration__Mutable: array(string),
       ~pageElement: React.element,
       ~headCssFilepaths: array(string),
@@ -155,10 +156,14 @@ let renderHtmlTemplate =
     )
     : string => {
   let pageElement =
-    <PartialHydration.WithHydrationContext.Provider
-      modulesWithHydration__Mutable>
-      pageElement
-    </PartialHydration.WithHydrationContext.Provider>;
+    switch (hydration) {
+    | Full => pageElement
+    | Partial =>
+      <PartialHydration.WithHydrationContext.Provider
+        modulesWithHydration__Mutable>
+        pageElement
+      </PartialHydration.WithHydrationContext.Provider>
+    };
 
   let html = ReactDOMServer.renderToString(pageElement);
 
@@ -457,6 +462,7 @@ let buildPageHtmlAndReactApp =
 
   let resultHtml: string =
     renderHtmlTemplate(
+      ~hydration=page.hydration,
       ~modulesWithHydration__Mutable,
       ~pageElement=element,
       ~headCssFilepaths=page.headCssFilepaths,
