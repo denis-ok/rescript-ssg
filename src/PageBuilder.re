@@ -17,9 +17,9 @@ type wrapperComponent =
   | WrapperWithDataAndChildren(wrapperComponentWithData('a))
     : wrapperComponent;
 
-type hydration =
-  | Full
-  | Partial;
+type hydrationMode =
+  | FullHydration
+  | PartialHydration;
 
 type pageWrapper = {
   component: wrapperComponent,
@@ -27,7 +27,7 @@ type pageWrapper = {
 };
 
 type page = {
-  hydration,
+  hydrationMode,
   pageWrapper: option(pageWrapper),
   component,
   modulePath: string,
@@ -146,7 +146,7 @@ let groupScripts = scripts =>
 
 let renderHtmlTemplate =
     (
-      ~hydration: hydration,
+      ~hydrationMode: hydrationMode,
       ~modulesWithHydration__Mutable: array(string),
       ~pageElement: React.element,
       ~headCssFilepaths: array(string),
@@ -156,9 +156,9 @@ let renderHtmlTemplate =
     )
     : string => {
   let pageElement =
-    switch (hydration) {
-    | Full => pageElement
-    | Partial =>
+    switch (hydrationMode) {
+    | FullHydration => pageElement
+    | PartialHydration =>
       <PartialHydration.WithHydrationContext.Provider
         modulesWithHydration__Mutable>
         pageElement
@@ -462,7 +462,7 @@ let buildPageHtmlAndReactApp =
 
   let resultHtml: string =
     renderHtmlTemplate(
-      ~hydration=page.hydration,
+      ~hydrationMode=page.hydrationMode,
       ~modulesWithHydration__Mutable,
       ~pageElement=element,
       ~headCssFilepaths=page.headCssFilepaths,
@@ -472,8 +472,8 @@ let buildPageHtmlAndReactApp =
     );
 
   let resultReactApp =
-    switch (page.hydration) {
-    | Full =>
+    switch (page.hydrationMode) {
+    | FullHydration =>
       renderReactAppTemplate(
         ~importPageWrapperDataString=?
           Belt.Option.map(pageWrapperDataProp, v => v.rescriptImportString),
@@ -481,7 +481,7 @@ let buildPageHtmlAndReactApp =
           Belt.Option.map(pageDataProp, v => v.rescriptImportString),
         elementString,
       )
-    | Partial =>
+    | PartialHydration =>
       PartialHydration.renderReactAppTemplate(~modulesWithHydration__Mutable)
     };
 
