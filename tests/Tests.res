@@ -37,7 +37,11 @@ module MakeReactAppModuleName = {
   let moduleName = "Page"
 
   let test = (~pagePath, ~expect) => {
-    let reactAppModuleName = PageBuilder.pagePathToPageAppModuleName(~pagePath, ~moduleName)
+    let reactAppModuleName = PageBuilder.pagePathToPageAppModuleName(
+      ~generatedFilesSuffix="",
+      ~pagePath,
+      ~moduleName,
+    )
     isEqual(~msg="makeReactAppModuleName", reactAppModuleName, expect)
   }
 
@@ -79,6 +83,7 @@ module BuildPageHtmlAndReactApp = {
       ~outputDir,
       ~melangeOutputDir=None,
       ~logger,
+      ~generatedFilesSuffix="",
       page,
     )
 
@@ -88,7 +93,11 @@ module BuildPageHtmlAndReactApp = {
 
     let pagePath: string = page.path->PageBuilderT.PagePath.toString
 
-    let reactAppModuleName = PageBuilder.pagePathToPageAppModuleName(~pagePath, ~moduleName)
+    let reactAppModuleName = PageBuilder.pagePathToPageAppModuleName(
+      ~generatedFilesSuffix="",
+      ~pagePath,
+      ~moduleName,
+    )
 
     let testPageAppContent = Fs.readFileSyncAsUtf8(
       Path.join2(intermediateFilesOutputDir, reactAppModuleName ++ ".res"),

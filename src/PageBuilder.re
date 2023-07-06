@@ -122,14 +122,15 @@ let dataPropName = "data";
 let getIntermediateFilesOutputDir = (~outputDir) =>
   Path.join2(outputDir, "temp");
 
-let pagePathToPageAppModuleName = (~pagePath, ~moduleName) => {
+let pagePathToPageAppModuleName =
+    (~generatedFilesSuffix, ~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
     ->Js.String2.replaceByRe([%re {|/\//g|}], "")
     ->Js.String2.replaceByRe([%re {|/-/g|}], "")
     ->Js.String2.replaceByRe([%re {|/\./g|}], "");
 
-  modulePrefix ++ moduleName ++ "__PageApp";
+  modulePrefix ++ moduleName ++ "__PageApp" ++ generatedFilesSuffix;
 };
 
 let groupScripts = scripts =>
@@ -388,6 +389,7 @@ let buildPageHtmlAndReactApp =
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
+      ~generatedFilesSuffix: string,
       page: page,
     ) => {
   let intermediateFilesOutputDir = getIntermediateFilesOutputDir(~outputDir);
@@ -457,7 +459,12 @@ let buildPageHtmlAndReactApp =
       elementString,
     );
 
-  let pageAppModuleName = pagePathToPageAppModuleName(~pagePath, ~moduleName);
+  let pageAppModuleName =
+    pagePathToPageAppModuleName(
+      ~generatedFilesSuffix,
+      ~pagePath,
+      ~moduleName,
+    );
 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
 
