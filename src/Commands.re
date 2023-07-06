@@ -47,6 +47,7 @@ let build =
       ~webpackBundleAnalyzerMode=None,
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
+      ~generatedFilesSuffix: string="",
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
@@ -61,6 +62,7 @@ let build =
       ~logger,
       ~globalEnvValues,
       ~exitOnPageBuildError=true,
+      ~generatedFilesSuffix,
     );
 
   webpackPages
@@ -107,6 +109,7 @@ let start =
       ~globalEnvValues,
       ~buildWorkersCount,
       ~exitOnPageBuildError=true,
+      ~generatedFilesSuffix="",
     );
 
   webpackPages

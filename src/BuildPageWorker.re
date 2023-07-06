@@ -139,6 +139,7 @@ let workerOutput: workerOutput =
         ~outputDir=workerData.outputDir,
         ~melangeOutputDir=workerData.melangeOutputDir,
         ~logger,
+        ~generatedFilesSuffix=workerData.generatedFilesSuffix,
         newPage,
       );
     })

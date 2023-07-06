@@ -184,6 +184,7 @@ let startWatcher =
         ~logger,
         ~globalEnvValues,
         ~exitOnPageBuildError=false,
+        ~generatedFilesSuffix="",
       )
       ->Promise.map(_ => {
           logger.debug(() =>

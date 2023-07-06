@@ -37,15 +37,19 @@ module MakeReactAppModuleName = {
   let moduleName = "Page"
 
   let test = (~pagePath, ~expect) => {
-    let reactAppModuleName = PageBuilder.makeReactAppModuleName(~pagePath, ~moduleName)
+    let reactAppModuleName = PageBuilder.pagePathToPageAppModuleName(
+      ~generatedFilesSuffix="",
+      ~pagePath,
+      ~moduleName,
+    )
     isEqual(~msg="makeReactAppModuleName", reactAppModuleName, expect)
   }
 
-  test(~pagePath=".", ~expect="PageApp")
+  test(~pagePath=".", ~expect="Page__PageApp")
 
-  test(~pagePath="foo/bar", ~expect="foobarPageApp")
+  test(~pagePath="foo/bar", ~expect="foobarPage__PageApp")
 
-  test(~pagePath="foo/bar-baz", ~expect="foobarbazPageApp")
+  test(~pagePath="foo/bar-baz", ~expect="foobarbazPage__PageApp")
 
   Js.log("MakeReactAppModuleName tests passed!")
 }
@@ -79,6 +83,7 @@ module BuildPageHtmlAndReactApp = {
       ~outputDir,
       ~melangeOutputDir=None,
       ~logger,
+      ~generatedFilesSuffix="",
       page,
     )
 
@@ -88,7 +93,11 @@ module BuildPageHtmlAndReactApp = {
 
     let pagePath: string = page.path->PageBuilderT.PagePath.toString
 
-    let reactAppModuleName = PageBuilder.makeReactAppModuleName(~pagePath, ~moduleName)
+    let reactAppModuleName = PageBuilder.pagePathToPageAppModuleName(
+      ~generatedFilesSuffix="",
+      ~pagePath,
+      ~moduleName,
+    )
 
     let testPageAppContent = Fs.readFileSyncAsUtf8(
       Path.join2(intermediateFilesOutputDir, reactAppModuleName ++ ".res"),
