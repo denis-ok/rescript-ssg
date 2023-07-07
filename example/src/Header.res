@@ -13,6 +13,10 @@ let make = (~h1Text) =>
         <li key=slug> <a href={"/" ++ slug}> <h3> {slug->React.string} </h3> </a> </li>
       })
       ->React.array}
-      <li> <a href={"/" ++ {Page.toSlug(PageWithoutData)} ++ "/some_path"}> <h3> {"page-without-data/dynamic__path"->React.string} </h3> </a> </li>
+      <li>
+        <a href={"/" ++ Page.toSlug(PageWithoutData) ++ "/some_path"}>
+          <h3> {"page-without-data/dynamic__path"->React.string} </h3>
+        </a>
+      </li>
     </ul>
   </div>

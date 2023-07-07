@@ -27,6 +27,7 @@ let wrapperWithData: RescriptSsg.PageBuilder.pageWrapper = {
 
 let pageWithoutData: PageBuilder.page = {
   {
+    hydrationMode: FullHydration,
     pageWrapper: None,
     component: ComponentWithoutData(<PageWithoutData />),
     modulePath: PageWithoutData.modulePath,
@@ -43,6 +44,7 @@ let pageWithoutData: PageBuilder.page = {
 
 let pageWithData: PageBuilder.page = {
   {
+    hydrationMode: FullHydration,
     pageWrapper: None,
     component: ComponentWithData({
       component: data => <PageWithData data />,
@@ -96,6 +98,22 @@ let pageWithoutDataDynamicPath: PageBuilder.page = {
   path: Path([Page.toSlug(PageWithoutData), "dynamic__id"]),
 }
 
+let pageWithPartialHydration: PageBuilder.page = {
+  ...pageWithoutData,
+  hydrationMode: PartialHydration,
+  component: ComponentWithoutData(<PageWithPartialHydration />),
+  modulePath: PageWithPartialHydration.modulePath,
+  path: Path([Page.toSlug(PageWithPartialHydration)]),
+}
+
+let pageWithoutHydration: PageBuilder.page = {
+  ...pageWithoutData,
+  hydrationMode: PartialHydration,
+  component: ComponentWithoutData(<PageWithoutHydration />),
+  modulePath: PageWithoutHydration.modulePath,
+  path: Path([Page.toSlug(PageWithoutHydration)]),
+}
+
 let pages = [
   {...pageWithoutData, path: Root},
   pageWithoutData,
@@ -105,6 +123,8 @@ let pages = [
   pageWithDataAndWrapperWithoutData,
   pageWithDataAndWrapperWithData,
   pageWithoutDataDynamicPath,
+  pageWithPartialHydration,
+  pageWithoutHydration,
 ]
 
 let fakeExtralanguages = ["es"]

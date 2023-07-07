@@ -3,6 +3,7 @@ let dirname = Utils.getDirname();
 let mapPageToPageForRebuild =
     (~page: PageBuilder.page): BuildPageWorkerT.workerPage => {
   {
+    hydrationMode: page.hydrationMode,
     pageWrapper: {
       switch (page.pageWrapper) {
       | None => None
