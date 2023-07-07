@@ -36,6 +36,10 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   };
 };
 
+type generatedFilesSuffix =
+  | NoSuffix
+  | UnixTimestamp;
+
 let build =
     (
       ~outputDir: string,
@@ -47,7 +51,7 @@ let build =
       ~webpackBundleAnalyzerMode=None,
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
-      ~generatedFilesSuffix: string="",
+      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
@@ -62,7 +66,11 @@ let build =
       ~logger,
       ~globalEnvValues,
       ~exitOnPageBuildError=true,
-      ~generatedFilesSuffix,
+      ~generatedFilesSuffix=
+        switch (generatedFilesSuffix) {
+        | NoSuffix => ""
+        | UnixTimestamp => "_" ++ Js.Date.make()->Js.Date.valueOf->Belt.Float.toString
+        },
     );
 
   webpackPages
