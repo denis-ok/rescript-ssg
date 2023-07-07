@@ -69,7 +69,8 @@ let build =
       ~generatedFilesSuffix=
         switch (generatedFilesSuffix) {
         | NoSuffix => ""
-        | UnixTimestamp => "_" ++ Js.Date.make()->Js.Date.valueOf->Belt.Float.toString
+        | UnixTimestamp =>
+          "_" ++ Js.Date.make()->Js.Date.valueOf->Belt.Float.toString
         },
     );
 

@@ -13,11 +13,16 @@ let make = () => {
   let (isFlagVisible, setIsFlagVisible) = React.useState(() => false)
 
   <div className=Css.content>
-    <p> {"Image:"->React.string} </p>
+    <div> {"Imported image file:"->React.string} </div>
     <div> <img src=catImage /> </div>
+    <div>
+      {"Flag from imported external CSS lib: "->React.string}
+      <div className={"flag-icon flag-icon-es"} />
+    </div>
+    <div> {"Button styled via imported CSS:"->React.string} </div>
     <button
       className="customButton" onClick={_ => setIsFlagVisible(isFlagVisible => !isFlagVisible)}>
-      {"Show USA flag"->React.string}
+      {isFlagVisible ? "Hide USA flag"->React.string : "Show USA flag"->React.string}
     </button>
     {isFlagVisible ? <div className={"flag-icon flag-icon-us"} /> : React.null}
     <div> {"ENV_VAR: "->React.string} {Env.envVar->React.string} </div>
