@@ -5,6 +5,8 @@ type t =
   | PageWithoutDataAndWrapperWithData
   | PageWithDataAndWrapperWithoutData
   | PageWithDataAndWrapperWithData
+  | PageWithPartialHydration
+  | PageWithoutHydration
 
 let toSlug = page =>
   switch page {
@@ -14,6 +16,8 @@ let toSlug = page =>
   | PageWithoutDataAndWrapperWithData => "page-without-data-and-wrapper-with-data"
   | PageWithDataAndWrapperWithoutData => "page-with-data-and-wrapper-without-data"
   | PageWithDataAndWrapperWithData => "page-with-data-and-wrapper-with-data"
+  | PageWithPartialHydration => "page-with-partial-hydration"
+  | PageWithoutHydration => "page-without-hydration"
   }
 
 let all = [
@@ -23,4 +27,6 @@ let all = [
   PageWithoutDataAndWrapperWithData,
   PageWithDataAndWrapperWithoutData,
   PageWithDataAndWrapperWithData,
+  PageWithPartialHydration,
+  PageWithoutHydration,
 ]
