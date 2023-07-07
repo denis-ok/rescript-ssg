@@ -10,108 +10,107 @@ let globalEnvValues = [
   ("GLOBAL_VAR", "BAR"),
 ]
 
-let pageIndex: PageBuilder.page = {
-  let jsonExample =
-    [("string", "hello"->Js.Json.string), ("int", 2.->Js.Json.number)]
-    ->Js.Dict.fromArray
-    ->Js.Json.object_
+let wrapperWithoutData: RescriptSsg.PageBuilder.pageWrapper = {
+  PageBuilder.component: WrapperWithChildren(
+    children => <WrapperWithoutData> children </WrapperWithoutData>,
+  ),
+  modulePath: WrapperWithoutData.modulePath,
+}
 
+let wrapperWithData: RescriptSsg.PageBuilder.pageWrapper = {
+  component: WrapperWithDataAndChildren({
+    component: (data, children) => <WrapperWithData data> children </WrapperWithData>,
+    data: "LALA \"escaped quotes\"",
+  }),
+  modulePath: WrapperWithData.modulePath,
+}
+
+let pageWithoutData: PageBuilder.page = {
   {
-    pageWrapper: Some({
-      component: WrapperWithChildren(children => <Wrapper> children </Wrapper>),
-      modulePath: Wrapper.modulePath,
-    }),
-    component: ComponentWithoutData(<Index />),
-    modulePath: Index.modulePath,
+    pageWrapper: None,
+    component: ComponentWithoutData(<PageWithoutData />),
+    modulePath: PageWithoutData.modulePath,
     headCssFilepaths: [normalizeCssFilePath],
-    path: Root,
+    path: Path([Page.toSlug(PageWithoutData)]),
     globalValues: Some([
-      ("PER_PAGE_GLOBAL_1", "INDEX"->Js.Json.string),
-      ("PER_PAGE_GLOBAL_2", jsonExample),
+      ("PER_PAGE_GLOBAL_1", "ONE!"->Js.Json.string),
+      ("PER_PAGE_GLOBAL_2", "TWO!"->Js.Json.string),
     ]),
     headScripts: [],
     bodyScripts: [],
   }
 }
 
-let page1: PageBuilder.page = {
-  pageWrapper: Some({
-    component: WrapperWithDataAndChildren({
-      component: (data, children) => <WrapperWithData data> children </WrapperWithData>,
-      data: "LALA \"escape\"",
+let pageWithData: PageBuilder.page = {
+  {
+    pageWrapper: None,
+    component: ComponentWithData({
+      component: data => <PageWithData data />,
+      data: Some({
+        string: "foo \"bar\" baz",
+        int: 1,
+        float: 1.23,
+        variant: One,
+        polyVariant: #hello,
+        option: Some("lalala"),
+        bool: true,
+      }),
     }),
-    modulePath: WrapperWithData.modulePath,
-  }),
-  component: ComponentWithData({
-    component: data => <Page1 data />,
-    data: Some({
-      string: "foo \"bar\" baz",
-      int: 1,
-      float: 1.23,
-      variant: One,
-      polyVariant: #hello,
-      option: Some("lalala"),
-      bool: true,
-    }),
-  }),
-  modulePath: Page1.modulePath,
-  headCssFilepaths: [],
-  path: Path(["page1"]),
-  globalValues: Some([("PER_PAGE_GLOBAL_1", "PAGE1"->Js.Json.string)]),
-  headScripts: [],
-  bodyScripts: [],
+    modulePath: PageWithData.modulePath,
+    headCssFilepaths: [normalizeCssFilePath],
+    path: Path([Page.toSlug(PageWithData)]),
+    globalValues: None,
+    headScripts: [],
+    bodyScripts: [],
+  }
 }
 
-let page11: PageBuilder.page = {
-  pageWrapper: None,
-  component: ComponentWithData({
-    component: data => <Page1 data />,
-    data: Some({
-      string: "foo \"bar\" baz",
-      int: 1,
-      float: 1.23,
-      variant: One,
-      polyVariant: #hello,
-      option: Some("lalala"),
-      bool: true,
-    }),
-  }),
-  modulePath: Page1.modulePath,
-  headCssFilepaths: [],
-  path: Path(["page11"]),
-  globalValues: None,
-  headScripts: [],
-  bodyScripts: [],
+let pageWithoutDataAndWrapperWithoutData = {
+  ...pageWithoutData,
+  pageWrapper: Some(wrapperWithoutData),
+  path: Path([Page.toSlug(PageWithoutDataAndWrapperWithoutData)]),
 }
 
-let page2: PageBuilder.page = {
-  pageWrapper: None,
-  component: ComponentWithData({component: data => <Page2 data />, data: true}),
-  modulePath: Page2.modulePath,
-  headCssFilepaths: [],
-  path: Path(["page2"]),
-  globalValues: None,
-  headScripts: [],
-  bodyScripts: [],
+let pageWithoutDataAndWrapperWithData = {
+  ...pageWithoutData,
+  pageWrapper: Some(wrapperWithData),
+  path: Path([Page.toSlug(PageWithoutDataAndWrapperWithData)]),
 }
 
-let page1Dynamic: PageBuilder.page = {
-  pageWrapper: None,
+let pageWithDataAndWrapperWithoutData = {
+  ...pageWithData,
+  pageWrapper: Some(wrapperWithoutData),
+  path: Path([Page.toSlug(PageWithDataAndWrapperWithoutData)]),
+}
+
+let pageWithDataAndWrapperWithData = {
+  ...pageWithData,
+  pageWrapper: Some(wrapperWithData),
+  path: Path([Page.toSlug(PageWithDataAndWrapperWithData)]),
+}
+
+let pageWithoutDataDynamicPath: PageBuilder.page = {
+  ...pageWithoutData,
   component: ComponentWithoutData(<PageDynamic />),
   modulePath: PageDynamic.modulePath,
-  headCssFilepaths: [],
-  path: Path(["page1", "dynamic__id"]),
-  globalValues: None,
-  headScripts: [],
-  bodyScripts: [],
+  path: Path([Page.toSlug(PageWithoutData), "dynamic__id"]),
 }
 
-let languages = ["en", "ru"]
+let pages = [
+  {...pageWithoutData, path: Root},
+  pageWithoutData,
+  pageWithoutDataAndWrapperWithoutData,
+  pageWithoutDataAndWrapperWithData,
+  pageWithData,
+  pageWithDataAndWrapperWithoutData,
+  pageWithDataAndWrapperWithData,
+  pageWithoutDataDynamicPath,
+]
 
-let pages = [pageIndex, page1, page2, page1Dynamic]
+let fakeExtralanguages = ["es"]
 
 let localizedPages =
-  languages
+  fakeExtralanguages
   ->Js.Array2.map(language =>
     pages->Js.Array2.map(page => {
       ...page,
