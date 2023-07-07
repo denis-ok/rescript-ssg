@@ -1,4 +1,8 @@
-let makeScriptId = (~moduleName) => "withHydration__" ++ moduleName;
+let makeScriptId = (~moduleName) => {
+  // TODO hashify it
+  let modulePrefix = moduleName->Js.String2.replaceByRe([%re {|/\./g|}], "_");
+  "withHydration__" ++ modulePrefix;
+};
 
 let renderReactAppTemplate = (~modulesWithHydration__Mutable: array(string)) => {
   modulesWithHydration__Mutable
