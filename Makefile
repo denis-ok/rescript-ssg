@@ -57,6 +57,10 @@ build-ci: clean
 	make clean-example
 	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithTerserPluginWithSwc.bs.js
 
+build-serve:
+	make build
+	make serve-example
+
 start: clean build-rescript
 	make -j 2 start-rescript start-example
 

@@ -1,35 +1,32 @@
-module Css = Index_Css
-
-let modulePath = Utils.getFilepath()
+module Css = Content_Css
 
 @module("./images/cat.jpeg") external catImage: string = "default"
 
-@module("./index.css") external css: string = "default"
-
-@module("lite-flag-icon/css/flag-icon.min.css") external flagsCss: string = "default"
-
+@module("./content.css") external css: string = "default"
 css->ignore
 
+@module("lite-flag-icon/css/flag-icon.min.css") external flagsCss: string = "default"
 flagsCss->ignore
 
 @react.component
 let make = () => {
   let (isFlagVisible, setIsFlagVisible) = React.useState(() => false)
 
-  <div>
-    <MetaTags title="Index" description="Index description" />
-    <SharedModule.Header />
-    <div className=Css.content> <h1> {"Index page"->React.string} </h1> </div>
-    <p> {"Image:"->React.string} </p>
+  <div className=Css.content>
+    <div> {"Imported image file:"->React.string} </div>
     <div> <img src=catImage /> </div>
+    <div>
+      {"Flag from imported external CSS lib: "->React.string}
+      <div className={"flag-icon flag-icon-es"} />
+    </div>
+    <div> {"Button styled via imported CSS:"->React.string} </div>
     <button
       className="customButton" onClick={_ => setIsFlagVisible(isFlagVisible => !isFlagVisible)}>
-      {"Show USA flag"->React.string}
+      {isFlagVisible ? "Hide USA flag"->React.string : "Show USA flag"->React.string}
     </button>
     {isFlagVisible ? <div className={"flag-icon flag-icon-us"} /> : React.null}
-    <SharedModule.Footer />
     <div> {"ENV_VAR: "->React.string} {Env.envVar->React.string} </div>
     <div> {"GLOBAL_VAR: "->React.string} {Env.globalVar->React.string} </div>
-    <PerPageGlobal />
+    <PerPageGlobals />
   </div>
 }

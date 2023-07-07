@@ -18,6 +18,7 @@ type component =
   | ComponentWithData(componentWithData('a)): component;
 
 type workerPage = {
+  hydrationMode: PageBuilder.hydrationMode,
   pageWrapper: option(pageWrapper),
   component,
   modulePath: string,

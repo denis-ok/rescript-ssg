@@ -30,12 +30,17 @@ type wrapperComponent =
   | WrapperWithDataAndChildren(wrapperComponentWithData('a))
     : wrapperComponent;
 
+type hydrationMode =
+  | FullHydration
+  | PartialHydration;
+
 type pageWrapper = {
   component: wrapperComponent,
   modulePath: string,
 };
 
 type page = {
+  hydrationMode,
   pageWrapper: option(pageWrapper),
   component,
   modulePath: string,
@@ -154,6 +159,8 @@ let groupScripts = scripts =>
 
 let renderHtmlTemplate =
     (
+      ~hydrationMode: hydrationMode,
+      ~modulesWithHydration__Mutable: array(string),
       ~pageElement: React.element,
       ~headCssFilepaths: array(string),
       ~globalValues: array((string, Js.Json.t)),
@@ -161,6 +168,16 @@ let renderHtmlTemplate =
       ~bodyScripts: array(string),
     )
     : string => {
+  let pageElement =
+    switch (hydrationMode) {
+    | FullHydration => pageElement
+    | PartialHydration =>
+      <PartialHydration.WithHydrationContext.Provider
+        modulesWithHydration__Mutable>
+        pageElement
+      </PartialHydration.WithHydrationContext.Provider>
+    };
+
   let html = ReactDOMServer.renderToString(pageElement);
 
   let Emotion.Server.{html: renderedHtml, css, ids} =
@@ -454,8 +471,12 @@ let buildPageHtmlAndReactApp =
       ~pageWrappersDataDir,
     );
 
+  let modulesWithHydration__Mutable = [||];
+
   let resultHtml: string =
     renderHtmlTemplate(
+      ~hydrationMode=page.hydrationMode,
+      ~modulesWithHydration__Mutable,
       ~pageElement=element,
       ~headCssFilepaths=page.headCssFilepaths,
       ~globalValues=Belt.Option.getWithDefault(page.globalValues, [||]),
@@ -464,13 +485,18 @@ let buildPageHtmlAndReactApp =
     );
 
   let resultReactApp =
-    renderReactAppTemplate(
-      ~importPageWrapperDataString=?
-        Belt.Option.map(pageWrapperDataProp, v => v.rescriptImportString),
-      ~importPageDataString=?
-        Belt.Option.map(pageDataProp, v => v.rescriptImportString),
-      elementString,
-    );
+    switch (page.hydrationMode) {
+    | FullHydration =>
+      renderReactAppTemplate(
+        ~importPageWrapperDataString=?
+          Belt.Option.map(pageWrapperDataProp, v => v.rescriptImportString),
+        ~importPageDataString=?
+          Belt.Option.map(pageDataProp, v => v.rescriptImportString),
+        elementString,
+      )
+    | PartialHydration =>
+      PartialHydration.renderReactAppTemplate(~modulesWithHydration__Mutable)
+    };
 
   let pageAppModuleName =
     pagePathToPageAppModuleName(

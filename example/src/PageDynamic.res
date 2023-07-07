@@ -1,22 +1,20 @@
-module Css = Page1_Css
-
 let modulePath = Utils.getFilepath()
 
 @react.component
 let make = () => {
   let url = ReasonReactRouter.useUrl(
-    ~serverUrl={path: list{"page1", "server-id"}, hash: "", search: ""},
+    ~serverUrl={path: list{"page-without-data", "server-id"}, hash: "", search: ""},
     (),
   )
 
-  let path = url.path->Belt.List.toArray->Js.Array2.joinWith("/")
+  let path =
+    url.path->Belt.List.reverse->Belt.List.head->Belt.Option.getWithDefault("None(unexpected)")
 
-  <div>
+  <>
     <MetaTags title="PageDynamic" description="PageDynamic description" />
-    <SharedModule.Header />
-    <div className=Css.content>
-      <h1> {"PageDynamic"->React.string} </h1> <h2> {path->React.string} </h2>
-    </div>
-    <SharedModule.Footer />
-  </div>
+    <Header h1Text="PageDynamic" />
+    <h2> {"Dynamic path part: "->React.string} {path->React.string} </h2>
+    <Content />
+    <Footer />
+  </>
 }
