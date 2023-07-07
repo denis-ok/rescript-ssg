@@ -39,6 +39,6 @@ module WithHydration = {
 
     let () = modulesWithHydration->Js.Array2.push(moduleName)->ignore;
 
-    <> <script id={makeScriptId(~moduleName)} /> children </>;
+    <div id={makeScriptId(~moduleName)}> children </div>;
   };
 };
