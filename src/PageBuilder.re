@@ -496,10 +496,10 @@ let buildPageHtmlAndReactApp =
 
   let () = {
     let reactAppFilename = pageAppModuleName ++ ".res";
-    Fs.writeFileSync(resultHtmlPath, resultHtml);
+    Fs.writeFileSync(~path=resultHtmlPath, ~data=resultHtml);
     Fs.writeFileSync(
-      Path.join2(pageOutputDir, reactAppFilename),
-      resultReactApp,
+      ~path=Path.join2(pageOutputDir, reactAppFilename),
+      ~data=resultReactApp,
     );
   };
 
@@ -509,7 +509,7 @@ let buildPageHtmlAndReactApp =
         switch (data) {
         | None => ()
         | Some({jsDataFileContent, jsDataFilepath, _}) =>
-          Fs.writeFileSync(jsDataFilepath, jsDataFileContent)
+          Fs.writeFileSync(~path=jsDataFilepath, ~data=jsDataFileContent)
         }
       );
 
