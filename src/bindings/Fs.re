@@ -24,3 +24,10 @@ type rmSyncOptions = {
 [@module "fs"] external rmSync: (string, rmSyncOptions) => unit = "rmSync";
 
 let readFileSyncAsUtf8 = path => readFileSync'(~path, ~encoding="utf8");
+
+module Promises = {
+  [@module "node:fs/promises"]
+  external readFileAsBuffer': string => Js.Promise.t(Buffer.t) = "readFile";
+
+  let readFileAsBuffer = path => path->readFileAsBuffer'->Promise.toResult;
+};
