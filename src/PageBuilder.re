@@ -440,8 +440,6 @@ let buildPageHtmlAndReactApp =
     )
   );
 
-  let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
-
   let {element, elementString, pageDataProp, pageWrapperDataProp} =
     processPageComponentWithWrapper(
       ~pageComponent=page.component,

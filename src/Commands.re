@@ -67,6 +67,13 @@ let build =
 
   let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
 
+  let () =
+    pages->Js.Array2.forEach(page => {
+      let pagePath = page.path->PageBuilderT.PagePath.toString;
+      let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
+      Fs.mkDirSync(pageOutputDir, {recursive: true});
+    });
+
   let webpackPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
@@ -127,6 +134,13 @@ let start =
     Path.join2(intermediateFilesOutputDir, pageWrappersDataDirname);
 
   let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
+
+  let () =
+    pages->Js.Array2.forEach(page => {
+      let pagePath = page.path->PageBuilderT.PagePath.toString;
+      let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
+      Fs.mkDirSync(pageOutputDir, {recursive: true});
+    });
 
   let webpackPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
