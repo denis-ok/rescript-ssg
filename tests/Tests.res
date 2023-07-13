@@ -80,7 +80,7 @@ module BuildPageHtmlAndReactApp = {
     cleanup()
 
     let _webpackPages: Webpack.page = PageBuilder.buildPageHtmlAndReactApp(
-      ~outputDir,
+      ~intermediateFilesOutputDir,
       ~melangeOutputDir=None,
       ~logger,
       ~generatedFilesSuffix="",

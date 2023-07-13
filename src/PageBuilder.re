@@ -403,14 +403,12 @@ let processPageComponentWithWrapper =
 
 let buildPageHtmlAndReactApp =
     (
-      ~outputDir: string,
+      ~intermediateFilesOutputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~generatedFilesSuffix: string,
       page: page,
     ) => {
-  let intermediateFilesOutputDir = getIntermediateFilesOutputDir(~outputDir);
-
   let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
 
   let pagePath: string = page.path->PageBuilderT.PagePath.toString;
@@ -553,29 +551,29 @@ let checkPageDuplicates = (pages: array(page)) => {
   });
 };
 
-let buildPages =
-    (
-      ~outputDir,
-      ~melangeOutputDir: option(string),
-      ~logger: Log.logger,
-      pages: array(page),
-    ) => {
-  checkPageDuplicates(pages);
+// let buildPages =
+//     (
+//       ~outputDir,
+//       ~melangeOutputDir: option(string),
+//       ~logger: Log.logger,
+//       pages: array(page),
+//     ) => {
+//   checkPageDuplicates(pages);
 
-  let durationLabel = "[PageBuilder.buildPages] duration";
-  Js.Console.timeStart(durationLabel);
+//   let durationLabel = "[PageBuilder.buildPages] duration";
+//   Js.Console.timeStart(durationLabel);
 
-  logger.info(() => Js.log("[PageBuilder.buildPages] Building pages..."));
+//   logger.info(() => Js.log("[PageBuilder.buildPages] Building pages..."));
 
-  let webpackPages =
-    pages->Js.Array2.map(page => {
-      buildPageHtmlAndReactApp(~outputDir, ~melangeOutputDir, ~logger, page)
-    });
+//   let webpackPages =
+//     pages->Js.Array2.map(page => {
+//       buildPageHtmlAndReactApp(~outputDir, ~melangeOutputDir, ~logger, page)
+//     });
 
-  logger.info(() => {
-    Js.log("[PageBuilder.buildPages] Pages build finished successfully!");
-    Js.Console.timeEnd(durationLabel);
-  });
+//   logger.info(() => {
+//     Js.log("[PageBuilder.buildPages] Pages build finished successfully!");
+//     Js.Console.timeEnd(durationLabel);
+//   });
 
-  webpackPages;
-};
+//   webpackPages;
+// };

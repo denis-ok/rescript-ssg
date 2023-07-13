@@ -40,6 +40,9 @@ type generatedFilesSuffix =
   | NoSuffix
   | UnixTimestamp;
 
+  let getIntermediateFilesOutputDir = (~outputDir) =>
+  Path.join2(outputDir, "temp");
+
 let build =
     (
       ~outputDir: string,
@@ -57,11 +60,13 @@ let build =
     ) => {
   let logger = Log.makeLogger(logLevel);
 
+  let intermediateFilesOutputDir = PageBuilder.getIntermediateFilesOutputDir(~outputDir);
+
   let webpackPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
       ~pages,
-      ~outputDir,
+      ~intermediateFilesOutputDir,
       ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
@@ -109,10 +114,12 @@ let start =
     ) => {
   let logger = Log.makeLogger(logLevel);
 
+  let intermediateFilesOutputDir = PageBuilder.getIntermediateFilesOutputDir(~outputDir);
+
   let webpackPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~pages,
-      ~outputDir,
+      ~intermediateFilesOutputDir,
       ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
@@ -140,7 +147,7 @@ let start =
 
   let () =
     Watcher.startWatcher(
-      ~outputDir,
+      ~intermediateFilesOutputDir,
       ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,

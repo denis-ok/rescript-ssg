@@ -30,7 +30,7 @@ type workerPage = {
 };
 
 type workerData = {
-  outputDir: string,
+  intermediateFilesOutputDir: string,
   melangeOutputDir: option(string),
   logLevel: Log.level,
   page: workerPage,

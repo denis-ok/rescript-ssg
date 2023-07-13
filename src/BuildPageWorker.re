@@ -124,7 +124,7 @@ let workerOutput: workerOutput =
       };
 
       PageBuilder.buildPageHtmlAndReactApp(
-        ~outputDir=workerData.outputDir,
+        ~intermediateFilesOutputDir=workerData.intermediateFilesOutputDir,
         ~melangeOutputDir=workerData.melangeOutputDir,
         ~logger,
         ~generatedFilesSuffix=workerData.generatedFilesSuffix,
