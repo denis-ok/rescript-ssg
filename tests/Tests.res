@@ -72,6 +72,8 @@ module BuildPageHtmlAndReactApp = {
 
   let intermediateFilesOutputDir = PageBuilder.getIntermediateFilesOutputDir(~outputDir)
 
+  let pageWrappersDataDir = Path.join2(intermediateFilesOutputDir, Commands.pageWrappersDataDirname);
+
   let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true})
 
   let compileCommand = Path.join2(dirname, "../node_modules/.bin/rescript")
@@ -81,6 +83,7 @@ module BuildPageHtmlAndReactApp = {
 
     let _webpackPages: Webpack.page = PageBuilder.buildPageHtmlAndReactApp(
       ~intermediateFilesOutputDir,
+      ~pageWrappersDataDir,
       ~melangeOutputDir=None,
       ~logger,
       ~generatedFilesSuffix="",

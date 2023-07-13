@@ -125,6 +125,7 @@ let workerOutput: workerOutput =
 
       PageBuilder.buildPageHtmlAndReactApp(
         ~intermediateFilesOutputDir=workerData.intermediateFilesOutputDir,
+        ~pageWrappersDataDir=workerData.pageWrappersDataDir,
         ~melangeOutputDir=workerData.melangeOutputDir,
         ~logger,
         ~generatedFilesSuffix=workerData.generatedFilesSuffix,

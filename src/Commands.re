@@ -40,8 +40,7 @@ type generatedFilesSuffix =
   | NoSuffix
   | UnixTimestamp;
 
-  let getIntermediateFilesOutputDir = (~outputDir) =>
-  Path.join2(outputDir, "temp");
+let pageWrappersDataDirname = "__pageWrappersData";
 
 let build =
     (
@@ -60,13 +59,20 @@ let build =
     ) => {
   let logger = Log.makeLogger(logLevel);
 
-  let intermediateFilesOutputDir = PageBuilder.getIntermediateFilesOutputDir(~outputDir);
+  let intermediateFilesOutputDir =
+    PageBuilder.getIntermediateFilesOutputDir(~outputDir);
+
+  let pageWrappersDataDir =
+    Path.join2(intermediateFilesOutputDir, pageWrappersDataDirname);
+
+  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
 
   let webpackPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
       ~pages,
       ~intermediateFilesOutputDir,
+      ~pageWrappersDataDir,
       ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
@@ -114,12 +120,19 @@ let start =
     ) => {
   let logger = Log.makeLogger(logLevel);
 
-  let intermediateFilesOutputDir = PageBuilder.getIntermediateFilesOutputDir(~outputDir);
+  let intermediateFilesOutputDir =
+    PageBuilder.getIntermediateFilesOutputDir(~outputDir);
+
+  let pageWrappersDataDir =
+    Path.join2(intermediateFilesOutputDir, pageWrappersDataDirname);
+
+  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
 
   let webpackPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~pages,
       ~intermediateFilesOutputDir,
+      ~pageWrappersDataDir,
       ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
@@ -148,6 +161,7 @@ let start =
   let () =
     Watcher.startWatcher(
       ~intermediateFilesOutputDir,
+      ~pageWrappersDataDir,
       ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,

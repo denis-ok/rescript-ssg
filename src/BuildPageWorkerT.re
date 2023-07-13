@@ -30,6 +30,7 @@ type workerPage = {
 };
 
 type workerData = {
+  pageWrappersDataDir: string,
   intermediateFilesOutputDir: string,
   melangeOutputDir: option(string),
   logLevel: Log.level,
