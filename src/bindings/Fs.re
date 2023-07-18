@@ -1,11 +1,13 @@
 [@module "fs"]
-external readFileSync': (string, string) => string = "readFileSync";
+external readFileSync': (~path: string, ~encoding: string) => string =
+  "readFileSync";
 
 [@module "fs"]
 external readFileSyncAsBuffer: string => Buffer.t = "readFileSync";
 
 [@module "fs"]
-external writeFileSync: (string, string) => unit = "writeFileSync";
+external writeFileSync: (~path: string, ~data: string) => unit =
+  "writeFileSync";
 
 [@module "fs"] external existsSync: string => bool = "existsSync";
 
@@ -21,4 +23,11 @@ type rmSyncOptions = {
 
 [@module "fs"] external rmSync: (string, rmSyncOptions) => unit = "rmSync";
 
-let readFileSyncAsUtf8 = path => readFileSync'(path, "utf8");
+let readFileSyncAsUtf8 = path => readFileSync'(~path, ~encoding="utf8");
+
+module Promises = {
+  [@module "node:fs/promises"]
+  external readFileAsBuffer': string => Js.Promise.t(Buffer.t) = "readFile";
+
+  let readFileAsBuffer = path => path->readFileAsBuffer'->Promise.toResult;
+};

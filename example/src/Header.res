@@ -1,7 +1,7 @@
-Global_Css.injectGlobal()
-
 @react.component
-let make = (~h1Text) =>
+let make = (~h1Text) => {
+  Global_Css.injectGlobal()
+
   <div>
     <h1> {h1Text->React.string} </h1>
     <h3> {"Page examples:"->React.string} </h3>
@@ -20,3 +20,4 @@ let make = (~h1Text) =>
       </li>
     </ul>
   </div>
+}
