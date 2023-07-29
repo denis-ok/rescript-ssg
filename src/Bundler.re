@@ -42,3 +42,7 @@ let assetRegex = {
   let regex = {|\.|} ++ "(" ++ regex ++ ")" ++ "$";
   Js.Re.fromStringWithFlags(regex, ~flags="i");
 };
+
+let dirname = Utils.getDirname();
+
+let projectRoot = Path.join2(dirname, "..");

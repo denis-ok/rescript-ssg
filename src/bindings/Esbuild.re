@@ -1,20 +1,38 @@
 type esbuild;
 type config;
 type esbuildPluginSvgr;
+type plugin;
 
 [@module "esbuild"] external esbuild: esbuild = "default";
 
 [@module "esbuild-plugin-svgr"]
-external esbuildPluginSvgr: (. Js.t('a)) => unit = "default";
+external esbuildPluginSvgr: (. Js.t('a)) => plugin = "default";
+
+module HtmlPlugin = {
+  type options = {
+    //
+    files: array(htmlFileConfiguration),
+  }
+  and htmlFileConfiguration = {
+    filename: string,
+    entryPoints: array(string),
+    htmlTemplate: option(string),
+    scriptLoading: string,
+  };
+
+  [@module "@craftamap/esbuild-plugin-html"]
+  external make: (. options) => plugin = "htmlPlugin";
+  // https://github.com/craftamap/esbuild-plugin-html/blob/b74debfe7f089a4f073f5a0cf9bbdb2e59370a7c/src/index.ts#L12
+};
 
 [@send] external build: (esbuild, Js.t('a)) => Js.Promise.t('a) = "build";
 
 let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
   "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
+  // "entryNames": "[dir]/[name]-[hash]",
   "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
-  "chunkNames": Bundler.assetsDirname ++ "/" ++ "_chunks/[name]-[hash]",
-  "outdir": Path.join2(outputDir, "bundle"),
-  "nodePaths": [|"../node_modules"|],
+  // TODO share "public" constant
+  "outdir": Path.join2(outputDir, "public"),
   "format": "esm",
   "bundle": true,
   "minify": true,
@@ -26,14 +44,37 @@ let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
     ->Js.Array2.map(ext => {("." ++ ext, "file")})
     ->Js.Dict.fromArray;
   },
-  "plugins": [|
-    // esbuildPluginSvgr(. {
-    //   "dimensions": false,
-    //   "plugins": ["@svgr/plugin-jsx"],
-    //   "svgo": false,
-    //   "titleProp": true,
-    // }),
-  |],
+  "plugins": {
+    let htmlPluginFiles =
+      renderedPages->Js.Array2.map(renderedPage => {
+        let pagePath = renderedPage.path->PageBuilderT.PagePath.toString;
+        {
+          // filename must be relative path to the root of public dir
+          HtmlPlugin.filename: pagePath ++ "/index.html",
+          // entryPoints must be relative paths to the root of rescript-ssg
+          entryPoints: [|
+            Path.relative(
+              ~from=Bundler.projectRoot,
+              ~to_=renderedPage.entryPath,
+            ),
+          |],
+          htmlTemplate: Some(renderedPage.htmlTemplatePath),
+          scriptLoading: "module",
+        };
+      });
+
+    let htmlPlugin = HtmlPlugin.make(. {files: htmlPluginFiles});
+
+    [|
+      htmlPlugin,
+      // esbuildPluginSvgr(. {
+      //   "dimensions": false,
+      //   "plugins": ["@svgr/plugin-jsx"],
+      //   "svgo": false,
+      //   "titleProp": true,
+      // }),
+    |];
+  },
 };
 
 let build = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {

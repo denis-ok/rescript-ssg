@@ -22,6 +22,7 @@
   "author": "Denis Strelkov",
   "license": "MIT",
   "dependencies": {
+    "@craftamap/esbuild-plugin-html": "^0.6.1",
     "@swc/core": "^1.3.68",
     "base32-encode": "^2.0.0",
     "chokidar": "^3.5.3",
