@@ -127,8 +127,8 @@ let buildPagesWithWorkers =
         Array.flat1(results);
       });
 
-  results->Promise.map(webpackPages =>
-    webpackPages->Belt.Array.keepMap(result => {
+  results->Promise.map(renderedPages =>
+    renderedPages->Belt.Array.keepMap(result => {
       switch (result) {
       | Ok(webpackPage) => Some(webpackPage)
       | Error(path) =>

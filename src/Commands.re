@@ -58,7 +58,7 @@ let build =
     ) => {
   let logger = Log.makeLogger(logLevel);
 
-  let webpackPages =
+  let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
       ~pages,
@@ -75,8 +75,8 @@ let build =
         },
     );
 
-  webpackPages
-  ->Promise.map(webpackPages => {
+  renderedPages
+  ->Promise.map(renderedPages => {
       let () = compileRescript(~compileCommand, ~logger);
 
       switch (Bundler.bundler) {
@@ -86,7 +86,7 @@ let build =
         );
 
         let () =
-          Esbuild.build(~outputDir, ~webpackPages)
+          Esbuild.build(~outputDir, ~renderedPages)
           ->Promise.map(_ =>
               logger.info(() =>
                 Js.log("[rescript-ssg][build] Bundling finished!")
@@ -104,7 +104,7 @@ let build =
             ~webpackBundleAnalyzerMode,
             ~minimizer,
             ~globalEnvValues,
-            ~webpackPages,
+            ~renderedPages,
           );
         ();
       };
@@ -129,7 +129,7 @@ let start =
     ) => {
   let logger = Log.makeLogger(logLevel);
 
-  let webpackPages =
+  let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~pages,
       ~outputDir,
@@ -141,8 +141,8 @@ let start =
       ~generatedFilesSuffix="",
     );
 
-  webpackPages
-  ->Promise.map(webpackPages => {
+  renderedPages
+  ->Promise.map(renderedPages => {
       let () =
         Webpack.startDevServer(
           ~devServerOptions,
@@ -152,7 +152,7 @@ let start =
           ~outputDir,
           ~minimizer,
           ~globalEnvValues,
-          ~webpackPages,
+          ~renderedPages,
         );
       ();
     })

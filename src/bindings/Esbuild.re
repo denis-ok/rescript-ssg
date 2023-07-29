@@ -9,10 +9,8 @@ external esbuildPluginSvgr: (. Js.t('a)) => unit = "default";
 
 [@send] external build: (esbuild, Js.t('a)) => Js.Promise.t('a) = "build";
 
-type webpackPages = array(Webpack.page);
-
-let makeConfig = (~outputDir, ~webpackPages: webpackPages) => {
-  "entryPoints": webpackPages->Js.Array2.map(page => page.entryPath),
+let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
+  "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
   "nodePaths": [|"../node_modules"|],
   "bundle": true,
   "minify": true,
@@ -37,8 +35,9 @@ let makeConfig = (~outputDir, ~webpackPages: webpackPages) => {
   "outdir": Path.join2(outputDir, "esbuild"),
 };
 
-let build = (~outputDir, ~webpackPages: webpackPages) => {
-  let config = makeConfig(~outputDir, ~webpackPages);
+let build = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
+  let config = makeConfig(~outputDir, ~renderedPages);
+
   esbuild
   ->build(config)
   ->Promise.map(result => {
@@ -47,4 +46,11 @@ let build = (~outputDir, ~webpackPages: webpackPages) => {
       Fs.writeFileSync(~path=Path.join2(outputDir, "meta.json"), ~data=json);
     })
   ->Promise.catch(err => Js.log(err)->Js.Promise.resolve);
+};
+
+let makeFileHash = (buffer: Buffer.t) => {
+  HashWasm.createXXHash64AndReturnBinaryDigest(buffer)
+  ->Promise.map(buffer => {
+      Base32Encode.base32Encode(buffer)->Js.String2.slice(~from=0, ~to_=8)
+    });
 };

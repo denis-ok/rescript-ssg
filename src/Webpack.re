@@ -158,13 +158,6 @@ module Minimizer = {
     | TerserPluginWithEsbuild;
 };
 
-type page = {
-  path: PageBuilderT.PagePath.t,
-  entryPath: string,
-  outputDir: string,
-  htmlTemplatePath: string,
-};
-
 module DevServerOptions = {
   module Proxy = {
     module DevServerTarget = {
@@ -247,10 +240,10 @@ let makeConfig =
       ~logger: Log.logger,
       ~outputDir: string,
       ~globalEnvValues: array((string, string)),
-      ~webpackPages: array(page),
+      ~renderedPages: array(RenderedPage.t),
     ) => {
   let entries =
-    webpackPages
+    renderedPages
     ->Js.Array2.map(({path, entryPath, _}) =>
         (PageBuilderT.PagePath.toWebpackEntryName(path), entryPath)
       )
@@ -294,7 +287,7 @@ let makeConfig =
 
     "plugins": {
       let htmlWebpackPlugins =
-        webpackPages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
+        renderedPages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
           HtmlWebpackPlugin.make({
             "template": htmlTemplatePath,
             "filename":
@@ -411,7 +404,7 @@ let makeConfig =
               // from: "/^\/users\/.*/"
               // to: "/users/_id/index.html"
               let rewrites =
-                webpackPages->Belt.Array.keepMap(page =>
+                renderedPages->Belt.Array.keepMap(page =>
                   switch (page.path) {
                   | Root => None
                   | Path(segments) =>
@@ -538,7 +531,7 @@ let makeCompiler =
       ~globalEnvValues: array((string, string)),
       ~outputDir,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~webpackPages: array(page),
+      ~renderedPages: array(RenderedPage.t),
     ) => {
   let config =
     makeConfig(
@@ -549,7 +542,7 @@ let makeCompiler =
       ~outputDir,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
-      ~webpackPages,
+      ~renderedPages,
     );
   // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
@@ -564,7 +557,7 @@ let build =
       ~outputDir,
       ~globalEnvValues: array((string, string)),
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~webpackPages: array(page),
+      ~renderedPages: array(RenderedPage.t),
     ) => {
   let durationLabel = "[Webpack.build] duration";
   Js.Console.timeStart(durationLabel);
@@ -580,7 +573,7 @@ let build =
       ~minimizer,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~webpackPages,
+      ~renderedPages,
     );
 
   compiler->Webpack.run((err, stats) => {
@@ -636,7 +629,7 @@ let startDevServer =
       ~outputDir,
       ~globalEnvValues: array((string, string)),
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~webpackPages: array(page),
+      ~renderedPages: array(RenderedPage.t),
     ) => {
   logger.info(() => Js.log("[Webpack] Starting dev server..."));
   let startupDurationLabel = "[Webpack] WebpackDevServer startup duration";
@@ -651,7 +644,7 @@ let startDevServer =
       ~minimizer,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
-      ~webpackPages,
+      ~renderedPages,
     );
 
   let devServerOptions = config##devServer;

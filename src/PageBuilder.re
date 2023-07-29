@@ -522,7 +522,7 @@ let buildPageHtmlAndReactApp =
 
   let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
 
-  let webpackPage: Webpack.page = {
+  let webpackPage: RenderedPage.t = {
     path: page.path,
     entryPath:
       Path.join2(
@@ -567,7 +567,7 @@ let buildPages =
 
   logger.info(() => Js.log("[PageBuilder.buildPages] Building pages..."));
 
-  let webpackPages =
+  let renderedPages =
     pages->Js.Array2.map(page => {
       buildPageHtmlAndReactApp(~outputDir, ~melangeOutputDir, ~logger, page)
     });
@@ -577,5 +577,5 @@ let buildPages =
     Js.Console.timeEnd(durationLabel);
   });
 
-  webpackPages;
+  renderedPages;
 };
