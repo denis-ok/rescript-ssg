@@ -29,7 +29,8 @@ module HtmlPlugin = {
 
 let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
   "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
-  // "entryNames": "[dir]/[name]-[hash]",
+  "entryNames": Bundler.assetsDirname ++ "/" ++ "js/[dir]/[name]-[hash]",
+  "chunkNames": Bundler.assetsDirname ++ "/" ++ "js/_chunks/[name]-[hash]",
   "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
   // TODO share "public" constant
   "outdir": Path.join2(outputDir, "public"),
