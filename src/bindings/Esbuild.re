@@ -22,8 +22,7 @@ let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
   "splitting": true,
   "logLevel": "error",
   "loader": {
-    // {".jpg": "file", ".png": "file"}
-    Bundler.assetFileExtensions
+    Bundler.assetFileExtensionsWithoutCss
     ->Js.Array2.map(ext => {("." ++ ext, "file")})
     ->Js.Dict.fromArray;
   },

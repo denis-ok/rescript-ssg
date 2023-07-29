@@ -34,6 +34,9 @@ let assetFileExtensions = [|
   "mp4",
 |];
 
+let assetFileExtensionsWithoutCss =
+  assetFileExtensions->Js.Array2.filter(ext => ext !== "css");
+
 let assetRegex = {
   let regex: string = assetFileExtensions->Js.Array2.joinWith("|");
   let regex = {|\.|} ++ "(" ++ regex ++ ")" ++ "$";
