@@ -48,7 +48,7 @@ let build = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
   ->Promise.catch(err => Js.log(err)->Js.Promise.resolve);
 };
 
-let makeFileHash = (buffer: Buffer.t) => {
+let getFileHash = (buffer: Buffer.t) => {
   HashWasm.createXXHash64AndReturnBinaryDigest(buffer)
   ->Promise.map(buffer => {
       Base32Encode.base32Encode(buffer)->Js.String2.slice(~from=0, ~to_=8)
