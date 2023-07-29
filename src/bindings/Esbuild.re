@@ -12,7 +12,8 @@ external esbuildPluginSvgr: (. Js.t('a)) => unit = "default";
 let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
   "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
   "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
-  "outdir": Path.join2(outputDir, "esbuild"),
+  "chunkNames": Bundler.assetsDirname ++ "/" ++ "_chunks/[name]-[hash]",
+  "outdir": Path.join2(outputDir, "bundle"),
   "nodePaths": [|"../node_modules"|],
   "format": "esm",
   "bundle": true,
