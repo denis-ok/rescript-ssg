@@ -44,16 +44,16 @@ let getFinalHashedAssetPath =
           | Some(func) => func(fileData)
           };
 
-        let fileHash: string = Crypto.Hash.bufferToHash(processedFileData);
+        let fileHash = Crypto.Hash.bufferToHash(processedFileData);
 
         let fileName = Path.basename(url);
 
-        let fileExt: string = Path.extname(fileName);
+        let fileExt = Path.extname(fileName);
 
-        let filenameWithoutExt: string =
-          fileName->Js.String2.replace(fileExt, "");
+        let filenameWithoutExt = fileName->Js.String2.replace(fileExt, "");
 
-        let filenameWithHash = {j|$(filenameWithoutExt).$(fileHash)$(fileExt)|j};
+        let filenameWithHash =
+          filenameWithoutExt ++ "." ++ fileHash ++ fileExt;
 
         let assetPath =
           switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
