@@ -11,6 +11,7 @@ external esbuildPluginSvgr: (. Js.t('a)) => unit = "default";
 
 let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
   "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
+  "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
   "nodePaths": [|"../node_modules"|],
   "bundle": true,
   "minify": true,

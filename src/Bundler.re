@@ -15,3 +15,5 @@ let bundler =
   ->Belt.Option.getWithDefault("")
   ->Js.String2.toLowerCase
   ->fromString;
+
+let assetsDirname = "assets";

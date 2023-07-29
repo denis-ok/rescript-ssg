@@ -264,10 +264,9 @@ let makeConfig =
     "output": {
       "path": getWebpackOutputDir(outputDir),
       "publicPath": assetPrefix,
-      "filename":
-        NodeLoader.webpackAssetsDir ++ "/" ++ "js/[name]_[chunkhash].js",
+      "filename": Bundler.assetsDirname ++ "/" ++ "js/[name]_[chunkhash].js",
       "assetModuleFilename":
-        NodeLoader.webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
+        Bundler.assetsDirname ++ "/" ++ "[name].[hash][ext]",
       "hashFunction": Crypto.Hash.createMd5,
       "hashDigestLength": Crypto.Hash.digestLength,
       // Clean the output directory before emit.
@@ -311,8 +310,7 @@ let makeConfig =
 
       let miniCssExtractPlugin =
         MiniCssExtractPlugin.make({
-          "filename":
-            NodeLoader.webpackAssetsDir ++ "/" ++ "[name]_[chunkhash].css",
+          "filename": Bundler.assetsDirname ++ "/" ++ "[name]_[chunkhash].css",
         });
 
       let webpackBundleAnalyzerPlugin =

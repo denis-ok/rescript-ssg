@@ -20,8 +20,6 @@ let isAsset = fileUrl => {
   Js.String2.match(fileUrl, assetRegex) != None;
 };
 
-let webpackAssetsDir = "assets";
-
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
 let getFinalHashedAssetPath =
     (url: string, processFileData: option(Buffer.t => Buffer.t)) => {
@@ -70,10 +68,11 @@ let getFinalHashedAssetPath =
             switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
             | false =>
               let assetsDir =
-                Path.join2(EnvParams.assetPrefix, webpackAssetsDir);
+                Path.join2(EnvParams.assetPrefix, Bundler.assetsDirname);
               Path.join2(assetsDir, filenameWithHash);
             | true =>
-              let assetsDir = EnvParams.assetPrefix ++ "/" ++ webpackAssetsDir;
+              let assetsDir =
+                EnvParams.assetPrefix ++ "/" ++ Bundler.assetsDirname;
               assetsDir ++ "/" ++ filenameWithHash;
             };
 
