@@ -17,3 +17,25 @@ let bundler =
   ->fromString;
 
 let assetsDirname = "assets";
+
+let assetFileExtensions = [|
+  "css",
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "svg",
+  "ico",
+  "avif",
+  "webp",
+  "woff",
+  "woff2",
+  "json",
+  "mp4",
+|];
+
+let assetRegex = {
+  let regex: string = assetFileExtensions->Js.Array2.joinWith("|");
+  let regex = {|\.|} ++ "(" ++ regex ++ ")" ++ "$";
+  Js.Re.fromStringWithFlags(regex, ~flags="i");
+};

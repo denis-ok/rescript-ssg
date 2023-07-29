@@ -280,7 +280,7 @@ let makeConfig =
           "test": [%re {|/\.css$/|}],
           "use": [|MiniCssExtractPlugin.loader, "css-loader"|],
         },
-        {"test": NodeLoader.assetRegex, "type": "asset/resource"}->Obj.magic,
+        {"test": Bundler.assetRegex, "type": "asset/resource"}->Obj.magic,
       |],
     },
 

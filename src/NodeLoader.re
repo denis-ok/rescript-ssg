@@ -12,12 +12,8 @@ let isBsArtifact = fileUrl => {
   Js.String2.match(fileUrl, bsArtifactRegex) != None;
 };
 
-let assetRegex = [%re
-  {|/\.(css|jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json|mp4)$/i|}
-];
-
 let isAsset = fileUrl => {
-  Js.String2.match(fileUrl, assetRegex) != None;
+  Js.String2.match(fileUrl, Bundler.assetRegex) != None;
 };
 
 // We get a file's hash and make a JS module that exports a filename with hash suffix.

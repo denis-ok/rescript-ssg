@@ -12,28 +12,28 @@ external esbuildPluginSvgr: (. Js.t('a)) => unit = "default";
 let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
   "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
   "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
+  "outdir": Path.join2(outputDir, "esbuild"),
   "nodePaths": [|"../node_modules"|],
+  "format": "esm",
   "bundle": true,
   "minify": true,
   "metafile": true,
-  "plugins": [|
-    esbuildPluginSvgr(. {
-      "dimensions": false,
-      "plugins": ["@svgr/plugin-jsx"],
-      "svgo": false,
-      "titleProp": true,
-    }),
-  |],
-  "loader": {
-    ".svg": "file",
-    ".jpeg": "file",
-    ".jpg": "file",
-    ".png": "file",
-  },
   "splitting": true,
-  "format": "esm",
   "logLevel": "error",
-  "outdir": Path.join2(outputDir, "esbuild"),
+  "loader": {
+    // {".jpg": "file", ".png": "file"}
+    Bundler.assetFileExtensions
+    ->Js.Array2.map(ext => {("." ++ ext, "file")})
+    ->Js.Dict.fromArray;
+  },
+  "plugins": [|
+    // esbuildPluginSvgr(. {
+    //   "dimensions": false,
+    //   "plugins": ["@svgr/plugin-jsx"],
+    //   "svgo": false,
+    //   "titleProp": true,
+    // }),
+  |],
 };
 
 let build = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
