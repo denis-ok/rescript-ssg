@@ -1,3 +1,23 @@
+module Bundler = {
+  type t =
+    | Webpack
+    | Esbuild;
+
+  let fromString = (bundler: string) =>
+    switch (bundler) {
+    | "webpack" => Webpack
+    | "esbuild" => Esbuild
+    | _ => Webpack
+    };
+};
+
+let bundler =
+  Process.env
+  ->Js.Dict.get("RESCRIPT_SSG_BUNDLER")
+  ->Belt.Option.getWithDefault("")
+  ->Js.String2.toLowerCase
+  ->Bundler.fromString;
+
 let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   let durationLabel = "[Commands.compileRescript] Success! Duration";
   Js.Console.timeStart(durationLabel);
@@ -48,7 +68,8 @@ let build =
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
       ~pages: array(PageBuilder.page),
-      ~webpackBundleAnalyzerMode=None,
+      ~webpackBundleAnalyzerMode:
+         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
@@ -77,17 +98,36 @@ let build =
   webpackPages
   ->Promise.map(webpackPages => {
       let () = compileRescript(~compileCommand, ~logger);
-      let () =
-        Webpack.build(
-          ~mode,
-          ~outputDir,
-          ~logger,
-          ~webpackBundleAnalyzerMode,
-          ~minimizer,
-          ~globalEnvValues,
-          ~webpackPages,
+
+      switch (bundler) {
+      | Esbuild =>
+        logger.info(() =>
+          Js.log("[rescript-ssg][build] Bundling with Esbuild...")
         );
-      ();
+
+        let () =
+          Esbuild.build(~outputDir, ~webpackPages)
+          ->Promise.map(_ =>
+              logger.info(() =>
+                Js.log("[rescript-ssg][build] Bundling finished!")
+              )
+            )
+          ->ignore;
+
+        ();
+      | Webpack =>
+        let () =
+          Webpack.build(
+            ~mode,
+            ~outputDir,
+            ~logger,
+            ~webpackBundleAnalyzerMode,
+            ~minimizer,
+            ~globalEnvValues,
+            ~webpackPages,
+          );
+        ();
+      };
     })
   ->ignore;
 };

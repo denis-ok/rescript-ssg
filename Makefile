@@ -43,7 +43,7 @@ clean:
 
 build: clean
 	make build-rescript
-	make build-example
+	RESCRIPT_SSG_BUNDLER=esbuild make build-example
 
 build-ci: clean
 	make build-rescript
