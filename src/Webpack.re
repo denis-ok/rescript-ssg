@@ -221,8 +221,6 @@ module DevServerOptions = {
   };
 };
 
-let getWebpackOutputDir = outputDir => Path.join2(outputDir, "public");
-
 let dynamicPageSegmentPrefix = "dynamic__";
 
 let makeConfig =
@@ -256,7 +254,7 @@ let makeConfig =
     "mode": Mode.toString(mode),
 
     "output": {
-      "path": getWebpackOutputDir(outputDir),
+      "path": Bundler.getOutputDir(~outputDir),
       "publicPath": assetPrefix,
       "filename": Bundler.assetsDirname ++ "/" ++ "js/[name]_[chunkhash].js",
       "assetModuleFilename":

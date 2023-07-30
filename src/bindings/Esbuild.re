@@ -37,8 +37,7 @@ let makeConfig =
   "entryNames": Bundler.assetsDirname ++ "/" ++ "js/[dir]/[name]-[hash]",
   "chunkNames": Bundler.assetsDirname ++ "/" ++ "js/_chunks/[name]-[hash]",
   "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
-  // TODO share "public" constant
-  "outdir": Path.join2(outputDir, "public"),
+  "outdir": Bundler.getOutputDir(~outputDir),
   "format": "esm",
   "bundle": true,
   "minify": true,
