@@ -22,7 +22,13 @@ module HtmlPlugin = {
   external make: (. options) => plugin = "htmlPlugin";
 };
 
-[@send] external build: (esbuild, Js.t('a)) => Js.Promise.t('a) = "build";
+type buildResult = {
+  errors: array(Js.Json.t),
+  warnings: array(Js.Json.t),
+  metafile: Js.Json.t,
+};
+
+[@send] external build: (esbuild, Js.t('a)) => Js.Promise.t(buildResult) = "build";
 
 let makeConfig =
     (
@@ -95,10 +101,9 @@ let build =
 
   esbuild
   ->build(config)
-  ->Promise.map(result => {
-      let json =
-        Js.Json.stringifyAny(result)->Belt.Option.getWithDefault("");
-      Fs.writeFileSync(~path=Path.join2(outputDir, "meta.json"), ~data=json);
+  ->Promise.map(_result => {
+      // let json = Js.Json.stringifyAny(result.metafile)->Belt.Option.getWithDefault("");
+      // Fs.writeFileSync(~path=Path.join2(outputDir, "meta.json"), ~data=json);
       Js.Console.timeEnd(durationLabel);
     })
   ->Promise.catch(err => Js.log(err)->Js.Promise.resolve);
