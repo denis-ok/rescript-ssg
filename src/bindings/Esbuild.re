@@ -1,12 +1,19 @@
 type esbuild;
-type config;
-type esbuildPluginSvgr;
+
 type plugin;
+
+type buildResult = {
+  errors: array(Js.Json.t),
+  warnings: array(Js.Json.t),
+  metafile: Js.Json.t,
+};
 
 [@module "esbuild"] external esbuild: esbuild = "default";
 
-[@module "esbuild-plugin-svgr"]
-external esbuildPluginSvgr: (. Js.t('a)) => plugin = "default";
+[@send] external build: (esbuild, Js.t('a)) => Js.Promise.t(buildResult) = "build";
+
+// [@module "esbuild-plugin-svgr"]
+// external esbuildPluginSvgr: (. Js.t('a)) => plugin = "default";
 
 module HtmlPlugin = {
   // https://github.com/craftamap/esbuild-plugin-html/blob/b74debfe7f089a4f073f5a0cf9bbdb2e59370a7c/src/index.ts#L8
@@ -21,14 +28,6 @@ module HtmlPlugin = {
   [@module "@craftamap/esbuild-plugin-html"]
   external make: (. options) => plugin = "htmlPlugin";
 };
-
-type buildResult = {
-  errors: array(Js.Json.t),
-  warnings: array(Js.Json.t),
-  metafile: Js.Json.t,
-};
-
-[@send] external build: (esbuild, Js.t('a)) => Js.Promise.t(buildResult) = "build";
 
 let makeConfig =
     (
