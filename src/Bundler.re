@@ -59,3 +59,6 @@ let getGlobalEnvValuesDict = (globalEnvValues: array((string, string))) => {
 };
 
 let getOutputDir = (~outputDir) => Path.join2(outputDir, "public");
+
+let assetPrefix =
+  EnvParams.assetPrefix->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;

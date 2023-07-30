@@ -241,11 +241,6 @@ let makeConfig =
       )
     ->Js.Dict.fromArray;
 
-  let assetPrefix =
-    EnvParams.assetPrefix
-    ->Utils.maybeAddSlashPrefix
-    ->Utils.maybeAddSlashSuffix;
-
   let shouldMinimize = mode == Production;
 
   let config = {
@@ -255,7 +250,7 @@ let makeConfig =
 
     "output": {
       "path": Bundler.getOutputDir(~outputDir),
-      "publicPath": assetPrefix,
+      "publicPath": Bundler.assetPrefix,
       "filename": Bundler.assetsDirname ++ "/" ++ "js/[name]_[chunkhash].js",
       "assetModuleFilename":
         Bundler.assetsDirname ++ "/" ++ "[name].[hash][ext]",

@@ -38,6 +38,7 @@ let makeConfig =
   "chunkNames": Bundler.assetsDirname ++ "/" ++ "js/_chunks/[name]-[hash]",
   "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
   "outdir": Bundler.getOutputDir(~outputDir),
+  "publicPath": Bundler.assetPrefix,
   "format": "esm",
   "bundle": true,
   "minify": true,
