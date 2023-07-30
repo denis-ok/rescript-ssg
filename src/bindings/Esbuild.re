@@ -27,7 +27,12 @@ module HtmlPlugin = {
 
 [@send] external build: (esbuild, Js.t('a)) => Js.Promise.t('a) = "build";
 
-let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
+let makeConfig =
+    (
+      ~outputDir,
+      ~globalEnvValues: array((string, string)),
+      ~renderedPages: array(RenderedPage.t),
+    ) => {
   "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
   "entryNames": Bundler.assetsDirname ++ "/" ++ "js/[dir]/[name]-[hash]",
   "chunkNames": Bundler.assetsDirname ++ "/" ++ "js/_chunks/[name]-[hash]",
@@ -40,6 +45,7 @@ let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
   "metafile": true,
   "splitting": true,
   "logLevel": "error",
+  "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
   "loader": {
     Bundler.assetFileExtensionsWithoutCss
     ->Js.Array2.map(ext => {("." ++ ext, "file")})
@@ -78,8 +84,13 @@ let makeConfig = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
   },
 };
 
-let build = (~outputDir, ~renderedPages: array(RenderedPage.t)) => {
-  let config = makeConfig(~outputDir, ~renderedPages);
+let build =
+    (
+      ~outputDir,
+      ~globalEnvValues: array((string, string)),
+      ~renderedPages: array(RenderedPage.t),
+    ) => {
+  let config = makeConfig(~outputDir, ~globalEnvValues, ~renderedPages);
 
   esbuild
   ->build(config)

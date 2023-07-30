@@ -81,15 +81,9 @@ external makeProfilingPlugin: unit => webpackPlugin = "default";
 [@new] [@module "esbuild-loader"]
 external makeESBuildPlugin: Js.t('a) => webpackPlugin = "EsbuildPlugin";
 
-let getPluginWithGlobalValues = (globalValues: array((string, string))) => {
-  let dict = Js.Dict.empty();
-
-  globalValues->Js.Array2.forEach(((key, value)) => {
-    let value = {j|"$(value)"|j};
-    dict->Js.Dict.set(key, value);
-  });
-
-  definePlugin(dict);
+let getPluginWithGlobalValues =
+    (globalEnvValuesDict: array((string, string))) => {
+  Bundler.getGlobalEnvValuesDict(globalEnvValuesDict)->definePlugin;
 };
 
 module Webpack = {

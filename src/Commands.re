@@ -86,7 +86,7 @@ let build =
         );
 
         let () =
-          Esbuild.build(~outputDir, ~renderedPages)
+          Esbuild.build(~outputDir, ~globalEnvValues, ~renderedPages)
           ->Promise.map(_ =>
               logger.info(() =>
                 Js.log("[rescript-ssg][build] Bundling finished!")

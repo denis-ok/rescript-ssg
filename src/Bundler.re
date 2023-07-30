@@ -46,3 +46,14 @@ let assetRegex = {
 let dirname = Utils.getDirname();
 
 let projectRoot = Path.join2(dirname, "..");
+
+let getGlobalEnvValuesDict = (globalEnvValues: array((string, string))) => {
+  let dict = Js.Dict.empty();
+
+  globalEnvValues->Js.Array2.forEach(((key, value)) => {
+    let value = {j|"$(value)"|j};
+    dict->Js.Dict.set(key, value);
+  });
+
+  dict;
+};
