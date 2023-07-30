@@ -41,7 +41,11 @@ clean:
 	make clean-rescript
 	make clean-example
 
-build: clean
+build-webpack: clean
+	make build-rescript
+	RESCRIPT_SSG_BUNDLER=webpack make build-example
+
+build-esbuild build: clean
 	make build-rescript
 	RESCRIPT_SSG_BUNDLER=esbuild make build-example
 
@@ -49,6 +53,8 @@ build-ci: clean
 	make build-rescript
 	make test
 	make clean-test
+	make build-esbuild
+	make clean-example
 	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithTerser.bs.js
 	make clean-example
 	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithEsbuildPlugin.bs.js
