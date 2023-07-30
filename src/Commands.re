@@ -81,19 +81,8 @@ let build =
 
       switch (Bundler.bundler) {
       | Esbuild =>
-        logger.info(() =>
-          Js.log("[rescript-ssg][build] Bundling with Esbuild...")
-        );
-
         let () =
-          Esbuild.build(~outputDir, ~globalEnvValues, ~renderedPages)
-          ->Promise.map(_ =>
-              logger.info(() =>
-                Js.log("[rescript-ssg][build] Bundling finished!")
-              )
-            )
-          ->ignore;
-
+          Esbuild.build(~outputDir, ~globalEnvValues, ~renderedPages)->ignore;
         ();
       | Webpack =>
         let () =
