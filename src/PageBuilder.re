@@ -403,14 +403,13 @@ let processPageComponentWithWrapper =
 
 let buildPageHtmlAndReactApp =
     (
-      ~outputDir: string,
+      ~intermediateFilesOutputDir: string,
+      ~pageWrappersDataDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~generatedFilesSuffix: string,
       page: page,
     ) => {
-  let intermediateFilesOutputDir = getIntermediateFilesOutputDir(~outputDir);
-
   let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
 
   let pagePath: string = page.path->PageBuilderT.PagePath.toString;
@@ -428,9 +427,6 @@ let buildPageHtmlAndReactApp =
       Some(Path.join2(melangeIntermediateFilesOutputDir, pagePath));
     };
 
-  let pageWrappersDataDir =
-    Path.join2(intermediateFilesOutputDir, pageWrappersDataDirname);
-
   logger.debug(() =>
     Js.log(
       {j|[PageBuilder.buildPageHtmlAndReactApp] Building page module: $(moduleName), page path: $(pagePath)|j},
@@ -445,8 +441,6 @@ let buildPageHtmlAndReactApp =
   );
 
   let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
-
-  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
 
   let {element, elementString, pageDataProp, pageWrapperDataProp} =
     processPageComponentWithWrapper(

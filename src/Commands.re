@@ -59,6 +59,13 @@ type generatedFilesSuffix =
   | NoSuffix
   | UnixTimestamp;
 
+type initializeAndBuildPagesResult = {
+  logger: Log.logger,
+  intermediateFilesOutputDir: string,
+  pageWrappersDataDir: string,
+  renderedPages: Promise.t(array(RescriptSsg.RenderedPage.t)),
+};
+
 let initializeAndBuildPages =
     (
       ~logLevel,
@@ -71,13 +78,25 @@ let initializeAndBuildPages =
     ) => {
   let () = checkDuplicatedPagePaths(pages);
 
+  let intermediateFilesOutputDir =
+    PageBuilder.getIntermediateFilesOutputDir(~outputDir);
+
+  let pageWrappersDataDir =
+    Path.join2(
+      intermediateFilesOutputDir,
+      PageBuilder.pageWrappersDataDirname,
+    );
+
+  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
+
   let logger = Log.makeLogger(logLevel);
 
   let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
       ~pages,
-      ~outputDir,
+      ~intermediateFilesOutputDir,
+      ~pageWrappersDataDir,
       ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
@@ -90,7 +109,7 @@ let initializeAndBuildPages =
         },
     );
 
-  (logger, renderedPages);
+  {intermediateFilesOutputDir, pageWrappersDataDir, logger, renderedPages};
 };
 
 let build =
@@ -109,7 +128,7 @@ let build =
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let (logger, renderedPages) =
+  let {logger, renderedPages, _} =
     initializeAndBuildPages(
       ~logLevel,
       ~buildWorkersCount,
@@ -162,7 +181,7 @@ let start =
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let (logger, renderedPages) =
+  let {intermediateFilesOutputDir, pageWrappersDataDir, logger, renderedPages} =
     initializeAndBuildPages(
       ~logLevel,
       ~buildWorkersCount,
@@ -192,7 +211,8 @@ let start =
 
   let () =
     Watcher.startWatcher(
-      ~outputDir,
+      ~intermediateFilesOutputDir,
+      ~pageWrappersDataDir,
       ~melangeOutputDir,
       ~logger,
       ~globalEnvValues,
