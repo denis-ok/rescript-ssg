@@ -10,10 +10,8 @@ type buildResult = {
 
 [@module "esbuild"] external esbuild: esbuild = "default";
 
-[@send] external build: (esbuild, Js.t('a)) => Js.Promise.t(buildResult) = "build";
-
-// [@module "esbuild-plugin-svgr"]
-// external esbuildPluginSvgr: (. Js.t('a)) => plugin = "default";
+[@send]
+external build: (esbuild, Js.t('a)) => Js.Promise.t(buildResult) = "build";
 
 module HtmlPlugin = {
   // https://github.com/craftamap/esbuild-plugin-html/blob/b74debfe7f089a4f073f5a0cf9bbdb2e59370a7c/src/index.ts#L8
@@ -74,15 +72,7 @@ let makeConfig =
 
     let htmlPlugin = HtmlPlugin.make(. {files: htmlPluginFiles});
 
-    [|
-      htmlPlugin,
-      // esbuildPluginSvgr(. {
-      //   "dimensions": false,
-      //   "plugins": ["@svgr/plugin-jsx"],
-      //   "svgo": false,
-      //   "titleProp": true,
-      // }),
-    |];
+    [|htmlPlugin|];
   },
 };
 
@@ -103,7 +93,9 @@ let build =
   ->Promise.map(_result => {
       // let json = Js.Json.stringifyAny(result.metafile)->Belt.Option.getWithDefault("");
       // Fs.writeFileSync(~path=Path.join2(outputDir, "meta.json"), ~data=json);
-      Js.Console.timeEnd(durationLabel);
+      Js.Console.timeEnd(
+        durationLabel,
+      )
     })
   ->Promise.catch(err => Js.log(err)->Js.Promise.resolve);
 };
