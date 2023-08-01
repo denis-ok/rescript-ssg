@@ -1,3 +1,22 @@
+let checkDuplicatedPagePaths = (pages: array(PageBuilder.page)) => {
+  Js.log("[rescript-ssg] Checking duplicated page paths...");
+
+  let pagesDict = Js.Dict.empty();
+
+  pages->Js.Array2.forEach(page => {
+    let pagePath = PageBuilderT.PagePath.toString(page.path);
+    switch (pagesDict->Js.Dict.get(pagePath)) {
+    | None => pagesDict->Js.Dict.set(pagePath, page)
+    | Some(_) =>
+      Js.Console.error2(
+        "[rescript-ssg] List of pages contains pages with the same paths. Duplicated page path: ",
+        pagePath,
+      );
+      Process.exit(1);
+    };
+  });
+};
+
 let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   let durationLabel = "[Commands.compileRescript] Success! Duration";
   Js.Console.timeStart(durationLabel);
@@ -56,6 +75,8 @@ let build =
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
+  let () = checkDuplicatedPagePaths(pages);
+
   let logger = Log.makeLogger(logLevel);
 
   let renderedPages =
@@ -116,6 +137,8 @@ let start =
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
+  let () = checkDuplicatedPagePaths(pages);
+
   let logger = Log.makeLogger(logLevel);
 
   let renderedPages =
