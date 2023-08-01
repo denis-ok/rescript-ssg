@@ -1,7 +1,12 @@
+include Js.Promise;
+
 [@send]
 external map: (Js.Promise.t('a), 'a => 'b) => Js.Promise.t('b) = "then";
 
-let bind = (callback, promise) => Js.Promise.then_(promise, callback);
+[@send]
+external flatMap:
+  (Js.Promise.t('a), 'a => Js.Promise.t('b)) => Js.Promise.t('b) =
+  "then";
 
 let catch = (callback, promise) => Js.Promise.catch(promise, callback);
 
@@ -11,7 +16,11 @@ let seqRun = (functions: array(unit => Js.Promise.t('a))) => {
     (acc, func) => {
       switch (acc) {
       | [] => [func()]
-      | [promise, ...rest] => [promise->bind(_ => func()), promise, ...rest]
+      | [promise, ...rest] => [
+          promise->flatMap(_ => func()),
+          promise,
+          ...rest,
+        ]
       }
     },
     [],

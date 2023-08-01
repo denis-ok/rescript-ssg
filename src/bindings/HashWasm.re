@@ -1,6 +1,6 @@
 // https://github.com/Daninet/hash-wasm#api
 
-[@module "hash-wasm"] external md5: Buffer.t => Js.Promise.t(string) = "md5";
+[@module "hash-wasm"] external md5: Buffer.t => Promise.t(string) = "md5";
 
 // interface IHasher {
 //   init: () => IHasher;
@@ -22,7 +22,7 @@ type hasher = {
 
 [@module "hash-wasm"]
 external createXXHash64:
-  (~seedLow: option(int), ~seedHigh: option(int)) => Js.Promise.t(hasher) =
+  (~seedLow: option(int), ~seedHigh: option(int)) => Promise.t(hasher) =
   "createXXHash64";
 
 let createXXHash64AndReturnBinaryDigest = (buffer: Buffer.t) => {

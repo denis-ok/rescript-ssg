@@ -1,4 +1,4 @@
-[@val] external import_: string => Js.Promise.t('a) = "import";
+[@val] external import_: string => Promise.t('a) = "import";
 
 let showPage = (page: BuildPageWorkerT.workerPage) => {
   Log.makeMinimalPrintablePageObj(
@@ -46,7 +46,7 @@ let pageModule = import_(page.modulePath);
 
 let pageWrapperModule =
   switch (page.pageWrapper) {
-  | None => Js.Promise.resolve(None)
+  | None => Promise.resolve(None)
   | Some({modulePath, _}) =>
     logger.debug(() =>
       Js.log2("[Worker] Trying to import wrapper module: ", modulePath)
@@ -54,10 +54,10 @@ let pageWrapperModule =
     import_(modulePath)->Promise.map(module_ => Some(module_));
   };
 
-let importedModules = Js.Promise.all2((pageModule, pageWrapperModule));
+let importedModules = Promise.all2((pageModule, pageWrapperModule));
 
 type workerOutput =
-  Js.Promise.t(Belt.Result.t(RenderedPage.t, PageBuilderT.PagePath.t));
+  Promise.t(Belt.Result.t(RenderedPage.t, PageBuilderT.PagePath.t));
 
 let workerOutput: workerOutput =
   importedModules
@@ -148,5 +148,5 @@ let workerOutput: workerOutput =
       );
       let result = Belt.Result.Error(page.path);
       parentPort->WorkerThreads.postMessage(result);
-      Js.Promise.resolve(result);
+      Promise.resolve(result);
     });

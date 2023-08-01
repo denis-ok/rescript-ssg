@@ -119,7 +119,7 @@ let buildPagesWithWorkers =
               page,
             )
           )
-        ->Js.Promise.all
+        ->Promise.all
       )
     ->Promise.seqRun
     ->Promise.map(results => {

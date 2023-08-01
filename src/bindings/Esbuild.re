@@ -11,7 +11,7 @@ type buildResult = {
 [@module "esbuild"] external esbuild: esbuild = "default";
 
 [@send]
-external build: (esbuild, Js.t('a)) => Js.Promise.t(buildResult) = "build";
+external build: (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
 
 module HtmlPlugin = {
   // https://github.com/craftamap/esbuild-plugin-html/blob/b74debfe7f089a4f073f5a0cf9bbdb2e59370a7c/src/index.ts#L8
@@ -100,7 +100,7 @@ let build =
         durationLabel,
       )
     })
-  ->Promise.catch(err => Js.log(err)->Js.Promise.resolve);
+  ->Promise.catch(err => Js.log(err)->Promise.resolve);
 };
 
 // Getting a hash of the file contents the same way as it implemented in esbuild.

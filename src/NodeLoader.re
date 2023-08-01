@@ -23,7 +23,7 @@ let getFinalHashedAssetPath =
 
   filePath
   ->Fs.Promises.readFileAsBuffer
-  ->Promise.bind(fileData => {
+  ->Promise.flatMap(fileData => {
       switch (fileData) {
       | Error(error) =>
         Js.Console.error2(
@@ -48,9 +48,7 @@ let getFinalHashedAssetPath =
           switch (Bundler.bundler) {
           | Webpack =>
             let fileHash = Crypto.Hash.bufferToHash(processedFileData);
-            Js.Promise.resolve(
-              filenameWithoutExt ++ "." ++ fileHash ++ fileExt,
-            );
+            Promise.resolve(filenameWithoutExt ++ "." ++ fileHash ++ fileExt);
           | Esbuild =>
             // cat-FU5UU3XL.jpeg
             Esbuild.getFileHash(processedFileData)
