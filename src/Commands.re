@@ -9,7 +9,7 @@ let checkDuplicatedPagePaths = (pages: array(PageBuilder.page)) => {
     | None => pagesDict->Js.Dict.set(pagePath, page)
     | Some(_) =>
       Js.Console.error2(
-        "[rescript-ssg] List of pages contains pages with the same paths. Duplicated page path: ",
+        "[rescript-ssg] List of pages contains pages with the same paths. Duplicated page path:",
         pagePath,
       );
       Process.exit(1);
@@ -59,21 +59,15 @@ type generatedFilesSuffix =
   | NoSuffix
   | UnixTimestamp;
 
-let build =
+let initializeAndBuildPages =
     (
-      ~outputDir: string,
-      ~melangeOutputDir: option(string)=?,
-      ~compileCommand: string,
-      ~logLevel: Log.level,
-      ~mode: Webpack.Mode.t,
-      ~pages: array(PageBuilder.page),
-      ~webpackBundleAnalyzerMode:
-         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
-      ~minimizer: Webpack.Minimizer.t=Terser,
-      ~globalEnvValues: array((string, string))=[||],
-      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
-      ~buildWorkersCount: option(int)=?,
-      (),
+      ~logLevel,
+      ~buildWorkersCount,
+      ~pages,
+      ~outputDir,
+      ~melangeOutputDir,
+      ~globalEnvValues,
+      ~generatedFilesSuffix,
     ) => {
   let () = checkDuplicatedPagePaths(pages);
 
@@ -94,6 +88,36 @@ let build =
         | UnixTimestamp =>
           "_" ++ Js.Date.make()->Js.Date.valueOf->Belt.Float.toString
         },
+    );
+
+  (logger, renderedPages);
+};
+
+let build =
+    (
+      ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
+      ~compileCommand: string,
+      ~logLevel: Log.level,
+      ~mode: Webpack.Mode.t,
+      ~pages: array(PageBuilder.page),
+      ~webpackBundleAnalyzerMode:
+         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
+      ~minimizer: Webpack.Minimizer.t=Terser,
+      ~globalEnvValues: array((string, string))=[||],
+      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
+      ~buildWorkersCount: option(int)=?,
+      (),
+    ) => {
+  let (logger, renderedPages) =
+    initializeAndBuildPages(
+      ~logLevel,
+      ~buildWorkersCount,
+      ~pages,
+      ~outputDir,
+      ~melangeOutputDir,
+      ~globalEnvValues,
+      ~generatedFilesSuffix,
     );
 
   renderedPages
@@ -134,23 +158,19 @@ let start =
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
+      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let () = checkDuplicatedPagePaths(pages);
-
-  let logger = Log.makeLogger(logLevel);
-
-  let renderedPages =
-    BuildPageWorkerHelpers.buildPagesWithWorkers(
+  let (logger, renderedPages) =
+    initializeAndBuildPages(
+      ~logLevel,
+      ~buildWorkersCount,
       ~pages,
       ~outputDir,
       ~melangeOutputDir,
-      ~logger,
       ~globalEnvValues,
-      ~buildWorkersCount,
-      ~exitOnPageBuildError=true,
-      ~generatedFilesSuffix="",
+      ~generatedFilesSuffix,
     );
 
   renderedPages
