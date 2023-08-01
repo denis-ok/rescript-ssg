@@ -12,15 +12,9 @@ let isBsArtifact = fileUrl => {
   Js.String2.match(fileUrl, bsArtifactRegex) != None;
 };
 
-let assetRegex = [%re
-  {|/\.(css|jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json|mp4)$/i|}
-];
-
 let isAsset = fileUrl => {
-  Js.String2.match(fileUrl, assetRegex) != None;
+  Js.String2.match(fileUrl, Bundler.assetRegex) != None;
 };
-
-let webpackAssetsDir = "assets";
 
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
 let getFinalHashedAssetPath =
@@ -29,7 +23,7 @@ let getFinalHashedAssetPath =
 
   filePath
   ->Fs.Promises.readFileAsBuffer
-  ->Promise.map(fileData => {
+  ->Promise.bind(fileData => {
       switch (fileData) {
       | Error(error) =>
         Js.Console.error2(
@@ -44,30 +38,43 @@ let getFinalHashedAssetPath =
           | Some(func) => func(fileData)
           };
 
-        let fileHash = Crypto.Hash.bufferToHash(processedFileData);
-
         let fileName = Path.basename(url);
 
         let fileExt = Path.extname(fileName);
 
         let filenameWithoutExt = fileName->Js.String2.replace(fileExt, "");
 
-        let filenameWithHash = {j|$(filenameWithoutExt).$(fileHash)$(fileExt)|j};
-
-        let assetPath =
-          switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
-          | false =>
-            let assetsDir =
-              Path.join2(EnvParams.assetPrefix, webpackAssetsDir);
-            Path.join2(assetsDir, filenameWithHash);
-          | true =>
-            let assetsDir = EnvParams.assetPrefix ++ "/" ++ webpackAssetsDir;
-            assetsDir ++ "/" ++ filenameWithHash;
+        let filenameWithHash =
+          switch (Bundler.bundler) {
+          | Webpack =>
+            let fileHash = Crypto.Hash.bufferToHash(processedFileData);
+            Js.Promise.resolve(
+              filenameWithoutExt ++ "." ++ fileHash ++ fileExt,
+            );
+          | Esbuild =>
+            // cat-FU5UU3XL.jpeg
+            Esbuild.getFileHash(processedFileData)
+            ->Promise.map(fileHash =>
+                filenameWithoutExt ++ "-" ++ fileHash ++ fileExt
+              )
           };
 
-        let assetPath = Utils.maybeAddSlashPrefix(assetPath);
+        filenameWithHash->Promise.map(filenameWithHash => {
+          let assetPath =
+            switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
+            | false =>
+              let assetsDir =
+                Path.join2(EnvParams.assetPrefix, Bundler.assetsDirname);
+              Path.join2(assetsDir, filenameWithHash);
+            | true =>
+              let assetsDir =
+                EnvParams.assetPrefix ++ "/" ++ Bundler.assetsDirname;
+              assetsDir ++ "/" ++ filenameWithHash;
+            };
 
-        assetPath;
+          let assetPath = Utils.maybeAddSlashPrefix(assetPath);
+          assetPath;
+        });
       }
     });
 };

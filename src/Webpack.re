@@ -81,15 +81,9 @@ external makeProfilingPlugin: unit => webpackPlugin = "default";
 [@new] [@module "esbuild-loader"]
 external makeESBuildPlugin: Js.t('a) => webpackPlugin = "EsbuildPlugin";
 
-let getPluginWithGlobalValues = (globalValues: array((string, string))) => {
-  let dict = Js.Dict.empty();
-
-  globalValues->Js.Array2.forEach(((key, value)) => {
-    let value = {j|"$(value)"|j};
-    dict->Js.Dict.set(key, value);
-  });
-
-  definePlugin(dict);
+let getPluginWithGlobalValues =
+    (globalEnvValuesDict: array((string, string))) => {
+  Bundler.getGlobalEnvValuesDict(globalEnvValuesDict)->definePlugin;
 };
 
 module Webpack = {
@@ -156,13 +150,6 @@ module Minimizer = {
     | EsbuildPlugin
     | TerserPluginWithSwc
     | TerserPluginWithEsbuild;
-};
-
-type page = {
-  path: PageBuilderT.PagePath.t,
-  entryPath: string,
-  outputDir: string,
-  htmlTemplatePath: string,
 };
 
 module DevServerOptions = {
@@ -234,8 +221,6 @@ module DevServerOptions = {
   };
 };
 
-let getWebpackOutputDir = outputDir => Path.join2(outputDir, "public");
-
 let dynamicPageSegmentPrefix = "dynamic__";
 
 let makeConfig =
@@ -247,19 +232,14 @@ let makeConfig =
       ~logger: Log.logger,
       ~outputDir: string,
       ~globalEnvValues: array((string, string)),
-      ~webpackPages: array(page),
+      ~renderedPages: array(RenderedPage.t),
     ) => {
   let entries =
-    webpackPages
+    renderedPages
     ->Js.Array2.map(({path, entryPath, _}) =>
         (PageBuilderT.PagePath.toWebpackEntryName(path), entryPath)
       )
     ->Js.Dict.fromArray;
-
-  let assetPrefix =
-    EnvParams.assetPrefix
-    ->Utils.maybeAddSlashPrefix
-    ->Utils.maybeAddSlashSuffix;
 
   let shouldMinimize = mode == Production;
 
@@ -269,12 +249,11 @@ let makeConfig =
     "mode": Mode.toString(mode),
 
     "output": {
-      "path": getWebpackOutputDir(outputDir),
-      "publicPath": assetPrefix,
-      "filename":
-        NodeLoader.webpackAssetsDir ++ "/" ++ "js/[name]_[chunkhash].js",
+      "path": Bundler.getOutputDir(~outputDir),
+      "publicPath": Bundler.assetPrefix,
+      "filename": Bundler.assetsDirname ++ "/" ++ "js/[name]_[chunkhash].js",
       "assetModuleFilename":
-        NodeLoader.webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
+        Bundler.assetsDirname ++ "/" ++ "[name].[hash][ext]",
       "hashFunction": Crypto.Hash.createMd5,
       "hashDigestLength": Crypto.Hash.digestLength,
       // Clean the output directory before emit.
@@ -288,13 +267,13 @@ let makeConfig =
           "test": [%re {|/\.css$/|}],
           "use": [|MiniCssExtractPlugin.loader, "css-loader"|],
         },
-        {"test": NodeLoader.assetRegex, "type": "asset/resource"}->Obj.magic,
+        {"test": Bundler.assetRegex, "type": "asset/resource"}->Obj.magic,
       |],
     },
 
     "plugins": {
       let htmlWebpackPlugins =
-        webpackPages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
+        renderedPages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
           HtmlWebpackPlugin.make({
             "template": htmlTemplatePath,
             "filename":
@@ -318,8 +297,7 @@ let makeConfig =
 
       let miniCssExtractPlugin =
         MiniCssExtractPlugin.make({
-          "filename":
-            NodeLoader.webpackAssetsDir ++ "/" ++ "[name]_[chunkhash].css",
+          "filename": Bundler.assetsDirname ++ "/" ++ "[name]_[chunkhash].css",
         });
 
       let webpackBundleAnalyzerPlugin =
@@ -411,7 +389,7 @@ let makeConfig =
               // from: "/^\/users\/.*/"
               // to: "/users/_id/index.html"
               let rewrites =
-                webpackPages->Belt.Array.keepMap(page =>
+                renderedPages->Belt.Array.keepMap(page =>
                   switch (page.path) {
                   | Root => None
                   | Path(segments) =>
@@ -538,7 +516,7 @@ let makeCompiler =
       ~globalEnvValues: array((string, string)),
       ~outputDir,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~webpackPages: array(page),
+      ~renderedPages: array(RenderedPage.t),
     ) => {
   let config =
     makeConfig(
@@ -549,7 +527,7 @@ let makeCompiler =
       ~outputDir,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
-      ~webpackPages,
+      ~renderedPages,
     );
   // TODO handle errors when we make compiler
   let compiler = Webpack.makeCompiler(config);
@@ -564,7 +542,7 @@ let build =
       ~outputDir,
       ~globalEnvValues: array((string, string)),
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~webpackPages: array(page),
+      ~renderedPages: array(RenderedPage.t),
     ) => {
   let durationLabel = "[Webpack.build] duration";
   Js.Console.timeStart(durationLabel);
@@ -580,7 +558,7 @@ let build =
       ~minimizer,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~webpackPages,
+      ~renderedPages,
     );
 
   compiler->Webpack.run((err, stats) => {
@@ -636,7 +614,7 @@ let startDevServer =
       ~outputDir,
       ~globalEnvValues: array((string, string)),
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~webpackPages: array(page),
+      ~renderedPages: array(RenderedPage.t),
     ) => {
   logger.info(() => Js.log("[Webpack] Starting dev server..."));
   let startupDurationLabel = "[Webpack] WebpackDevServer startup duration";
@@ -651,7 +629,7 @@ let startDevServer =
       ~minimizer,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
-      ~webpackPages,
+      ~renderedPages,
     );
 
   let devServerOptions = config##devServer;
