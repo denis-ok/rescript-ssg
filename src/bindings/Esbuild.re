@@ -44,6 +44,7 @@ let makeConfig =
   "minify": true,
   "metafile": true,
   "splitting": true,
+  "treeShaking": true,
   "logLevel": "error",
   "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
   "loader": {
