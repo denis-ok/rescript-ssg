@@ -131,7 +131,7 @@ switch ReactDOM.querySelector("#root") {
 `
     let expectedHtmlContent = ``
 
-    let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)->ignore
+    let testPromise = () => test(~page, ~expectedAppContent, ~expectedHtmlContent)
   }
 
   module PageWithWrapper = {
@@ -158,7 +158,7 @@ switch ReactDOM.querySelector("#root") {
 `
     let expectedHtmlContent = ``
 
-    // let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)->ignore
+    let testPromise = () => test(~page, ~expectedAppContent, ~expectedHtmlContent)
   }
 
   module PageWithData = {
@@ -196,7 +196,7 @@ switch ReactDOM.querySelector("#root") {
 `
     let expectedHtmlContent = ``
 
-    // let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)->ignore
+    let testPromise = () => test(~page, ~expectedAppContent, ~expectedHtmlContent)
   }
 
   module PageWrapperWithDataAndPageWithData = {
@@ -253,8 +253,17 @@ switch ReactDOM.querySelector("#root") {
 `
     let expectedHtmlContent = ``
 
-    // let () = test(~page, ~expectedAppContent, ~expectedHtmlContent)->ignore
+    let testPromise = () => test(~page, ~expectedAppContent, ~expectedHtmlContent)
   }
 
-  Js.log("BuildPageHtmlAndReactApp tests passed!")
+  let tests =
+    [
+      SimplePage.testPromise,
+      PageWithWrapper.testPromise,
+      PageWithData.testPromise,
+      PageWrapperWithDataAndPageWithData.testPromise,
+    ]
+    ->Promise.seqRun
+    ->Promise.map(_ => Js.log("BuildPageHtmlAndReactApp tests passed!"))
+    ->ignore
 }
