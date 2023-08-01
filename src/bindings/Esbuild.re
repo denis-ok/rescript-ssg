@@ -100,7 +100,10 @@ let build =
         durationLabel,
       )
     })
-  ->Promise.catch(err => Js.log(err)->Promise.resolve);
+  ->Promise.catch(err => {
+      Js.Console.error2("[rescript-ssg] [Esbuild.build] Promise.catch:", err);
+      Process.exit(1);
+    });
 };
 
 // Getting a hash of the file contents the same way as it implemented in esbuild.
