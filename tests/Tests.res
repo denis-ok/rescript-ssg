@@ -70,7 +70,7 @@ module BuildPageHtmlAndReactApp = {
 
   let outputDir = Path.join2(dirname, "output")
 
-  let intermediateFilesOutputDir = PageBuilder.getIntermediateFilesOutputDir(~outputDir)
+  let artifactsOutputDir = PageBuilder.getArtifactsOutputDir(~outputDir)
 
   let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true})
 
@@ -100,12 +100,12 @@ module BuildPageHtmlAndReactApp = {
     )
 
     let testPageAppContent = Fs.readFileSyncAsUtf8(
-      Path.join2(intermediateFilesOutputDir, reactAppModuleName ++ ".res"),
+      Path.join2(artifactsOutputDir, reactAppModuleName ++ ".res"),
     )
 
     isEqual(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent))
 
-    let _html = Fs.readFileSyncAsUtf8(Path.join2(intermediateFilesOutputDir, "index.html"))
+    let _html = Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, "index.html"))
   }
 
   module SimplePage = {

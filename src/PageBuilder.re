@@ -124,8 +124,7 @@ switch ReactDOM.querySelector("#root") {
 
 let dataPropName = "data";
 
-let getIntermediateFilesOutputDir = (~outputDir) =>
-  Path.join2(outputDir, "temp");
+let getArtifactsOutputDir = (~outputDir) => Path.join2(outputDir, "temp");
 
 let pagePathToPageAppModuleName =
     (~generatedFilesSuffix, ~pagePath, ~moduleName) => {
@@ -409,13 +408,13 @@ let buildPageHtmlAndReactApp =
       ~generatedFilesSuffix: string,
       page: page,
     ) => {
-  let intermediateFilesOutputDir = getIntermediateFilesOutputDir(~outputDir);
+  let artifactsOutputDir = getArtifactsOutputDir(~outputDir);
 
   let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
 
   let pagePath: string = page.path->PageBuilderT.PagePath.toString;
 
-  let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
+  let pageOutputDir = Path.join2(artifactsOutputDir, pagePath);
 
   // Melange emits compiled JS files to a separate dir (not next to Reason files).
   // We need to handle it to build correct relative paths to webpack entries and to prop data files.
@@ -424,12 +423,12 @@ let buildPageHtmlAndReactApp =
     | None => None
     | Some(melangeOutputDir) =>
       let melangeIntermediateFilesOutputDir =
-        getIntermediateFilesOutputDir(~outputDir=melangeOutputDir);
+        getArtifactsOutputDir(~outputDir=melangeOutputDir);
       Some(Path.join2(melangeIntermediateFilesOutputDir, pagePath));
     };
 
   let pageWrappersDataDir =
-    Path.join2(intermediateFilesOutputDir, pageWrappersDataDirname);
+    Path.join2(artifactsOutputDir, pageWrappersDataDirname);
 
   logger.debug(() =>
     Js.log(
