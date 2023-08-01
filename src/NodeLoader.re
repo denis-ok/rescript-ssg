@@ -86,7 +86,6 @@ let processAsset =
       {
         "format": "module",
         "source": makeAssetSource(webpackAssetPath),
-        // shortCircuit is needed since node v16.17.0
         "shortCircuit": true,
       }
     );
