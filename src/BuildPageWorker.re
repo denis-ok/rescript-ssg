@@ -131,9 +131,9 @@ let workerOutput: workerOutput =
         newPage,
       );
     })
-  ->Promise.map((webpackPage: RenderedPage.t) => {
+  ->Promise.map((renderedPage: RenderedPage.t) => {
       logger.info(() => Js.Console.timeEnd(successText));
-      let result = Belt.Result.Ok(webpackPage);
+      let result = Belt.Result.Ok(renderedPage);
       parentPort->WorkerThreads.postMessage(result);
       result;
     })

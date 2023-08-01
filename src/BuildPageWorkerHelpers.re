@@ -130,7 +130,7 @@ let buildPagesWithWorkers =
   results->Promise.map(renderedPages =>
     renderedPages->Belt.Array.keepMap(result => {
       switch (result) {
-      | Ok(webpackPage) => Some(webpackPage)
+      | Ok(renderedPage) => Some(renderedPage)
       | Error(path) =>
         Js.Console.error2(
           "[Commands.buildPagesWithWorkers] One of the pages failed to build:",
