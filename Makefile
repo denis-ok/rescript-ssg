@@ -64,7 +64,11 @@ build-ci: clean
 	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithTerserPluginWithSwc.bs.js
 
 build-serve:
-	make build
+	make build-esbuild
+	make serve-example
+
+build-serve-webpack:
+	make build-webpack
 	make serve-example
 
 start: clean build-rescript
