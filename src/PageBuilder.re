@@ -124,7 +124,7 @@ switch ReactDOM.querySelector("#root") {
 
 let dataPropName = "data";
 
-let getArtifactsOutputDir = (~outputDir) => Path.join2(outputDir, "temp");
+let getArtifactsOutputDir = (~outputDir) => Path.join2(outputDir, "artifacts");
 
 let pagePathToPageAppModuleName =
     (~generatedFilesSuffix, ~pagePath, ~moduleName) => {
