@@ -61,7 +61,7 @@ type workerOutput =
 
 let workerOutput: workerOutput =
   importedModules
-  ->Promise.map(((module_, wrapperModule)) => {
+  ->Promise.flatMap(((module_, wrapperModule)) => {
       let newPage: PageBuilder.page = {
         hydrationMode: page.hydrationMode,
         pageWrapper: {

@@ -11,10 +11,10 @@ external writeFileSync: (~path: string, ~data: string) => unit =
 
 [@module "fs"] external existsSync: string => bool = "existsSync";
 
-type makeDirSyncOptions = {recursive: bool};
+type mkDirOptions = {recursive: bool};
 
 [@module "fs"]
-external mkDirSync: (string, makeDirSyncOptions) => unit = "mkdirSync";
+external mkDirSync: (string, mkDirOptions) => unit = "mkdirSync";
 
 type rmSyncOptions = {
   force: bool,
@@ -29,5 +29,17 @@ module Promises = {
   [@module "node:fs/promises"]
   external readFileAsBuffer': string => Promise.t(Buffer.t) = "readFile";
 
-  let readFileAsBuffer = path => path->readFileAsBuffer'->Promise.toResult;
+  [@module "node:fs/promises"]
+  external mkDir': (string, mkDirOptions) => Promise.t(unit) = "mkdir";
+
+  [@module "node:fs/promises"]
+  external writeFile': (~path: string, ~data: string) => Promise.t(unit) =
+    "writeFile";
+
+  let readFileAsBuffer = path =>
+    path->readFileAsBuffer'->Promise.catchAsResult;
+
+  let mkDir = (path, mkDirOptions) => mkDir'(path, mkDirOptions);
+
+  let writeFile = (~path, ~data) => writeFile'(~path, ~data);
 };

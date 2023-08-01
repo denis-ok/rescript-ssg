@@ -29,7 +29,7 @@ let seqRun = (functions: array(unit => Js.Promise.t('a))) => {
   ->Js.Promise.all;
 };
 
-let toResult = promise =>
+let catchAsResult = promise =>
   promise
   ->map(value => Belt.Result.Ok(value))
   ->catch(error => Belt.Result.Error(error)->Js.Promise.resolve);
