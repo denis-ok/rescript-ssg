@@ -32,50 +32,52 @@ let makeConfig =
       ~outputDir,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
-    ) => {
-  "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
-  "entryNames": Bundler.assetsDirname ++ "/" ++ "js/[dir]/[name]-[hash]",
-  "chunkNames": Bundler.assetsDirname ++ "/" ++ "js/_chunks/[name]-[hash]",
-  "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
-  "outdir": Bundler.getOutputDir(~outputDir),
-  "publicPath": Bundler.assetPrefix,
-  "format": "esm",
-  "bundle": true,
-  "minify": true,
-  "metafile": true,
-  "splitting": true,
-  "treeShaking": true,
-  "logLevel": "error",
-  "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
-  "loader": {
-    Bundler.assetFileExtensionsWithoutCss
-    ->Js.Array2.map(ext => {("." ++ ext, "file")})
-    ->Js.Dict.fromArray;
-  },
-  "plugins": {
-    let htmlPluginFiles =
-      renderedPages->Js.Array2.map(renderedPage => {
-        let pagePath = renderedPage.path->PageBuilderT.PagePath.toString;
-        {
-          // filename field, which if actually a path will be relative to "outdir".
-          HtmlPlugin.filename: pagePath ++ "/index.html",
-          // entryPoints must be relative paths to the root of rescript-ssg project
-          entryPoints: [|
-            Path.relative(
-              ~from=Bundler.projectRoot,
-              ~to_=renderedPage.entryPath,
-            ),
-          |],
-          htmlTemplate: renderedPage.htmlTemplatePath,
-          scriptLoading: "module",
-        };
-      });
+    ) =>
+  // https://esbuild.github.io/api/
+  {
+    "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
+    "entryNames": Bundler.assetsDirname ++ "/" ++ "js/[dir]/[name]-[hash]",
+    "chunkNames": Bundler.assetsDirname ++ "/" ++ "js/_chunks/[name]-[hash]",
+    "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
+    "outdir": Bundler.getOutputDir(~outputDir),
+    "publicPath": Bundler.assetPrefix,
+    "format": "esm",
+    "bundle": true,
+    "minify": true,
+    "metafile": true,
+    "splitting": true,
+    "treeShaking": true,
+    "logLevel": "error",
+    "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
+    "loader": {
+      Bundler.assetFileExtensionsWithoutCss
+      ->Js.Array2.map(ext => {("." ++ ext, "file")})
+      ->Js.Dict.fromArray;
+    },
+    "plugins": {
+      let htmlPluginFiles =
+        renderedPages->Js.Array2.map(renderedPage => {
+          let pagePath = renderedPage.path->PageBuilderT.PagePath.toString;
+          {
+            // filename field, which if actually a path will be relative to "outdir".
+            HtmlPlugin.filename: pagePath ++ "/index.html",
+            // entryPoints must be relative paths to the root of rescript-ssg project
+            entryPoints: [|
+              Path.relative(
+                ~from=Bundler.projectRoot,
+                ~to_=renderedPage.entryPath,
+              ),
+            |],
+            htmlTemplate: renderedPage.htmlTemplatePath,
+            scriptLoading: "module",
+          };
+        });
 
-    let htmlPlugin = HtmlPlugin.make(. {files: htmlPluginFiles});
+      let htmlPlugin = HtmlPlugin.make(. {files: htmlPluginFiles});
 
-    [|htmlPlugin|];
-  },
-};
+      [|htmlPlugin|];
+    },
+  };
 
 let build =
     (
