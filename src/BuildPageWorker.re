@@ -15,18 +15,17 @@ let page = workerData.page;
 
 let logger = Log.makeLogger(workerData.logLevel);
 
+let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
+
 let pagePath: string = page.path->PageBuilderT.PagePath.toString;
 
-let successText = {j|[Worker] Page: $(pagePath), build success. Duration|j};
+let pageInfo: string = {j|[Page module: $(moduleName), page path: $(pagePath)]|j};
+
+let successText = {j|[Worker] $(pageInfo) Build success. Duration|j};
 
 Js.Console.timeStart(successText);
 
-logger.info(() => {
-  let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
-  Js.log(
-    {j|[Worker] Building page module: $(moduleName), page path: $(pagePath)|j},
-  );
-});
+logger.info(() => {Js.log({j|[Worker] $(pageInfo) Building...|j})});
 
 logger.debug(() => Js.log2("[Worker] Page to build:\n", page->showPage));
 
@@ -39,7 +38,7 @@ let () =
     );
 
 logger.debug(() =>
-  Js.log2("[Worker] Trying to import module: ", page.modulePath)
+  Js.log2("[Worker] Trying to import page module: ", page.modulePath)
 );
 
 let pageModule = import_(page.modulePath);
@@ -49,7 +48,7 @@ let pageWrapperModule =
   | None => Promise.resolve(None)
   | Some({modulePath, _}) =>
     logger.debug(() =>
-      Js.log2("[Worker] Trying to import wrapper module: ", modulePath)
+      Js.log2("[Worker] Trying to import page wrapper module: ", modulePath)
     );
     import_(modulePath)->Promise.map(module_ => Some(module_));
   };
@@ -131,21 +130,34 @@ let workerOutput: workerOutput =
         newPage,
       );
     })
-  ->Promise.map((renderedPage: RenderedPage.t) => {
-      logger.info(() => Js.Console.timeEnd(successText));
-      let result = Belt.Result.Ok(renderedPage);
-      parentPort->WorkerThreads.postMessage(result);
-      result;
+  ->Promise.map(result => {
+      switch (result) {
+      | Ok((renderedPage: RenderedPage.t)) =>
+        logger.info(() => Js.Console.timeEnd(successText));
+        let result = Belt.Result.Ok(renderedPage);
+        parentPort->WorkerThreads.postMessage(result);
+        result;
+      | Error((errors: array((string, Js.Promise.error)))) =>
+        logger.info(() => {
+          Js.Console.error2(
+            {j|[Worker] $(pageInfo) Build page errors:|j},
+            errors,
+          )
+        });
+        let result = Belt.Result.Error(page.path);
+        parentPort->WorkerThreads.postMessage(result);
+        result;
+      }
     })
   ->Promise.catch(error => {
-      // We don't want to immediatelly stop node process/watcher when something happened in worker.
+      // We don't want to immediately stop node process/watcher when something happened in worker.
       // We just log the error and the caller will decide what to do.
-      logger.info(() =>
+      logger.info(() => {
         Js.Console.error2(
-          "[Worker] [Warning] Caught error, please check: ",
+          {j|[Worker] $(pageInfo) Unexpected promise rejection, please check:|j},
           error,
         )
-      );
+      });
       let result = Belt.Result.Error(page.path);
       parentPort->WorkerThreads.postMessage(result);
       Promise.resolve(result);

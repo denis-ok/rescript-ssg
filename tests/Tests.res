@@ -79,7 +79,7 @@ module BuildPageHtmlAndReactApp = {
   let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup()
 
-    let renderedPage: Js.Promise.t<RenderedPage.t> = PageBuilder.buildPageHtmlAndReactApp(
+    let renderedPage = PageBuilder.buildPageHtmlAndReactApp(
       ~outputDir,
       ~melangeOutputDir=None,
       ~logger,
@@ -87,26 +87,32 @@ module BuildPageHtmlAndReactApp = {
       page,
     )
 
-    renderedPage->Promise.map(_renderedPage => {
-      Commands.compileRescript(~compileCommand, ~logger)
+    renderedPage->Promise.map(renderedPage => {
+      switch renderedPage {
+      | Error(errors) =>
+        Js.Console.error2("Test failed:", errors)
+        Process.exit(1)
+      | Ok(_) =>
+        Commands.compileRescript(~compileCommand, ~logger)
 
-      let moduleName = Utils.getModuleNameFromModulePath(page.modulePath)
+        let moduleName = Utils.getModuleNameFromModulePath(page.modulePath)
 
-      let pagePath: string = page.path->PageBuilderT.PagePath.toString
+        let pagePath: string = page.path->PageBuilderT.PagePath.toString
 
-      let reactAppModuleName = PageBuilder.pagePathToPageAppModuleName(
-        ~generatedFilesSuffix="",
-        ~pagePath,
-        ~moduleName,
-      )
+        let reactAppModuleName = PageBuilder.pagePathToPageAppModuleName(
+          ~generatedFilesSuffix="",
+          ~pagePath,
+          ~moduleName,
+        )
 
-      let testPageAppContent = Fs.readFileSyncAsUtf8(
-        Path.join2(artifactsOutputDir, reactAppModuleName ++ ".res"),
-      )
+        let testPageAppContent = Fs.readFileSyncAsUtf8(
+          Path.join2(artifactsOutputDir, reactAppModuleName ++ ".res"),
+        )
 
-      isEqual(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent))
+        isEqual(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent))
 
-      let _html = Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, "index.html"))
+        let _html = Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, "index.html"))
+      }
     })
   }
 

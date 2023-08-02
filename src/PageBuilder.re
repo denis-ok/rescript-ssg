@@ -490,44 +490,70 @@ let buildPageHtmlAndReactApp =
 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
 
-  let promises =
-    Promise.all([|
-      Fs.Promises.mkDir(pageOutputDir, {recursive: true}),
-      Fs.Promises.mkDir(pageWrappersDataDir, {recursive: true}),
-    |])
-    ->Promise.flatMap(_createdDirs => {
-        let reactAppFilename = pageAppModuleName ++ ".res";
+  let mkDirPromises =
+    [|
+      Fs.Promises.mkDir(pageOutputDir, {recursive: true})
+      ->Promise.Result.catch(
+          ~context=
+            "[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageOutputDir)]",
+        ),
+      Fs.Promises.mkDir(pageWrappersDataDir, {recursive: true})
+      ->Promise.Result.catch(
+          ~context=
+            "[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageWrappersDataDir)]",
+        ),
+    |]
+    ->Promise.all
+    ->Promise.Result.all;
 
-        let resultHtmlFilePromise =
-          Fs.Promises.writeFile(~path=resultHtmlPath, ~data=resultHtml);
+  let writeFilePromises =
+    mkDirPromises->Promise.Result.flatMap(_createdDirs => {
+      let reactAppFilename = pageAppModuleName ++ ".res";
 
-        let resultReactAppFilePromise =
-          Fs.Promises.writeFile(
-            ~path=Path.join2(pageOutputDir, reactAppFilename),
-            ~data=resultReactApp,
+      let resultHtmlFilePromise =
+        Fs.Promises.writeFile(~path=resultHtmlPath, ~data=resultHtml)
+        ->Promise.Result.catch(
+            ~context=
+              "[PageBuilder.buildPageHtmlAndReactApp] [resultHtmlFilePromise]",
           );
 
-        let jsFilesPromises =
-          [|pageWrapperDataProp, pageDataProp|]
-          ->Js.Array2.map(data =>
-              switch (data) {
-              | None => Promise.resolve()
-              | Some({jsDataFileContent, jsDataFilepath, _}) =>
-                Fs.Promises.writeFile(
-                  ~path=jsDataFilepath,
-                  ~data=jsDataFileContent,
-                )
-              }
-            );
+      let resultReactAppFilePromise =
+        Fs.Promises.writeFile(
+          ~path=Path.join2(pageOutputDir, reactAppFilename),
+          ~data=resultReactApp,
+        )
+        ->Promise.Result.catch(
+            ~context=
+              "[PageBuilder.buildPageHtmlAndReactApp] [resultReactAppFilePromise]",
+          );
 
+      let jsFilesPromises =
+        [|pageWrapperDataProp, pageDataProp|]
+        ->Js.Array2.map(data =>
+            switch (data) {
+            | None => Promise.resolve(Belt.Result.Ok())
+            | Some({jsDataFileContent, jsDataFilepath, _}) =>
+              Fs.Promises.writeFile(
+                ~path=jsDataFilepath,
+                ~data=jsDataFileContent,
+              )
+              ->Promise.Result.catch(
+                  ~context=
+                    "[PageBuilder.buildPageHtmlAndReactApp] [jsFilesPromises]",
+                )
+            }
+          );
+
+      let promises =
         Js.Array2.concat(
           [|resultHtmlFilePromise, resultReactAppFilePromise|],
           jsFilesPromises,
-        )
-        ->Promise.all;
-      });
+        );
 
-  promises->Promise.map(_createdFiles => {
+      promises->Promise.all->Promise.Result.all;
+    });
+
+  writeFilePromises->Promise.Result.map(_createdFiles => {
     let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
 
     let renderedPage: RenderedPage.t = {
