@@ -70,10 +70,29 @@ let initializeAndBuildPages =
       ~melangeOutputDir,
       ~globalEnvValues,
       ~generatedFilesSuffix,
+      ~bundlerMode: Bundler.mode,
     ) => {
   let () = checkDuplicatedPagePaths(pages);
 
   let logger = Log.makeLogger(logLevel);
+
+  let pages =
+    pages->Js.Array2.map(page =>
+      switch (Bundler.bundler, bundlerMode) {
+      | (Esbuild, Watch) =>
+        // Add a script to implement live reloading with esbuild
+        // https://esbuild.github.io/api/#live-reload
+        {
+          ...page,
+          headScripts:
+            Js.Array2.concat(
+              [|Esbuild.subscribeToRebuildScript|],
+              page.headScripts,
+            ),
+        }
+      | _ => page
+      }
+    );
 
   let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
@@ -92,7 +111,7 @@ let initializeAndBuildPages =
         },
     );
 
-  (logger, renderedPages);
+  (logger, pages, renderedPages);
 };
 
 let build =
@@ -112,7 +131,7 @@ let build =
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let (logger, renderedPages) =
+  let (logger, _pages, renderedPages) =
     initializeAndBuildPages(
       ~logLevel,
       ~buildWorkersCount,
@@ -121,6 +140,7 @@ let build =
       ~melangeOutputDir,
       ~globalEnvValues,
       ~generatedFilesSuffix,
+      ~bundlerMode=Build,
     );
 
   renderedPages
@@ -171,7 +191,7 @@ let start =
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let (logger, renderedPages) =
+  let (logger, pages, renderedPages) =
     initializeAndBuildPages(
       ~logLevel,
       ~buildWorkersCount,
@@ -180,6 +200,7 @@ let start =
       ~melangeOutputDir,
       ~globalEnvValues,
       ~generatedFilesSuffix,
+      ~bundlerMode=Watch,
     );
 
   renderedPages
