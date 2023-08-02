@@ -8,7 +8,11 @@ external flatMap:
   (Js.Promise.t('a), 'a => Js.Promise.t('b)) => Js.Promise.t('b) =
   "then";
 
-let catch = (promise, func) => Js.Promise.catch(func, promise);
+[@send]
+external catch:
+  (Js.Promise.t('a), Js.Promise.error => Js.Promise.t('b)) =>
+  Js.Promise.t('b) =
+  "catch";
 
 let seqRun = (functions: array(unit => Js.Promise.t('a))) => {
   Js.Array2.reduce(
