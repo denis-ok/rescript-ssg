@@ -1,7 +1,5 @@
 type esbuild;
 
-type plugin;
-
 type context;
 
 type buildResult = {
@@ -10,7 +8,33 @@ type buildResult = {
   metafile: Js.Json.t,
 };
 
-[@bs.module "esbuild"] external esbuild: esbuild = "default";
+module Plugin = {
+  // https://esbuild.github.io/plugins/#on-start
+
+  type buildCallbacks = {
+    onStart: (unit => unit) => unit,
+    onEnd: (buildResult => unit) => unit,
+  };
+
+  type t = {
+    name: string,
+    setup: buildCallbacks => unit,
+  };
+
+  let watchModePlugin = {
+    name: "watchPlugin",
+    setup: buildCallbacks => {
+      buildCallbacks.onStart(() =>
+        Js.log("[Esbuild] Rebuild started...")
+      );
+      buildCallbacks.onEnd(_buildResult =>
+        Js.log("[Esbuild] Rebuild finished!")
+      );
+    },
+  };
+};
+
+[@module "esbuild"] external esbuild: esbuild = "default";
 
 [@bs.send]
 external build: (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
@@ -33,7 +57,7 @@ module HtmlPlugin = {
   };
 
   [@bs.module "@craftamap/esbuild-plugin-html"]
-  external make: (. options) => plugin = "htmlPlugin";
+  external make: (. options) => Plugin.t = "htmlPlugin";
 };
 
 let makeConfig =
@@ -90,7 +114,10 @@ let makeConfig =
 
       let htmlPlugin = HtmlPlugin.make(. {files: htmlPluginFiles});
 
-      [|htmlPlugin|];
+      switch (mode) {
+      | Build => [|htmlPlugin|]
+      | Watch => [|htmlPlugin, Plugin.watchModePlugin|]
+      };
     },
   };
 
