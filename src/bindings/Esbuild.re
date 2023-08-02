@@ -85,23 +85,23 @@ let build =
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
     ) => {
-  Js.log("[rescript-ssg][Esbuild.build] Bundling...");
-  let durationLabel = "[rescript-ssg][Esbuild.build] Success! Duration";
+  Js.log("[Esbuild.build] Bundling...");
+  let durationLabel = "[Esbuild.build] Success! Duration";
   Js.Console.timeStart(durationLabel);
 
   let config = makeConfig(~outputDir, ~globalEnvValues, ~renderedPages);
 
   esbuild
   ->build(config)
-  ->Promise.map(_result => {
+  ->Promise.map(_buildResult => {
       // let json = Js.Json.stringifyAny(result.metafile)->Belt.Option.getWithDefault("");
       // Fs.writeFileSync(~path=Path.join2(outputDir, "meta.json"), ~data=json);
       Js.Console.timeEnd(
         durationLabel,
       )
     })
-  ->Promise.catch(err => {
-      Js.Console.error2("[rescript-ssg] [Esbuild.build] Promise.catch:", err);
+  ->Promise.catch(error => {
+      Js.Console.error2("[Esbuild.build] Promise.catch:", error);
       Process.exit(1);
     });
 };
