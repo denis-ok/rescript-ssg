@@ -444,10 +444,6 @@ let buildPageHtmlAndReactApp =
     )
   );
 
-  let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
-
-  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
-
   let {element, elementString, pageDataProp, pageWrapperDataProp} =
     processPageComponentWithWrapper(
       ~pageComponent=page.component,
@@ -494,44 +490,90 @@ let buildPageHtmlAndReactApp =
 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
 
-  let () = {
-    let reactAppFilename = pageAppModuleName ++ ".res";
-    Fs.writeFileSync(~path=resultHtmlPath, ~data=resultHtml);
-    Fs.writeFileSync(
-      ~path=Path.join2(pageOutputDir, reactAppFilename),
-      ~data=resultReactApp,
+  let mkDirPromises =
+    [|
+      Fs.Promises.mkDir(pageOutputDir, {recursive: true})
+      ->Promise.Result.catch(
+          ~context=
+            "[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageOutputDir)]",
+        ),
+      Fs.Promises.mkDir(pageWrappersDataDir, {recursive: true})
+      ->Promise.Result.catch(
+          ~context=
+            "[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageWrappersDataDir)]",
+        ),
+    |]
+    ->Promise.all
+    ->Promise.Result.all;
+
+  let writeFilePromises =
+    mkDirPromises->Promise.Result.flatMap(_createdDirs => {
+      let reactAppFilename = pageAppModuleName ++ ".res";
+
+      let resultHtmlFilePromise =
+        Fs.Promises.writeFile(~path=resultHtmlPath, ~data=resultHtml)
+        ->Promise.Result.catch(
+            ~context=
+              "[PageBuilder.buildPageHtmlAndReactApp] [resultHtmlFilePromise]",
+          );
+
+      let resultReactAppFilePromise =
+        Fs.Promises.writeFile(
+          ~path=Path.join2(pageOutputDir, reactAppFilename),
+          ~data=resultReactApp,
+        )
+        ->Promise.Result.catch(
+            ~context=
+              "[PageBuilder.buildPageHtmlAndReactApp] [resultReactAppFilePromise]",
+          );
+
+      let jsFilesPromises =
+        [|pageWrapperDataProp, pageDataProp|]
+        ->Js.Array2.map(data =>
+            switch (data) {
+            | None => Promise.resolve(Belt.Result.Ok())
+            | Some({jsDataFileContent, jsDataFilepath, _}) =>
+              Fs.Promises.writeFile(
+                ~path=jsDataFilepath,
+                ~data=jsDataFileContent,
+              )
+              ->Promise.Result.catch(
+                  ~context=
+                    "[PageBuilder.buildPageHtmlAndReactApp] [jsFilesPromises]",
+                )
+            }
+          );
+
+      let promises =
+        Js.Array2.concat(
+          [|resultHtmlFilePromise, resultReactAppFilePromise|],
+          jsFilesPromises,
+        );
+
+      promises->Promise.all->Promise.Result.all;
+    });
+
+  writeFilePromises->Promise.Result.map(_createdFiles => {
+    let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
+
+    let renderedPage: RenderedPage.t = {
+      path: page.path,
+      entryPath:
+        Path.join2(
+          melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
+          compiledReactAppFilename,
+        ),
+      outputDir: pageOutputDir,
+      htmlTemplatePath: resultHtmlPath,
+    };
+
+    logger.debug(() =>
+      Js.log2(
+        "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
+        moduleName,
+      )
     );
-  };
 
-  let () =
-    [|pageWrapperDataProp, pageDataProp|]
-    ->Js.Array2.forEach(data =>
-        switch (data) {
-        | None => ()
-        | Some({jsDataFileContent, jsDataFilepath, _}) =>
-          Fs.writeFileSync(~path=jsDataFilepath, ~data=jsDataFileContent)
-        }
-      );
-
-  logger.debug(() =>
-    Js.log2(
-      "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
-      moduleName,
-    )
-  );
-
-  let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
-
-  let renderedPage: RenderedPage.t = {
-    path: page.path,
-    entryPath:
-      Path.join2(
-        melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
-        compiledReactAppFilename,
-      ),
-    outputDir: pageOutputDir,
-    htmlTemplatePath: resultHtmlPath,
-  };
-
-  renderedPage;
+    renderedPage;
+  });
 };
