@@ -2,6 +2,8 @@ type esbuild;
 
 type plugin;
 
+type context;
+
 type buildResult = {
   errors: array(Js.Json.t),
   warnings: array(Js.Json.t),
@@ -12,6 +14,13 @@ type buildResult = {
 
 [@bs.send]
 external build: (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
+
+[@send]
+external context: (esbuild, Js.t('a)) => Promise.t(context) = "context";
+
+[@send] external watch: (context, unit) => Promise.t(unit) = "watch";
+
+[@send] external dispose: (context, unit) => Promise.t(unit) = "dispose";
 
 module HtmlPlugin = {
   // https://github.com/craftamap/esbuild-plugin-html/blob/b74debfe7f089a4f073f5a0cf9bbdb2e59370a7c/src/index.ts#L8
@@ -111,4 +120,34 @@ let build =
       );
       Process.exit(1);
     });
+};
+
+let watch =
+    (
+      ~outputDir,
+      ~globalEnvValues: array((string, string)),
+      ~renderedPages: array(RenderedPage.t),
+    ) => {
+  Js.log("[Esbuild.watch] Starting watch mode...");
+  let durationLabel = "[Esbuild.watch] Watcher started! Duration";
+  Js.Console.timeStart(durationLabel);
+
+  let config = makeConfig(~outputDir, ~globalEnvValues, ~renderedPages);
+
+  let contextPromise = esbuild->context(config);
+
+  let () =
+    contextPromise
+    ->Promise.flatMap(context => context->watch())
+    ->Promise.map(() => {
+        Js.Console.timeEnd(durationLabel);
+        Js.log("[Esbuild.watch] Starting watch mode...");
+      })
+    ->Promise.catch(error => {
+        Js.Console.error2("[Esbuild.watch] Promise.catch:", error);
+        Process.exit(1);
+      })
+    ->ignore;
+
+  ();
 };

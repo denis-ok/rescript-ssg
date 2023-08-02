@@ -184,18 +184,24 @@ let start =
 
   renderedPages
   ->Promise.map(renderedPages => {
-      let () =
-        Webpack.startDevServer(
-          ~devServerOptions,
-          ~webpackBundleAnalyzerMode,
-          ~mode,
-          ~logger,
-          ~outputDir,
-          ~minimizer,
-          ~globalEnvValues,
-          ~renderedPages,
-        );
-      ();
+      switch (Bundler.bundler) {
+      | Esbuild =>
+        let () = Esbuild.watch(~outputDir, ~globalEnvValues, ~renderedPages);
+        ();
+      | Webpack =>
+        let () =
+          Webpack.startDevServer(
+            ~devServerOptions,
+            ~webpackBundleAnalyzerMode,
+            ~mode,
+            ~logger,
+            ~outputDir,
+            ~minimizer,
+            ~globalEnvValues,
+            ~renderedPages,
+          );
+        ();
+      }
     })
   ->ignore;
 
