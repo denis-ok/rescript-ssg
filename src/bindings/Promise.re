@@ -60,12 +60,12 @@ module Result = {
     });
 
   let map =
-      (promise: Js.Promise.t(Belt.Result.t('ok, 'error)), func: 'a => 'b) =>
+      (promise: Js.Promise.t(Belt.Result.t('a, 'error)), func: 'a => 'b) =>
     promise->map(result => result->Belt.Result.map(func));
 
   let flatMap =
       (
-        promise: Js.Promise.t(Belt.Result.t('ok, 'error)),
+        promise: Js.Promise.t(Belt.Result.t('a, 'error)),
         func: 'a => Js.Promise.t('b),
       ) =>
     promise->flatMap(result =>
