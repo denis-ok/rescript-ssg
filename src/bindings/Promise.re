@@ -75,8 +75,3 @@ module Result = {
       }
     );
 };
-
-let catchAsResult = promise =>
-  promise
-  ->map(value => Belt.Result.Ok(value))
-  ->catch(error => Belt.Result.Error(error)->Js.Promise.resolve);
