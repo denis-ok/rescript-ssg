@@ -38,6 +38,7 @@ module HtmlPlugin = {
 
 let makeConfig =
     (
+            ~mode: Bundler.mode,
       ~outputDir: string,
       ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
@@ -53,7 +54,12 @@ let makeConfig =
     "publicPath": Bundler.assetPrefix,
     "format": "esm",
     "bundle": true,
-    "minify": true,
+    "minify": {
+      switch (mode) {
+      | Build => true
+      | Watch => false
+      };
+    },
     "metafile": true,
     "splitting": true,
     "treeShaking": true,
@@ -100,7 +106,7 @@ let build =
   Js.Console.timeStart(durationLabel);
 
   let config =
-    makeConfig(~outputDir, ~projectRootDir, ~globalEnvValues, ~renderedPages);
+    makeConfig(~mode=Build, ~outputDir, ~projectRootDir, ~globalEnvValues, ~renderedPages);
 
   esbuild
   ->build(config)
@@ -132,7 +138,8 @@ let watch =
   let durationLabel = "[Esbuild.watch] Watcher started! Duration";
   Js.Console.timeStart(durationLabel);
 
-  let config = makeConfig(~outputDir, ~globalEnvValues, ~renderedPages);
+  let config =
+    makeConfig(~mode=Watch, ~outputDir, ~globalEnvValues, ~renderedPages);
 
   let contextPromise = esbuild->context(config);
 
