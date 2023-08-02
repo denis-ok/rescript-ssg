@@ -24,9 +24,7 @@ module Plugin = {
   let watchModePlugin = {
     name: "watchPlugin",
     setup: buildCallbacks => {
-      buildCallbacks.onStart(() =>
-        Js.log("[Esbuild] Rebuild started...")
-      );
+      buildCallbacks.onStart(() => Js.log("[Esbuild] Rebuild started..."));
       buildCallbacks.onEnd(_buildResult =>
         Js.log("[Esbuild] Rebuild finished!")
       );
@@ -45,6 +43,21 @@ external context: (esbuild, Js.t('a)) => Promise.t(context) = "context";
 [@send] external watch: (context, unit) => Promise.t(unit) = "watch";
 
 [@send] external dispose: (context, unit) => Promise.t(unit) = "dispose";
+
+// https://esbuild.github.io/api/#serve-arguments
+type serveOptions = {
+  port: int,
+  servedir: option(string),
+};
+
+// https://esbuild.github.io/api/#serve-return-values
+type serveResult = {
+  host: string,
+  port: int,
+};
+
+[@send]
+external serve: (context, serveOptions) => Promise.t(serveResult) = "serve";
 
 module HtmlPlugin = {
   // https://github.com/craftamap/esbuild-plugin-html/blob/b74debfe7f089a4f073f5a0cf9bbdb2e59370a7c/src/index.ts#L8
@@ -161,27 +174,41 @@ let watch =
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
     ) => {
-  Js.log("[Esbuild.watch] Starting watch mode...");
-  let durationLabel = "[Esbuild.watch] Watcher started! Duration";
-  Js.Console.timeStart(durationLabel);
-
   let config =
     makeConfig(~mode=Watch, ~outputDir, ~globalEnvValues, ~renderedPages);
 
+  let watchDurationLabel = "[Esbuild.watch] Watch mode started! Duration";
+  let serveDurationLabel = "[Esbuild.watch] Serve mode started! Duration";
+
+  Js.log("[Esbuild.watch] Starting watch mode...");
+  Js.Console.timeStart(watchDurationLabel);
+
   let contextPromise = esbuild->context(config);
 
-  let () =
-    contextPromise
-    ->Promise.flatMap(context => context->watch())
-    ->Promise.map(() => {
-        Js.Console.timeEnd(durationLabel);
-        Js.log("[Esbuild.watch] Starting watch mode...");
-      })
-    ->Promise.catch(error => {
-        Js.Console.error2("[Esbuild.watch] Promise.catch:", error);
-        Process.exit(1);
-      })
-    ->ignore;
+  contextPromise
+  ->Promise.flatMap(context => context->watch())
+  ->Promise.map(() => Js.Console.timeEnd(watchDurationLabel))
+  ->Promise.catch(error => {
+      Js.Console.error2("[Esbuild.watch] Failed to start watch mode:", error);
+      Process.exit(1);
+    })
+  ->Promise.flatMap(() => {
+      Js.log("[Esbuild.watch] Starting serve mode...");
+      Js.Console.timeStart(serveDurationLabel);
+
+      contextPromise->Promise.flatMap(context =>
+        context->serve({port: 8000, servedir: Some(config#outdir)})
+      );
+    })
+  ->Promise.map(serveResult => {
+      Js.Console.timeEnd(serveDurationLabel);
+      Js.log2("[Esbuild.watch] Serve mode settings:", serveResult);
+    })
+  ->Promise.catch(error => {
+      Js.Console.error2("[Esbuild.watch] Failed to start serve mode:", error);
+      Process.exit(1);
+    })
+  ->ignore;
 
   ();
 };
