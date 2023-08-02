@@ -23,58 +23,69 @@ let getFinalHashedAssetPath =
 
   filePath
   ->Fs.Promises.readFileAsBuffer
-  ->Promise.catchAsResult
+  ->Promise.catch(error => {
+      Js.Console.error2(
+        "[NodeLoader.getFinalHashedAssetPath] [Fs.Promises.readFileAsBuffer] Error:",
+        error,
+      );
+      Process.exit(1);
+    })
   ->Promise.flatMap(fileData => {
-      switch (fileData) {
-      | Error(error) =>
-        Js.Console.error2(
-          "[NodeLoader.getFinalHashedAssetPath] Error reading file:",
-          error,
-        );
-        Process.exit(1);
-      | Ok(fileData) =>
-        let processedFileData =
-          switch (processFileData) {
-          | None => fileData
-          | Some(func) => func(fileData)
+      let processedFileData =
+        switch (processFileData) {
+        | None => fileData
+        | Some(func) => func(fileData)
+        };
+
+      let fileName = Path.basename(url);
+
+      let fileExt = Path.extname(fileName);
+
+      let filenameWithoutExt = fileName->Js.String2.replace(fileExt, "");
+
+      let filenameWithHash =
+        switch (Bundler.bundler) {
+        | Webpack =>
+          let fileHash = Crypto.Hash.bufferToHash(processedFileData);
+          Promise.resolve(filenameWithoutExt ++ "." ++ fileHash ++ fileExt);
+        | Esbuild =>
+          // cat-FU5UU3XL.jpeg
+          Esbuild.getFileHash(processedFileData)
+          ->Promise.map(fileHash => {
+              filenameWithoutExt ++ "-" ++ fileHash ++ fileExt
+            })
+          ->Promise.catch(error => {
+              Js.Console.error2(
+                "[NodeLoader.getFinalHashedAssetPath] [Esbuild.getFileHash] Error:",
+                error,
+              );
+              Process.exit(1);
+            })
+        };
+
+      filenameWithHash->Promise.map(filenameWithHash => {
+        let assetPath =
+          switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
+          | false =>
+            let assetsDir =
+              Path.join2(EnvParams.assetPrefix, Bundler.assetsDirname);
+            Path.join2(assetsDir, filenameWithHash);
+          | true =>
+            let assetsDir =
+              EnvParams.assetPrefix ++ "/" ++ Bundler.assetsDirname;
+            assetsDir ++ "/" ++ filenameWithHash;
           };
 
-        let fileName = Path.basename(url);
-
-        let fileExt = Path.extname(fileName);
-
-        let filenameWithoutExt = fileName->Js.String2.replace(fileExt, "");
-
-        let filenameWithHash =
-          switch (Bundler.bundler) {
-          | Webpack =>
-            let fileHash = Crypto.Hash.bufferToHash(processedFileData);
-            Promise.resolve(filenameWithoutExt ++ "." ++ fileHash ++ fileExt);
-          | Esbuild =>
-            // cat-FU5UU3XL.jpeg
-            Esbuild.getFileHash(processedFileData)
-            ->Promise.map(fileHash =>
-                filenameWithoutExt ++ "-" ++ fileHash ++ fileExt
-              )
-          };
-
-        filenameWithHash->Promise.map(filenameWithHash => {
-          let assetPath =
-            switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
-            | false =>
-              let assetsDir =
-                Path.join2(EnvParams.assetPrefix, Bundler.assetsDirname);
-              Path.join2(assetsDir, filenameWithHash);
-            | true =>
-              let assetsDir =
-                EnvParams.assetPrefix ++ "/" ++ Bundler.assetsDirname;
-              assetsDir ++ "/" ++ filenameWithHash;
-            };
-
-          let assetPath = Utils.maybeAddSlashPrefix(assetPath);
-          assetPath;
-        });
-      }
+        let assetPath = Utils.maybeAddSlashPrefix(assetPath);
+        assetPath;
+      });
+    })
+  ->Promise.catch(error => {
+      Js.Console.error2(
+        "[NodeLoader.getFinalHashedAssetPath] Unexpected promise rejection:",
+        error,
+      );
+      Process.exit(1);
     });
 };
 
