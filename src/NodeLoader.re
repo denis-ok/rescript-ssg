@@ -23,11 +23,12 @@ let getFinalHashedAssetPath =
 
   filePath
   ->Fs.Promises.readFileAsBuffer
+  ->Promise.catchAsResult
   ->Promise.flatMap(fileData => {
       switch (fileData) {
       | Error(error) =>
         Js.Console.error2(
-          "[getFinalHashedAssetPath] Error reading file: ",
+          "[NodeLoader.getFinalHashedAssetPath] Error reading file:",
           error,
         );
         Process.exit(1);

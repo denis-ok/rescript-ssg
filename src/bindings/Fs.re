@@ -27,19 +27,12 @@ let readFileSyncAsUtf8 = path => readFileSync'(~path, ~encoding="utf8");
 
 module Promises = {
   [@module "node:fs/promises"]
-  external readFileAsBuffer': string => Promise.t(Buffer.t) = "readFile";
+  external readFileAsBuffer: string => Promise.t(Buffer.t) = "readFile";
 
   [@module "node:fs/promises"]
-  external mkDir': (string, mkDirOptions) => Promise.t(unit) = "mkdir";
+  external mkDir: (string, mkDirOptions) => Promise.t(unit) = "mkdir";
 
   [@module "node:fs/promises"]
-  external writeFile': (~path: string, ~data: string) => Promise.t(unit) =
+  external writeFile: (~path: string, ~data: string) => Promise.t(unit) =
     "writeFile";
-
-  let readFileAsBuffer = path =>
-    path->readFileAsBuffer'->Promise.catchAsResult;
-
-  let mkDir = (path, mkDirOptions) => mkDir'(path, mkDirOptions);
-
-  let writeFile = (~path, ~data) => writeFile'(~path, ~data);
 };
