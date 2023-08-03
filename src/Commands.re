@@ -1,3 +1,22 @@
+let checkDuplicatedPagePaths = (pages: array(PageBuilder.page)) => {
+  Js.log("[rescript-ssg] Checking duplicated page paths...");
+
+  let pagesDict = Js.Dict.empty();
+
+  pages->Js.Array2.forEach(page => {
+    let pagePath = PageBuilderT.PagePath.toString(page.path);
+    switch (pagesDict->Js.Dict.get(pagePath)) {
+    | None => pagesDict->Js.Dict.set(pagePath, page)
+    | Some(_) =>
+      Js.Console.error2(
+        "[rescript-ssg] List of pages contains pages with the same paths. Duplicated page path:",
+        pagePath,
+      );
+      Process.exit(1);
+    };
+  });
+};
+
 let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   let durationLabel = "[Commands.compileRescript] Success! Duration";
   Js.Console.timeStart(durationLabel);
@@ -40,24 +59,21 @@ type generatedFilesSuffix =
   | NoSuffix
   | UnixTimestamp;
 
-let build =
+let initializeAndBuildPages =
     (
-      ~outputDir: string,
-      ~melangeOutputDir: option(string)=?,
-      ~compileCommand: string,
-      ~logLevel: Log.level,
-      ~mode: Webpack.Mode.t,
-      ~pages: array(PageBuilder.page),
-      ~webpackBundleAnalyzerMode=None,
-      ~minimizer: Webpack.Minimizer.t=Terser,
-      ~globalEnvValues: array((string, string))=[||],
-      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
-      ~buildWorkersCount: option(int)=?,
-      (),
+      ~logLevel,
+      ~buildWorkersCount,
+      ~pages,
+      ~outputDir,
+      ~melangeOutputDir,
+      ~globalEnvValues,
+      ~generatedFilesSuffix,
     ) => {
+  let () = checkDuplicatedPagePaths(pages);
+
   let logger = Log.makeLogger(logLevel);
 
-  let webpackPages =
+  let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
       ~pages,
@@ -74,20 +90,58 @@ let build =
         },
     );
 
-  webpackPages
-  ->Promise.map(webpackPages => {
+  (logger, renderedPages);
+};
+
+let build =
+    (
+      ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
+      ~compileCommand: string,
+      ~logLevel: Log.level,
+      ~mode: Webpack.Mode.t,
+      ~pages: array(PageBuilder.page),
+      ~webpackBundleAnalyzerMode:
+         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
+      ~minimizer: Webpack.Minimizer.t=Terser,
+      ~globalEnvValues: array((string, string))=[||],
+      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
+      ~buildWorkersCount: option(int)=?,
+      (),
+    ) => {
+  let (logger, renderedPages) =
+    initializeAndBuildPages(
+      ~logLevel,
+      ~buildWorkersCount,
+      ~pages,
+      ~outputDir,
+      ~melangeOutputDir,
+      ~globalEnvValues,
+      ~generatedFilesSuffix,
+    );
+
+  renderedPages
+  ->Promise.map(renderedPages => {
       let () = compileRescript(~compileCommand, ~logger);
-      let () =
-        Webpack.build(
-          ~mode,
-          ~outputDir,
-          ~logger,
-          ~webpackBundleAnalyzerMode,
-          ~minimizer,
-          ~globalEnvValues,
-          ~webpackPages,
-        );
-      ();
+
+      switch (Bundler.bundler) {
+      | Esbuild =>
+        let () =
+          Esbuild.build(~outputDir, ~globalEnvValues, ~renderedPages)->ignore;
+        ();
+      | Webpack =>
+        let () =
+          Webpack.build(
+            ~mode,
+            ~outputDir,
+            ~logger,
+            ~webpackBundleAnalyzerMode,
+            ~minimizer,
+            ~globalEnvValues,
+            ~renderedPages,
+          );
+        ();
+      };
     })
   ->ignore;
 };
@@ -104,25 +158,23 @@ let start =
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
+      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let logger = Log.makeLogger(logLevel);
-
-  let webpackPages =
-    BuildPageWorkerHelpers.buildPagesWithWorkers(
+  let (logger, renderedPages) =
+    initializeAndBuildPages(
+      ~logLevel,
+      ~buildWorkersCount,
       ~pages,
       ~outputDir,
       ~melangeOutputDir,
-      ~logger,
       ~globalEnvValues,
-      ~buildWorkersCount,
-      ~exitOnPageBuildError=true,
-      ~generatedFilesSuffix="",
+      ~generatedFilesSuffix,
     );
 
-  webpackPages
-  ->Promise.map(webpackPages => {
+  renderedPages
+  ->Promise.map(renderedPages => {
       let () =
         Webpack.startDevServer(
           ~devServerOptions,
@@ -132,7 +184,7 @@ let start =
           ~outputDir,
           ~minimizer,
           ~globalEnvValues,
-          ~webpackPages,
+          ~renderedPages,
         );
       ();
     })

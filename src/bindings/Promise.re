@@ -1,9 +1,18 @@
+include Js.Promise;
+
 [@send]
 external map: (Js.Promise.t('a), 'a => 'b) => Js.Promise.t('b) = "then";
 
-let bind = (callback, promise) => Js.Promise.then_(promise, callback);
+[@send]
+external flatMap:
+  (Js.Promise.t('a), 'a => Js.Promise.t('b)) => Js.Promise.t('b) =
+  "then";
 
-let catch = (callback, promise) => Js.Promise.catch(promise, callback);
+[@send]
+external catch:
+  (Js.Promise.t('a), Js.Promise.error => Js.Promise.t('b)) =>
+  Js.Promise.t('b) =
+  "catch";
 
 let seqRun = (functions: array(unit => Js.Promise.t('a))) => {
   Js.Array2.reduce(
@@ -11,7 +20,11 @@ let seqRun = (functions: array(unit => Js.Promise.t('a))) => {
     (acc, func) => {
       switch (acc) {
       | [] => [func()]
-      | [promise, ...rest] => [promise->bind(_ => func()), promise, ...rest]
+      | [promise, ...rest] => [
+          promise->flatMap(_ => func()),
+          promise,
+          ...rest,
+        ]
       }
     },
     [],
@@ -20,7 +33,45 @@ let seqRun = (functions: array(unit => Js.Promise.t('a))) => {
   ->Js.Promise.all;
 };
 
-let toResult = promise =>
-  promise
-  ->map(value => Belt.Result.Ok(value))
-  ->catch(error => Belt.Result.Error(error)->Js.Promise.resolve);
+module Result = {
+  let catch =
+      (promise, ~context: string)
+      : Js.Promise.t(Belt.Result.t('ok, (string, Js.Promise.error))) =>
+    promise
+    ->map(value => Belt.Result.Ok(value))
+    ->catch(error => Belt.Result.Error((context, error))->Js.Promise.resolve);
+
+  let all = (promises: Js.Promise.t(array(Belt.Result.t('ok, 'error)))) =>
+    promises->map(promises => {
+      let (oks, errors) =
+        promises->Js.Array2.reduce(
+          ((oks, errors), result) =>
+            switch (result) {
+            | Ok(ok) => (Js.Array2.concat([|ok|], oks), errors)
+            | Error(error) => (oks, Js.Array2.concat([|error|], errors))
+            },
+          ([||], [||]),
+        );
+
+      switch (errors) {
+      | [||] => Ok(oks)
+      | _ => Error(errors)
+      };
+    });
+
+  let map =
+      (promise: Js.Promise.t(Belt.Result.t('a, 'error)), func: 'a => 'b) =>
+    promise->map(result => result->Belt.Result.map(func));
+
+  let flatMap =
+      (
+        promise: Js.Promise.t(Belt.Result.t('a, 'error)),
+        func: 'a => Js.Promise.t('b),
+      ) =>
+    promise->flatMap(result =>
+      switch (result) {
+      | Ok(ok) => func(ok)
+      | Error(error) => Js.Promise.resolve(Error(error))
+      }
+    );
+};

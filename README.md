@@ -49,11 +49,15 @@ let currentDir = RescriptSsg.Utils.getDirname()
 let outputDir = RescriptSsg.Path.join2(currentDir, "../build")
 
 let index: RescriptSsg.PageBuilder.page = {
+  hydrationMode: FullHydration,
   pageWrapper: None,
   component: ComponentWithoutData(<Index />),
   modulePath: Index.modulePath,
   headCssFilepaths: [],
   path: Root,
+  globalValues:⋅None,
+  headScripts:⋅[],
+  bodyScripts:⋅[]
 }
 
 let pages = [index]
@@ -70,6 +74,10 @@ let () = RescriptSsg.Commands.build(
   ~logLevel=Info,
   ~compileCommand=Path.join2(currentDir, "../node_modules/.bin/rescript"),
   ~pages=Pages.pages,
+  ~webpackBundleAnalyzerMode=Some(Static({reportHtmlFilepath:⋅"webpack-bundle/index.html"})),
+  ~minimizer=Terser,
+  ~globalEnvValues=[],
+  ~buildWorkersCount=32
   (),
 )
 ```
@@ -80,6 +88,8 @@ let () = RescriptSsg.Commands.build(
 let () = RescriptSsg.Commands.start(
   ~devServerOptions={listenTo: Port(9000), proxy: None},
   ~mode=Development,
+  ~globalEnvValues=Pages.globalEnvValues,
+  ~webpackBundleAnalyzerMode=None,
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
   ~pages=Pages.pages,

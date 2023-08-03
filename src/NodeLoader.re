@@ -12,15 +12,9 @@ let isBsArtifact = fileUrl => {
   Js.String2.match(fileUrl, bsArtifactRegex) != None;
 };
 
-let assetRegex = [%re
-  {|/\.(css|jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json|mp4)$/i|}
-];
-
 let isAsset = fileUrl => {
-  Js.String2.match(fileUrl, assetRegex) != None;
+  Js.String2.match(fileUrl, Bundler.assetRegex) != None;
 };
-
-let webpackAssetsDir = "assets";
 
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
 let getFinalHashedAssetPath =
@@ -29,46 +23,69 @@ let getFinalHashedAssetPath =
 
   filePath
   ->Fs.Promises.readFileAsBuffer
-  ->Promise.map(fileData => {
-      switch (fileData) {
-      | Error(error) =>
-        Js.Console.error2(
-          "[getFinalHashedAssetPath] Error reading file: ",
-          error,
-        );
-        Process.exit(1);
-      | Ok(fileData) =>
-        let processedFileData =
-          switch (processFileData) {
-          | None => fileData
-          | Some(func) => func(fileData)
-          };
+  ->Promise.catch(error => {
+      Js.Console.error2(
+        "[NodeLoader.getFinalHashedAssetPath] [Fs.Promises.readFileAsBuffer] Error:",
+        error,
+      );
+      Process.exit(1);
+    })
+  ->Promise.flatMap(fileData => {
+      let processedFileData =
+        switch (processFileData) {
+        | None => fileData
+        | Some(func) => func(fileData)
+        };
 
-        let fileHash = Crypto.Hash.bufferToHash(processedFileData);
+      let fileName = Path.basename(url);
 
-        let fileName = Path.basename(url);
+      let fileExt = Path.extname(fileName);
 
-        let fileExt = Path.extname(fileName);
+      let filenameWithoutExt = fileName->Js.String2.replace(fileExt, "");
 
-        let filenameWithoutExt = fileName->Js.String2.replace(fileExt, "");
+      let filenameWithHash =
+        switch (Bundler.bundler) {
+        | Webpack =>
+          let fileHash = Crypto.Hash.bufferToHash(processedFileData);
+          Promise.resolve(filenameWithoutExt ++ "." ++ fileHash ++ fileExt);
+        | Esbuild =>
+          // cat-FU5UU3XL.jpeg
+          Esbuild.getFileHash(processedFileData)
+          ->Promise.map(fileHash => {
+              filenameWithoutExt ++ "-" ++ fileHash ++ fileExt
+            })
+          ->Promise.catch(error => {
+              Js.Console.error2(
+                "[NodeLoader.getFinalHashedAssetPath] [Esbuild.getFileHash] Error:",
+                error,
+              );
+              Process.exit(1);
+            })
+        };
 
-        let filenameWithHash = {j|$(filenameWithoutExt).$(fileHash)$(fileExt)|j};
-
+      filenameWithHash->Promise.map(filenameWithHash => {
         let assetPath =
           switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
           | false =>
             let assetsDir =
-              Path.join2(EnvParams.assetPrefix, webpackAssetsDir);
+              Path.join2(EnvParams.assetPrefix, Bundler.assetsDirname);
             Path.join2(assetsDir, filenameWithHash);
           | true =>
-            let assetsDir = EnvParams.assetPrefix ++ "/" ++ webpackAssetsDir;
+            let assetsDir =
+              EnvParams.assetPrefix ++ "/" ++ Bundler.assetsDirname;
             assetsDir ++ "/" ++ filenameWithHash;
           };
 
         let assetPath = Utils.maybeAddSlashPrefix(assetPath);
-
         assetPath;
-      }
+      });
+    })
+  ->Promise.catch(error => {
+      Js.Console.error2(
+        "[NodeLoader.getFinalHashedAssetPath] Unexpected promise rejection:",
+        error,
+      );
+      Process.exit(1);
     });
 };
 
@@ -81,7 +98,6 @@ let processAsset =
       {
         "format": "module",
         "source": makeAssetSource(webpackAssetPath),
-        // shortCircuit is needed since node v16.17.0
         "shortCircuit": true,
       }
     );

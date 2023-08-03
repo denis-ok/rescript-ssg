@@ -1,6 +1,4 @@
-import * as NodeLoader from "../NodeLoader.bs.js"
-
-const nodeVersion = NodeLoader.nodeVersionToInt(process.version)
+import * as NodeLoader from "../NodeLoader.bs.js";
 
 export async function load(url, context, nextLoad) {
   if (NodeLoader.isBsArtifact(url)) {
@@ -10,16 +8,11 @@ export async function load(url, context, nextLoad) {
     // ^^^^^^
     // SyntaxError: Cannot use import statement outside a module
     // We force NodeJS to load bs-artifacts as es6 modules
-    const format = "module"
-    return nextLoad(url, { format })
+    const format = "module";
+    return nextLoad(url, { format });
   } else if (NodeLoader.isAsset(url)) {
-    return NodeLoader.processAsset(url, undefined)
+    return NodeLoader.processAsset(url, undefined);
   } else {
-    // Defer to Node.js for all other URLs.
-    if (nodeVersion >= 16170) {
-      return nextLoad(url)
-    } else {
-      return nextLoad(url, context, nextLoad)
-    }
+    return nextLoad(url);
   }
 }

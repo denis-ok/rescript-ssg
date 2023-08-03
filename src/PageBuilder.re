@@ -137,8 +137,8 @@ switch ReactDOM.querySelector("#root") {
 
 let dataPropName = "data";
 
-let getIntermediateFilesOutputDir = (~outputDir) =>
-  Path.join2(outputDir, "temp");
+let getArtifactsOutputDir = (~outputDir) =>
+  Path.join2(outputDir, "artifacts");
 
 let pagePathToPageAppModuleName =
     (~generatedFilesSuffix, ~pagePath, ~moduleName) => {
@@ -422,27 +422,27 @@ let buildPageHtmlAndReactApp =
       ~generatedFilesSuffix: string,
       page: page,
     ) => {
-  let intermediateFilesOutputDir = getIntermediateFilesOutputDir(~outputDir);
+  let artifactsOutputDir = getArtifactsOutputDir(~outputDir);
 
   let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
 
   let pagePath: string = page.path->PageBuilderT.PagePath.toString;
 
-  let pageOutputDir = Path.join2(intermediateFilesOutputDir, pagePath);
+  let pageOutputDir = Path.join2(artifactsOutputDir, pagePath);
 
   // Melange emits compiled JS files to a separate dir (not next to Reason files).
-  // We need to handle it to build correct relative paths to webpack entries and to prop data files.
+  // We need to handle it to build correct relative paths to entry files and to prop data files.
   let melangePageOutputDir =
     switch (melangeOutputDir) {
     | None => None
     | Some(melangeOutputDir) =>
-      let melangeIntermediateFilesOutputDir =
-        getIntermediateFilesOutputDir(~outputDir=melangeOutputDir);
-      Some(Path.join2(melangeIntermediateFilesOutputDir, pagePath));
+      let melangeArtifactsOutputDir =
+        getArtifactsOutputDir(~outputDir=melangeOutputDir);
+      Some(Path.join2(melangeArtifactsOutputDir, pagePath));
     };
 
   let pageWrappersDataDir =
-    Path.join2(intermediateFilesOutputDir, pageWrappersDataDirname);
+    Path.join2(artifactsOutputDir, pageWrappersDataDirname);
 
   logger.debug(() =>
     Js.log(
@@ -456,10 +456,6 @@ let buildPageHtmlAndReactApp =
       pageOutputDir,
     )
   );
-
-  let () = Fs.mkDirSync(pageOutputDir, {recursive: true});
-
-  let () = Fs.mkDirSync(pageWrappersDataDir, {recursive: true});
 
   let {element, elementString, pageDataProp, pageWrapperDataProp} =
     processPageComponentWithWrapper(
@@ -507,88 +503,90 @@ let buildPageHtmlAndReactApp =
 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
 
-  let () = {
-    let reactAppFilename = pageAppModuleName ++ ".res";
-    Fs.writeFileSync(~path=resultHtmlPath, ~data=resultHtml);
-    Fs.writeFileSync(
-      ~path=Path.join2(pageOutputDir, reactAppFilename),
-      ~data=resultReactApp,
-    );
-  };
+  let mkDirPromises =
+    [|
+      Fs.Promises.mkDir(pageOutputDir, {recursive: true})
+      ->Promise.Result.catch(
+          ~context=
+            "[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageOutputDir)]",
+        ),
+      Fs.Promises.mkDir(pageWrappersDataDir, {recursive: true})
+      ->Promise.Result.catch(
+          ~context=
+            "[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageWrappersDataDir)]",
+        ),
+    |]
+    ->Promise.all
+    ->Promise.Result.all;
 
-  let () =
-    [|pageWrapperDataProp, pageDataProp|]
-    ->Js.Array2.forEach(data =>
-        switch (data) {
-        | None => ()
-        | Some({jsDataFileContent, jsDataFilepath, _}) =>
-          Fs.writeFileSync(~path=jsDataFilepath, ~data=jsDataFileContent)
-        }
-      );
+  let writeFilePromises =
+    mkDirPromises->Promise.Result.flatMap(_createdDirs => {
+      let reactAppFilename = pageAppModuleName ++ ".res";
 
-  logger.debug(() =>
-    Js.log2(
-      "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
-      moduleName,
-    )
-  );
+      let resultHtmlFilePromise =
+        Fs.Promises.writeFile(~path=resultHtmlPath, ~data=resultHtml)
+        ->Promise.Result.catch(
+            ~context=
+              "[PageBuilder.buildPageHtmlAndReactApp] [resultHtmlFilePromise]",
+          );
 
-  let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
+      let resultReactAppFilePromise =
+        Fs.Promises.writeFile(
+          ~path=Path.join2(pageOutputDir, reactAppFilename),
+          ~data=resultReactApp,
+        )
+        ->Promise.Result.catch(
+            ~context=
+              "[PageBuilder.buildPageHtmlAndReactApp] [resultReactAppFilePromise]",
+          );
 
-  let webpackPage: Webpack.page = {
-    path: page.path,
-    entryPath:
-      Path.join2(
-        melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
-        compiledReactAppFilename,
-      ),
-    outputDir: pageOutputDir,
-    htmlTemplatePath: resultHtmlPath,
-  };
+      let jsFilesPromises =
+        [|pageWrapperDataProp, pageDataProp|]
+        ->Js.Array2.map(data =>
+            switch (data) {
+            | None => Promise.resolve(Belt.Result.Ok())
+            | Some({jsDataFileContent, jsDataFilepath, _}) =>
+              Fs.Promises.writeFile(
+                ~path=jsDataFilepath,
+                ~data=jsDataFileContent,
+              )
+              ->Promise.Result.catch(
+                  ~context=
+                    "[PageBuilder.buildPageHtmlAndReactApp] [jsFilesPromises]",
+                )
+            }
+          );
 
-  webpackPage;
-};
+      let promises =
+        Js.Array2.concat(
+          [|resultHtmlFilePromise, resultReactAppFilePromise|],
+          jsFilesPromises,
+        );
 
-let checkPageDuplicates = (pages: array(page)) => {
-  let pagesDict = Js.Dict.empty();
-
-  pages->Js.Array2.forEach(page => {
-    let pagePath = PageBuilderT.PagePath.toString(page.path);
-    switch (pagesDict->Js.Dict.get(pagePath)) {
-    | None => pagesDict->Js.Dict.set(pagePath, page)
-    | Some(_) =>
-      Js.Console.error2(
-        "[PageBuilder.buildPages] List of pages contains pages with the same paths. Duplicated page path: ",
-        pagePath,
-      );
-      Process.exit(1);
-    };
-  });
-};
-
-let buildPages =
-    (
-      ~outputDir,
-      ~melangeOutputDir: option(string),
-      ~logger: Log.logger,
-      pages: array(page),
-    ) => {
-  checkPageDuplicates(pages);
-
-  let durationLabel = "[PageBuilder.buildPages] duration";
-  Js.Console.timeStart(durationLabel);
-
-  logger.info(() => Js.log("[PageBuilder.buildPages] Building pages..."));
-
-  let webpackPages =
-    pages->Js.Array2.map(page => {
-      buildPageHtmlAndReactApp(~outputDir, ~melangeOutputDir, ~logger, page)
+      promises->Promise.all->Promise.Result.all;
     });
 
-  logger.info(() => {
-    Js.log("[PageBuilder.buildPages] Pages build finished successfully!");
-    Js.Console.timeEnd(durationLabel);
-  });
+  writeFilePromises->Promise.Result.map(_createdFiles => {
+    let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
 
-  webpackPages;
+    let renderedPage: RenderedPage.t = {
+      path: page.path,
+      entryPath:
+        Path.join2(
+          melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
+          compiledReactAppFilename,
+        ),
+      outputDir: pageOutputDir,
+      htmlTemplatePath: resultHtmlPath,
+    };
+
+    logger.debug(() =>
+      Js.log2(
+        "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
+        moduleName,
+      )
+    );
+
+    renderedPage;
+  });
 };

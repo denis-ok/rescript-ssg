@@ -119,7 +119,7 @@ let buildPagesWithWorkers =
               page,
             )
           )
-        ->Js.Promise.all
+        ->Promise.all
       )
     ->Promise.seqRun
     ->Promise.map(results => {
@@ -127,10 +127,10 @@ let buildPagesWithWorkers =
         Array.flat1(results);
       });
 
-  results->Promise.map(webpackPages =>
-    webpackPages->Belt.Array.keepMap(result => {
+  results->Promise.map(renderedPages =>
+    renderedPages->Belt.Array.keepMap(result => {
       switch (result) {
-      | Ok(webpackPage) => Some(webpackPage)
+      | Ok(renderedPage) => Some(renderedPage)
       | Error(path) =>
         Js.Console.error2(
           "[Commands.buildPagesWithWorkers] One of the pages failed to build:",
