@@ -128,7 +128,13 @@ let build =
       switch (Bundler.bundler) {
       | Esbuild =>
         let () =
-          Esbuild.build(~outputDir, ~projectRootDir, ~globalEnvValues, ~renderedPages)->ignore;
+          Esbuild.build(
+            ~outputDir,
+            ~projectRootDir,
+            ~globalEnvValues,
+            ~renderedPages,
+          )
+          ->ignore;
         ();
       | Webpack =>
         let () =
