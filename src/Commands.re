@@ -96,6 +96,7 @@ let initializeAndBuildPages =
 let build =
     (
       ~outputDir: string,
+      ~projectRootDir: string,
       ~melangeOutputDir: option(string)=?,
       ~compileCommand: string,
       ~logLevel: Log.level,
@@ -127,7 +128,7 @@ let build =
       switch (Bundler.bundler) {
       | Esbuild =>
         let () =
-          Esbuild.build(~outputDir, ~globalEnvValues, ~renderedPages)->ignore;
+          Esbuild.build(~outputDir, ~projectRootDir, ~globalEnvValues, ~renderedPages)->ignore;
         ();
       | Webpack =>
         let () =

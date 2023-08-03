@@ -6,6 +6,7 @@ let build = (~minimizer) =>
     ~globalEnvValues=Pages.globalEnvValues,
     ~mode=Production,
     ~outputDir=Pages.outputDir,
+    ~projectRootDir=Path.join2(currentDir, "../../../"),
     ~logLevel=Info,
     ~compileCommand=Path.join2(currentDir, "../../../node_modules/.bin/rescript"),
     ~minimizer,
