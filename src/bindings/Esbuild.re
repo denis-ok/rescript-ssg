@@ -101,7 +101,10 @@ let build =
       )
     })
   ->Promise.catch(error => {
-      Js.Console.error2("[Esbuild.build] Promise.catch:", error);
+      Js.Console.error2(
+        "[Esbuild.build] Build failed! Promise.catch:",
+        error->Util.inspect,
+      );
       Process.exit(1);
     });
 };

@@ -26,7 +26,7 @@ let getFinalHashedAssetPath =
   ->Promise.catch(error => {
       Js.Console.error2(
         "[NodeLoader.getFinalHashedAssetPath] [Fs.Promises.readFileAsBuffer] Error:",
-        error,
+        error->Util.inspect,
       );
       Process.exit(1);
     })
@@ -57,7 +57,7 @@ let getFinalHashedAssetPath =
           ->Promise.catch(error => {
               Js.Console.error2(
                 "[NodeLoader.getFinalHashedAssetPath] [Esbuild.getFileHash] Error:",
-                error,
+                error->Util.inspect,
               );
               Process.exit(1);
             })
@@ -83,7 +83,7 @@ let getFinalHashedAssetPath =
   ->Promise.catch(error => {
       Js.Console.error2(
         "[NodeLoader.getFinalHashedAssetPath] Unexpected promise rejection:",
-        error,
+        error->Util.inspect,
       );
       Process.exit(1);
     });
