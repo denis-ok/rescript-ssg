@@ -29,7 +29,8 @@ module HtmlPlugin = {
 
 let makeConfig =
     (
-      ~outputDir,
+      ~outputDir: string,
+      ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
     ) =>
@@ -58,16 +59,15 @@ let makeConfig =
       let htmlPluginFiles =
         renderedPages->Js.Array2.map(renderedPage => {
           let pagePath = renderedPage.path->PageBuilderT.PagePath.toString;
+
+          // entryPoint must be relative path to the root of user's project
+          let entryPathRelativeToProjectRoot =
+            Path.relative(~from=projectRootDir, ~to_=renderedPage.entryPath);
+
           {
             // filename field, which if actually a path will be relative to "outdir".
             HtmlPlugin.filename: pagePath ++ "/index.html",
-            // entryPoints must be relative paths to the root of rescript-ssg project
-            entryPoints: [|
-              Path.relative(
-                ~from=Bundler.projectRoot,
-                ~to_=renderedPage.entryPath,
-              ),
-            |],
+            entryPoints: [|entryPathRelativeToProjectRoot|],
             htmlTemplate: renderedPage.htmlTemplatePath,
             scriptLoading: "module",
           };
@@ -81,7 +81,8 @@ let makeConfig =
 
 let build =
     (
-      ~outputDir,
+      ~outputDir: string,
+      ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
     ) => {
@@ -89,12 +90,15 @@ let build =
   let durationLabel = "[Esbuild.build] Success! Duration";
   Js.Console.timeStart(durationLabel);
 
-  let config = makeConfig(~outputDir, ~globalEnvValues, ~renderedPages);
+  let config =
+    makeConfig(~outputDir, ~projectRootDir, ~globalEnvValues, ~renderedPages);
 
   esbuild
   ->build(config)
   ->Promise.map(_buildResult => {
-      // let json = Js.Json.stringifyAny(result.metafile)->Belt.Option.getWithDefault("");
+      // let json =
+      //   Js.Json.stringifyAny(_buildResult.metafile)
+      //   ->Belt.Option.getWithDefault("");
       // Fs.writeFileSync(~path=Path.join2(outputDir, "meta.json"), ~data=json);
       Js.Console.timeEnd(
         durationLabel,
