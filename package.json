@@ -34,6 +34,7 @@
     "html-webpack-plugin": "^5.5.3",
     "jsesc": "^3.0.2",
     "mini-css-extract-plugin": "^2.7.6",
+    "terser-webpack-plugin": "^5.3.9",
     "webpack": "^5.88.2",
     "webpack-bundle-analyzer": "^4.9.0",
     "webpack-dev-server": "^4.15.1"
@@ -45,8 +46,7 @@
     "bs-css-emotion": "^5.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-helmet": "^6.1.0",
-    "terser-webpack-plugin": "^5.3.7"
+    "react-helmet": "^6.1.0"
   },
   "devDependencies": {
     "c8": "^7.13.0",
