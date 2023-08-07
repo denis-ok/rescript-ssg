@@ -78,17 +78,25 @@ let build =
   renderedPages
   ->Promise.map(renderedPages => {
       let () = compileRescript(~compileCommand, ~logger);
-      let () =
-        Webpack.build(
-          ~mode,
-          ~outputDir,
-          ~logger,
-          ~webpackBundleAnalyzerMode,
-          ~minimizer,
-          ~globalEnvValues,
-          ~renderedPages,
-        );
-      ();
+
+      switch (Bundler.bundler) {
+      | Esbuild =>
+        let () =
+          Esbuild.build(~outputDir, ~globalEnvValues, ~renderedPages)->ignore;
+        ();
+      | Webpack =>
+        let () =
+          Webpack.build(
+            ~mode,
+            ~outputDir,
+            ~logger,
+            ~webpackBundleAnalyzerMode,
+            ~minimizer,
+            ~globalEnvValues,
+            ~renderedPages,
+          );
+        ();
+      };
     })
   ->ignore;
 };
