@@ -81,15 +81,9 @@ external makeProfilingPlugin: unit => webpackPlugin = "default";
 [@new] [@module "esbuild-loader"]
 external makeESBuildPlugin: Js.t('a) => webpackPlugin = "EsbuildPlugin";
 
-let getPluginWithGlobalValues = (globalValues: array((string, string))) => {
-  let dict = Js.Dict.empty();
-
-  globalValues->Js.Array2.forEach(((key, value)) => {
-    let value = {j|"$(value)"|j};
-    dict->Js.Dict.set(key, value);
-  });
-
-  definePlugin(dict);
+let getPluginWithGlobalValues =
+    (globalEnvValuesDict: array((string, string))) => {
+  Bundler.getGlobalEnvValuesDict(globalEnvValuesDict)->definePlugin;
 };
 
 module Webpack = {
@@ -227,8 +221,6 @@ module DevServerOptions = {
   };
 };
 
-let getWebpackOutputDir = outputDir => Path.join2(outputDir, "public");
-
 let dynamicPageSegmentPrefix = "dynamic__";
 
 let makeConfig =
@@ -249,11 +241,6 @@ let makeConfig =
       )
     ->Js.Dict.fromArray;
 
-  let assetPrefix =
-    EnvParams.assetPrefix
-    ->Utils.maybeAddSlashPrefix
-    ->Utils.maybeAddSlashSuffix;
-
   let shouldMinimize = mode == Production;
 
   let config = {
@@ -262,12 +249,11 @@ let makeConfig =
     "mode": Mode.toString(mode),
 
     "output": {
-      "path": getWebpackOutputDir(outputDir),
-      "publicPath": assetPrefix,
-      "filename":
-        NodeLoader.webpackAssetsDir ++ "/" ++ "js/[name]_[chunkhash].js",
+      "path": Bundler.getOutputDir(~outputDir),
+      "publicPath": Bundler.assetPrefix,
+      "filename": Bundler.assetsDirname ++ "/" ++ "js/[name]_[chunkhash].js",
       "assetModuleFilename":
-        NodeLoader.webpackAssetsDir ++ "/" ++ "[name].[hash][ext]",
+        Bundler.assetsDirname ++ "/" ++ "[name].[hash][ext]",
       "hashFunction": Crypto.Hash.createMd5,
       "hashDigestLength": Crypto.Hash.digestLength,
       // Clean the output directory before emit.
@@ -281,7 +267,7 @@ let makeConfig =
           "test": [%re {|/\.css$/|}],
           "use": [|MiniCssExtractPlugin.loader, "css-loader"|],
         },
-        {"test": NodeLoader.assetRegex, "type": "asset/resource"}->Obj.magic,
+        {"test": Bundler.assetRegex, "type": "asset/resource"}->Obj.magic,
       |],
     },
 
@@ -311,8 +297,7 @@ let makeConfig =
 
       let miniCssExtractPlugin =
         MiniCssExtractPlugin.make({
-          "filename":
-            NodeLoader.webpackAssetsDir ++ "/" ++ "[name]_[chunkhash].css",
+          "filename": Bundler.assetsDirname ++ "/" ++ "[name]_[chunkhash].css",
         });
 
       let webpackBundleAnalyzerPlugin =
