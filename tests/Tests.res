@@ -79,7 +79,7 @@ module BuildPageHtmlAndReactApp = {
   let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup()
 
-    let _webpackPages: Webpack.page = PageBuilder.buildPageHtmlAndReactApp(
+    let _renderedPages: RenderedPage.t = PageBuilder.buildPageHtmlAndReactApp(
       ~outputDir,
       ~melangeOutputDir=None,
       ~logger,

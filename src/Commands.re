@@ -48,7 +48,8 @@ let build =
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
       ~pages: array(PageBuilder.page),
-      ~webpackBundleAnalyzerMode=None,
+      ~webpackBundleAnalyzerMode:
+         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
       ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
@@ -57,7 +58,7 @@ let build =
     ) => {
   let logger = Log.makeLogger(logLevel);
 
-  let webpackPages =
+  let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~buildWorkersCount,
       ~pages,
@@ -74,8 +75,8 @@ let build =
         },
     );
 
-  webpackPages
-  ->Promise.map(webpackPages => {
+  renderedPages
+  ->Promise.map(renderedPages => {
       let () = compileRescript(~compileCommand, ~logger);
       let () =
         Webpack.build(
@@ -85,7 +86,7 @@ let build =
           ~webpackBundleAnalyzerMode,
           ~minimizer,
           ~globalEnvValues,
-          ~webpackPages,
+          ~renderedPages,
         );
       ();
     })
@@ -109,7 +110,7 @@ let start =
     ) => {
   let logger = Log.makeLogger(logLevel);
 
-  let webpackPages =
+  let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
       ~pages,
       ~outputDir,
@@ -121,8 +122,8 @@ let start =
       ~generatedFilesSuffix="",
     );
 
-  webpackPages
-  ->Promise.map(webpackPages => {
+  renderedPages
+  ->Promise.map(renderedPages => {
       let () =
         Webpack.startDevServer(
           ~devServerOptions,
@@ -132,7 +133,7 @@ let start =
           ~outputDir,
           ~minimizer,
           ~globalEnvValues,
-          ~webpackPages,
+          ~renderedPages,
         );
       ();
     })

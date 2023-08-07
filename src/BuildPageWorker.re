@@ -70,7 +70,7 @@ let pageWrapperModule =
 let importedModules = Js.Promise.all2((pageModule, pageWrapperModule));
 
 type workerOutput =
-  Js.Promise.t(Belt.Result.t(Webpack.page, PageBuilderT.PagePath.t));
+  Js.Promise.t(Belt.Result.t(RenderedPage.t, PageBuilderT.PagePath.t));
 
 let workerOutput: workerOutput =
   importedModules
@@ -144,7 +144,7 @@ let workerOutput: workerOutput =
         newPage,
       );
     })
-  ->Promise.map((webpackPage: Webpack.page) => {
+  ->Promise.map((webpackPage: RenderedPage.t) => {
       logger.info(() => Js.Console.timeEnd(successText));
       let result = Belt.Result.Ok(webpackPage);
       parentPort->WorkerThreads.postMessage(result);
