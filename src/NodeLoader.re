@@ -16,6 +16,13 @@ let isAsset = fileUrl => {
   Js.String2.match(fileUrl, Bundler.assetRegex) != None;
 };
 
+let getEsbuildFileHash = (buffer: Buffer.t) => {
+  HashWasm.createXXHash64AndReturnBinaryDigest(buffer)
+  ->Promise.map(buffer => {
+      Base32Encode.base32Encode(buffer)->Js.String2.slice(~from=0, ~to_=8)
+    });
+};
+
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
 let getFinalHashedAssetPath =
     (url: string, processFileData: option(Buffer.t => Buffer.t)) => {
@@ -53,7 +60,7 @@ let getFinalHashedAssetPath =
             );
           | Esbuild =>
             // cat-FU5UU3XL.jpeg
-            Esbuild.getFileHash(processedFileData)
+            getEsbuildFileHash(processedFileData)
             ->Promise.map(fileHash =>
                 filenameWithoutExt ++ "-" ++ fileHash ++ fileExt
               )
