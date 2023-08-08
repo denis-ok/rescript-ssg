@@ -29,7 +29,7 @@ let getFinalHashedAssetPath =
 
   filePath
   ->Fs.Promises.readFileAsBuffer
-  ->Promise.map(fileData => {
+  ->Promise.bind(fileData => {
       switch (fileData) {
       | Error(error) =>
         Js.Console.error2(
@@ -52,22 +52,27 @@ let getFinalHashedAssetPath =
 
         let filenameWithoutExt = fileName->Js.String2.replace(fileExt, "");
 
-        let filenameWithHash = {j|$(filenameWithoutExt).$(fileHash)$(fileExt)|j};
+        let filenameWithHash =
+          Js.Promise.resolve(
+            filenameWithoutExt ++ "." ++ fileHash ++ fileExt,
+          );
 
-        let assetPath =
-          switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
-          | false =>
-            let assetsDir =
-              Path.join2(EnvParams.assetPrefix, webpackAssetsDir);
-            Path.join2(assetsDir, filenameWithHash);
-          | true =>
-            let assetsDir = EnvParams.assetPrefix ++ "/" ++ webpackAssetsDir;
-            assetsDir ++ "/" ++ filenameWithHash;
-          };
+        filenameWithHash->Promise.map(filenameWithHash => {
+          let assetPath =
+            switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
+            | false =>
+              let assetsDir =
+                Path.join2(EnvParams.assetPrefix, webpackAssetsDir);
+              Path.join2(assetsDir, filenameWithHash);
+            | true =>
+              let assetsDir = EnvParams.assetPrefix ++ "/" ++ webpackAssetsDir;
+              assetsDir ++ "/" ++ filenameWithHash;
+            };
 
-        let assetPath = Utils.maybeAddSlashPrefix(assetPath);
+          let assetPath = Utils.maybeAddSlashPrefix(assetPath);
 
-        assetPath;
+          assetPath;
+        });
       }
     });
 };
