@@ -12,15 +12,9 @@ let isBsArtifact = fileUrl => {
   Js.String2.match(fileUrl, bsArtifactRegex) != None;
 };
 
-let assetRegex = [%re
-  {|/\.(css|jpg|jpeg|png|gif|svg|ico|avif|webp|woff|woff2|json|mp4)$/i|}
-];
-
 let isAsset = fileUrl => {
-  Js.String2.match(fileUrl, assetRegex) != None;
+  Js.String2.match(fileUrl, Bundler.assetRegex) != None;
 };
-
-let webpackAssetsDir = "assets";
 
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
 let getFinalHashedAssetPath =
@@ -62,15 +56,15 @@ let getFinalHashedAssetPath =
             switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
             | false =>
               let assetsDir =
-                Path.join2(EnvParams.assetPrefix, webpackAssetsDir);
+                Path.join2(EnvParams.assetPrefix, Bundler.assetsDirname);
               Path.join2(assetsDir, filenameWithHash);
             | true =>
-              let assetsDir = EnvParams.assetPrefix ++ "/" ++ webpackAssetsDir;
+              let assetsDir =
+                EnvParams.assetPrefix ++ "/" ++ Bundler.assetsDirname;
               assetsDir ++ "/" ++ filenameWithHash;
             };
 
           let assetPath = Utils.maybeAddSlashPrefix(assetPath);
-
           assetPath;
         });
       }
