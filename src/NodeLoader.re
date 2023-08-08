@@ -24,8 +24,7 @@ let getEsbuildFileHash = (buffer: Buffer.t) => {
 };
 
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
-let getFinalHashedAssetPath =
-    (url: string, processFileData: option(Buffer.t => Buffer.t)) => {
+let getFinalHashedAssetPath = (url: string) => {
   let filePath = url->Js.String2.replace("file://", "");
 
   filePath
@@ -39,12 +38,6 @@ let getFinalHashedAssetPath =
         );
         Process.exit(1);
       | Ok(fileData) =>
-        let processedFileData =
-          switch (processFileData) {
-          | None => fileData
-          | Some(func) => func(fileData)
-          };
-
         let fileName = Path.basename(url);
 
         let fileExt = Path.extname(fileName);
@@ -54,13 +47,13 @@ let getFinalHashedAssetPath =
         let filenameWithHash =
           switch (Bundler.bundler) {
           | Webpack =>
-            let fileHash = Crypto.Hash.bufferToHash(processedFileData);
+            let fileHash = Crypto.Hash.bufferToHash(fileData);
             Js.Promise.resolve(
               filenameWithoutExt ++ "." ++ fileHash ++ fileExt,
             );
           | Esbuild =>
             // cat-FU5UU3XL.jpeg
-            getEsbuildFileHash(processedFileData)
+            getEsbuildFileHash(fileData)
             ->Promise.map(fileHash =>
                 filenameWithoutExt ++ "-" ++ fileHash ++ fileExt
               )
@@ -88,9 +81,8 @@ let getFinalHashedAssetPath =
 
 let makeAssetSource = (webpackAssetPath: string) => {j|export default "$(webpackAssetPath)"|j};
 
-let processAsset =
-    (url: string, processFileData: option(Buffer.t => Buffer.t)) => {
-  getFinalHashedAssetPath(url, processFileData)
+let processAsset = (url: string) => {
+  getFinalHashedAssetPath(url)
   ->Promise.map(webpackAssetPath =>
       {
         "format": "module",
