@@ -25,7 +25,7 @@ external createXXHash64: unit => Promise.t(hasher) = "createXXHash64";
 
 let createXXHash64AndReturnBinaryDigest = (buffer: Buffer.t) => {
   createXXHash64()
-  ->Promise.map(hasher => hasher.init(.))
-  ->Promise.map(hasher => hasher.update(. buffer))
-  ->Promise.map(hasher => hasher.digest(. "binary"));
+  ->Promise.map(hasher =>
+      hasher.init(.).update(. buffer).digest(. "binary")
+    );
 };
