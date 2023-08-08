@@ -17,7 +17,7 @@ let isAsset = fileUrl => {
 };
 
 let getEsbuildFileHash = (buffer: Buffer.t) => {
-  HashWasm.createXXHash64AndReturnBinaryDigest(buffer)
+  HashWasm.createXXHash64AndReturnBinaryDigest(. buffer)
   ->Promise.map(buffer => {
       Base32Encode.base32Encode(buffer)->Js.String2.slice(~from=0, ~to_=8)
     });

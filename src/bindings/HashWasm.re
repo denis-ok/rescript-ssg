@@ -25,7 +25,7 @@ external createXXHash64:
   (~seedLow: option(int), ~seedHigh: option(int)) => Js.Promise.t(hasher) =
   "createXXHash64";
 
-let createXXHash64AndReturnBinaryDigest = (buffer: Buffer.t) => {
+let createXXHash64AndReturnBinaryDigest = (. buffer: Buffer.t) => {
   createXXHash64(~seedLow=None, ~seedHigh=None)
   ->Promise.map(hasher => hasher.init())
   ->Promise.map(hasher => hasher.update(buffer))
