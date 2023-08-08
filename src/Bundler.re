@@ -43,10 +43,6 @@ let assetRegex = {
   Js.Re.fromStringWithFlags(regex, ~flags="i");
 };
 
-let dirname = Utils.getDirname();
-
-let projectRoot = Path.join2(dirname, "..");
-
 let getGlobalEnvValuesDict = (globalEnvValues: array((string, string))) => {
   let dict = Js.Dict.empty();
 

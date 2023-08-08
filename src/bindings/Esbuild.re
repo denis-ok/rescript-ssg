@@ -112,18 +112,3 @@ let build =
       Process.exit(1);
     });
 };
-
-// Getting a hash of the file contents the same way as it implemented in esbuild.
-// 1. Calc xxhash64 from binary data and return digest as binary data.
-// Source: https://github.com/evanw/esbuild/blob/main/internal/bundler/bundler.go#L2191-L2195
-// 2. Encode binary data to base32.
-// Source: https://github.com/evanw/esbuild/blob/main/internal/bundler/bundler.go#L1084-L1086
-// Side note: the author of esbuild doesn't want to export hash function to use it from js.
-// Maybe it makes sense to raise this question again.
-// Source: https://github.com/evanw/esbuild/issues/3113#issuecomment-1542394482
-let getFileHash = (buffer: Buffer.t) => {
-  HashWasm.createXXHash64AndReturnBinaryDigest(buffer)
-  ->Promise.map(buffer => {
-      Base32Encode.base32Encode(buffer)->Js.String2.slice(~from=0, ~to_=8)
-    });
-};
