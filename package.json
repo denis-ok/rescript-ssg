@@ -28,7 +28,7 @@
     "chokidar": "^3.5.3",
     "css-loader": "^6.8.1",
     "dependency-tree": "^10.0.9",
-    "esbuild": "^0.18.19",
+    "esbuild": "^0.18.20",
     "esbuild-loader": "^3.1.0",
     "hash-wasm": "^4.9.0",
     "html-webpack-plugin": "^5.5.3",
