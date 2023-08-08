@@ -13,21 +13,19 @@
 // }
 
 type hasher = {
-  init: unit => hasher,
-  update: Buffer.t => hasher,
-  digest: string => Buffer.t,
-  save: unit => Buffer.t,
-  load: Buffer.t => hasher,
+  init: (. unit) => hasher,
+  update: (. Buffer.t) => hasher,
+  digest: (. string) => Buffer.t,
+  save: (. unit) => Buffer.t,
+  load: (. Buffer.t) => hasher,
 };
 
 [@module "hash-wasm"]
-external createXXHash64:
-  (~seedLow: option(int), ~seedHigh: option(int)) => Promise.t(hasher) =
-  "createXXHash64";
+external createXXHash64: unit => Promise.t(hasher) = "createXXHash64";
 
 let createXXHash64AndReturnBinaryDigest = (buffer: Buffer.t) => {
-  createXXHash64(~seedLow=None, ~seedHigh=None)
-  ->Promise.map(hasher => hasher.init())
-  ->Promise.map(hasher => hasher.update(buffer))
-  ->Promise.map(hasher => hasher.digest("binary"));
+  createXXHash64()
+  ->Promise.map(hasher =>
+      hasher.init(.).update(. buffer).digest(. "binary")
+    );
 };

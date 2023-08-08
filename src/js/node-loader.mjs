@@ -11,7 +11,7 @@ export async function load(url, context, nextLoad) {
     const format = "module";
     return nextLoad(url, { format });
   } else if (NodeLoader.isAsset(url)) {
-    return NodeLoader.processAsset(url, undefined);
+    return NodeLoader.processAsset(url);
   } else {
     return nextLoad(url);
   }
