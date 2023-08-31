@@ -257,13 +257,22 @@ let makeProcessedDataProp =
       ~data: 'a,
       ~pageDataType: PageData.t,
       ~moduleName: string,
-      ~pageOutputDir,
+      ~pageOutputDir: string,
+      ~melangePageOutputDir: option(string),
       ~pageWrappersDataDir,
     )
     : processedDataProp => {
   let relativePathToDataDir =
     switch (pageDataType) {
-    | PageData => "."
+    | PageData =>
+      switch (melangePageOutputDir) {
+      | None => "."
+      | Some(melangePageOutputDir) =>
+        let relativePath =
+          Path.relative(~from=melangePageOutputDir, ~to_=pageOutputDir);
+        relativePath;
+      }
+
     | PageWrapperData =>
       let relativePath =
         Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir);
@@ -304,6 +313,7 @@ let processPageComponentWithWrapper =
       ~pageWrapper: option(pageWrapper),
       ~pageModuleName: string,
       ~pageOutputDir: string,
+      ~melangePageOutputDir: option(string),
       ~pageWrappersDataDir: string,
     )
     : processedPage => {
@@ -335,6 +345,7 @@ let processPageComponentWithWrapper =
           ~data,
           ~moduleName=pageModuleName,
           ~pageOutputDir,
+          ~melangePageOutputDir,
           ~pageWrappersDataDir,
         );
 
@@ -388,6 +399,7 @@ let processPageComponentWithWrapper =
           ~data,
           ~moduleName=wrapperModuleName,
           ~pageOutputDir,
+          ~melangePageOutputDir,
           ~pageWrappersDataDir,
         );
 
@@ -449,8 +461,8 @@ let buildPageHtmlAndReactApp =
       ~pageComponent=page.component,
       ~pageWrapper=page.pageWrapper,
       ~pageModuleName=moduleName,
-      ~pageOutputDir=
-        melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
+      ~pageOutputDir,
+      ~melangePageOutputDir,
       ~pageWrappersDataDir,
     );
 
