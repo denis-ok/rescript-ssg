@@ -48,7 +48,7 @@ let makeConfig =
     "metafile": true,
     "splitting": true,
     "treeShaking": true,
-    "logLevel": "error",
+    "logLevel": "warning",
     "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
     "loader": {
       Bundler.assetFileExtensionsWithoutCss
