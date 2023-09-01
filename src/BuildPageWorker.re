@@ -146,9 +146,7 @@ let workerOutput: workerOutput =
           switch (result) {
           | Ok((renderedPage: RenderedPage.t)) =>
             logger.info(() => Js.Console.timeEnd(successText));
-            let result = Belt.Result.Ok(renderedPage);
-            parentPort->WorkerThreads.postMessage(result);
-            result;
+            Belt.Result.Ok(renderedPage);
           | Error((errors: array((string, Js.Promise.error)))) =>
             logger.info(() => {
               Js.Console.error2(
@@ -157,7 +155,6 @@ let workerOutput: workerOutput =
               )
             });
             let result = Belt.Result.Error(page.path);
-            parentPort->WorkerThreads.postMessage(result);
             result;
           }
         })
@@ -171,8 +168,11 @@ let workerOutput: workerOutput =
             )
           });
           let result = Belt.Result.Error(page.path);
-          parentPort->WorkerThreads.postMessage(result);
           Promise.resolve(result);
         });
     })
-  ->Promise.all;
+  ->Promise.all
+  ->Promise.map(pages => {
+      parentPort->WorkerThreads.postMessage(pages);
+      pages;
+    });

@@ -127,7 +127,7 @@ let pages = [
   pageWithoutHydration,
 ]
 
-let fakeExtralanguages = ["es", "de", "th"]
+let fakeExtralanguages = ["es"]
 
 let localizedPages = fakeExtralanguages->Js.Array2.map(language =>
   pages->Js.Array2.map(page => {
