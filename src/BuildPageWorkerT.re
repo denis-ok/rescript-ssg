@@ -33,7 +33,7 @@ type workerData = {
   outputDir: string,
   melangeOutputDir: option(string),
   logLevel: Log.level,
-  page: workerPage,
+  pages: array(workerPage),
   globalEnvValues: array((string, string)),
   generatedFilesSuffix: string,
 };
