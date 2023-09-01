@@ -45,21 +45,22 @@ let runBuildPageWorker =
     ~onExit,
   );
 
-let buildPageWithWorker =
+let buildPagesWithWorker =
     (
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
       ~generatedFilesSuffix: string,
-      page: PageBuilder.page,
+      pages: array(PageBuilder.page),
     ) => {
-  let rebuildPages = mapPageToPageForRebuild(~page);
+  let rebuildPages =
+    pages->Js.Array2.map(page => mapPageToPageForRebuild(~page));
 
   let workerData: BuildPageWorkerT.workerData = {
     outputDir,
     melangeOutputDir,
-    page: rebuildPages,
+    pages: rebuildPages,
     logLevel: logger.logLevel,
     globalEnvValues,
     generatedFilesSuffix,
@@ -74,7 +75,7 @@ let defaultWorkersCount = 16;
 
 let buildPagesWithWorkers =
     (
-      ~pages: array(PageBuilder.page),
+      ~pages: array(array(PageBuilder.page)),
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
@@ -82,7 +83,8 @@ let buildPagesWithWorkers =
       ~buildWorkersCount: option(int),
       ~exitOnPageBuildError: bool,
       ~generatedFilesSuffix: string,
-    ) => {
+    )
+    : Js.Promise.t(array(RenderedPage.t)) => {
   let buildWorkersCount =
     switch (buildWorkersCount) {
     | None =>
@@ -104,22 +106,21 @@ let buildPagesWithWorkers =
   let durationLabel = "[Commands.buildPagesWithWorkers] Build finished. Duration";
   Js.Console.timeStart(durationLabel);
 
+  // let pages = pages->Array.splitIntoChunks(~chunkSize=buildWorkersCount);
+
+  let pagesManualChunks = pages;
+
   let results =
-    pages
-    ->Array.splitIntoChunks(~chunkSize=buildWorkersCount)
-    ->Js.Array2.map((pages, ()) =>
-        pages
-        ->Js.Array2.map(page =>
-            buildPageWithWorker(
-              ~outputDir,
-              ~melangeOutputDir,
-              ~logger,
-              ~globalEnvValues,
-              ~generatedFilesSuffix,
-              page,
-            )
-          )
-        ->Promise.all
+    pagesManualChunks
+    ->Js.Array2.map((pagesChunk, ()) =>
+        buildPagesWithWorker(
+          ~outputDir,
+          ~melangeOutputDir,
+          ~logger,
+          ~globalEnvValues,
+          ~generatedFilesSuffix,
+          pagesChunk,
+        )
       )
     ->Promise.seqRun
     ->Promise.map(results => {

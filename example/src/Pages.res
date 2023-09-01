@@ -127,19 +127,16 @@ let pages = [
   pageWithoutHydration,
 ]
 
-let fakeExtralanguages = ["es"]
+let fakeExtralanguages = ["es", "de", "th"]
 
-let localizedPages =
-  fakeExtralanguages
-  ->Js.Array2.map(language =>
-    pages->Js.Array2.map(page => {
-      ...page,
-      path: switch page.path {
-      | Root => Path([language])
-      | Path(segments) => Path(Js.Array2.concat([language], segments))
-      },
-    })
-  )
-  ->Array.flat1
+let localizedPages = fakeExtralanguages->Js.Array2.map(language =>
+  pages->Js.Array2.map(page => {
+    ...page,
+    path: switch page.path {
+    | Root => Path([language])
+    | Path(segments) => Path(Js.Array2.concat([language], segments))
+    },
+  })
+)
 
-let pages = Js.Array2.concat(pages, localizedPages)
+let pages = Js.Array2.concat([pages], localizedPages)

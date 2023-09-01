@@ -1,19 +1,21 @@
-let checkDuplicatedPagePaths = (pages: array(PageBuilder.page)) => {
+let checkDuplicatedPagePaths = (pages: array(array(PageBuilder.page))) => {
   Js.log("[rescript-ssg] Checking duplicated page paths...");
 
   let pagesDict = Js.Dict.empty();
 
-  pages->Js.Array2.forEach(page => {
-    let pagePath = PageBuilderT.PagePath.toString(page.path);
-    switch (pagesDict->Js.Dict.get(pagePath)) {
-    | None => pagesDict->Js.Dict.set(pagePath, page)
-    | Some(_) =>
-      Js.Console.error2(
-        "[rescript-ssg] List of pages contains pages with the same paths. Duplicated page path:",
-        pagePath,
-      );
-      Process.exit(1);
-    };
+  pages->Js.Array2.forEach(pages' => {
+    pages'->Js.Array2.forEach(page => {
+      let pagePath = PageBuilderT.PagePath.toString(page.path);
+      switch (pagesDict->Js.Dict.get(pagePath)) {
+      | None => pagesDict->Js.Dict.set(pagePath, page)
+      | Some(_) =>
+        Js.Console.error2(
+          "[rescript-ssg] List of pages contains pages with the same paths. Duplicated page path:",
+          pagePath,
+        );
+        Process.exit(1);
+      };
+    })
   });
 };
 
@@ -63,7 +65,7 @@ let initializeAndBuildPages =
     (
       ~logLevel,
       ~buildWorkersCount,
-      ~pages,
+      ~pages: array(array(PageBuilder.page)),
       ~outputDir,
       ~melangeOutputDir,
       ~globalEnvValues,
@@ -101,7 +103,7 @@ let build =
       ~compileCommand: string,
       ~logLevel: Log.level,
       ~mode: Webpack.Mode.t,
-      ~pages: array(PageBuilder.page),
+      ~pages: array(array(PageBuilder.page)),
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
       ~minimizer: Webpack.Minimizer.t=Terser,
@@ -159,7 +161,7 @@ let start =
       ~melangeOutputDir: option(string)=?,
       ~mode: Webpack.Mode.t,
       ~logLevel: Log.level,
-      ~pages: array(PageBuilder.page),
+      ~pages: array(array(PageBuilder.page)),
       ~devServerOptions: Webpack.DevServerOptions.t,
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
