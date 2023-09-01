@@ -50,9 +50,10 @@ let startWatcher =
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int)=?,
-      pages: array(PageBuilder.page),
+      pages: array(array(PageBuilder.page)),
     )
     : unit => {
+  let pages = Array.flat1(pages);
   logger.info(() => Js.log("[Watcher] Starting file watcher..."));
 
   let durationLabel = "[Watcher] Startup duration";
@@ -178,7 +179,8 @@ let startWatcher =
 
       BuildPageWorkerHelpers.buildPagesWithWorkers(
         ~buildWorkersCount,
-        ~pages=pagesToRebuild,
+        // TODO Here we probably should group pages to rebuild by globalValues (one globalValues per worker)
+        ~pages=[|pagesToRebuild|],
         ~outputDir,
         ~melangeOutputDir,
         ~logger,
