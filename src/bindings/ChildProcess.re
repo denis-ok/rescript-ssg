@@ -7,7 +7,7 @@ type spawnSyncOutput = {
   error: Js.Nullable.t(jsError),
 };
 
-[@module "node:child_process"]
+[@bs.module "node:child_process"]
 external spawnSync': (. string, array(string), Js.t('a)) => spawnSyncOutput =
   "spawnSync";
 

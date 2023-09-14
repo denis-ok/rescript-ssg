@@ -1,4 +1,4 @@
-[@val] external import_: string => Promise.t('a) = "import";
+[@bs.val] external import_: string => Promise.t('a) = "import";
 
 let showPage = (page: BuildPageWorkerT.workerPage) => {
   Log.makeMinimalPrintablePageObj(

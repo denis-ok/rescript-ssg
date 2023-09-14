@@ -1,8 +1,8 @@
 type jsError;
 
-[@new] external makeError: unit => jsError = "Error";
+[@bs.new] external makeError: unit => jsError = "Error";
 
-[@get] external getStack: jsError => string = "stack";
+[@bs.get] external getStack: jsError => string = "stack";
 
 [@bs.val] external window: _ = "window";
 

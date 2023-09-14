@@ -4,25 +4,25 @@ module NodeLoader = NodeLoader; /* Workaround bug in dune and melange: https://g
 module Crypto = Crypto; /* Workaround bug in dune and melange: https://github.com/ocaml/dune/pull/6625 */
 
 module HtmlWebpackPlugin = {
-  [@module "html-webpack-plugin"] [@new]
+  [@bs.module "html-webpack-plugin"] [@bs.new]
   external make: Js.t('a) => webpackPlugin = "default";
 };
 
 module MiniCssExtractPlugin = {
-  [@module "mini-css-extract-plugin"] [@new]
+  [@bs.module "mini-css-extract-plugin"] [@bs.new]
   external make: Js.t('a) => webpackPlugin = "default";
 
-  [@module "mini-css-extract-plugin"] [@scope "default"]
+  [@bs.module "mini-css-extract-plugin"] [@bs.scope "default"]
   external loader: string = "loader";
 };
 
 module TerserPlugin = {
   type minifier;
-  [@module "terser-webpack-plugin"] [@new]
+  [@bs.module "terser-webpack-plugin"] [@bs.new]
   external make: Js.t('a) => webpackPlugin = "default";
-  [@module "terser-webpack-plugin"] [@scope "default"]
+  [@bs.module "terser-webpack-plugin"] [@bs.scope "default"]
   external swcMinify: minifier = "swcMinify";
-  [@module "terser-webpack-plugin"] [@scope "default"]
+  [@bs.module "terser-webpack-plugin"] [@bs.scope "default"]
   external esbuildMinify: minifier = "esbuildMinify";
 };
 
@@ -38,7 +38,7 @@ module WebpackBundleAnalyzerPlugin = {
     analyzerPort: option(int),
   };
 
-  [@module "webpack-bundle-analyzer"] [@new]
+  [@bs.module "webpack-bundle-analyzer"] [@bs.new]
   external make': options => webpackPlugin = "BundleAnalyzerPlugin";
 
   module Mode = {
@@ -72,13 +72,13 @@ module WebpackBundleAnalyzerPlugin = {
   let make = (mode: Mode.t) => mode->Mode.makeOptions->make';
 };
 
-[@new] [@module "webpack"] [@scope "default"]
+[@bs.new] [@bs.module "webpack"] [@bs.scope "default"]
 external definePlugin: Js.Dict.t(string) => webpackPlugin = "DefinePlugin";
 
-[@new] [@module "webpack/lib/debug/ProfilingPlugin.js"]
+[@bs.new] [@bs.module "webpack/lib/debug/ProfilingPlugin.js"]
 external makeProfilingPlugin: unit => webpackPlugin = "default";
 
-[@new] [@module "esbuild-loader"]
+[@bs.new] [@bs.module "esbuild-loader"]
 external makeESBuildPlugin: Js.t('a) => webpackPlugin = "EsbuildPlugin";
 
 let getPluginWithGlobalValues =
@@ -96,10 +96,10 @@ module Webpack = {
       colors: bool,
     };
 
-    [@send] external hasErrors: t => bool = "hasErrors";
-    [@send] external hasWarnings: t => bool = "hasWarnings";
-    [@send] external toString': (t, toStringOptions) => string = "toString";
-    [@send] external toJson': (t, string) => Js.Json.t = "toJson";
+    [@bs.send] external hasErrors: t => bool = "hasErrors";
+    [@bs.send] external hasWarnings: t => bool = "hasWarnings";
+    [@bs.send] external toString': (t, toStringOptions) => string = "toString";
+    [@bs.send] external toJson': (t, string) => Js.Json.t = "toJson";
 
     let toString = stats =>
       stats->toString'({assets: true, hash: true, colors: true});
@@ -109,26 +109,26 @@ module Webpack = {
 
   type compiler;
 
-  [@module "webpack"]
+  [@bs.module "webpack"]
   external makeCompiler: Js.t({..}) => compiler = "default";
 
-  [@send]
+  [@bs.send]
   external run: (compiler, ('err, Js.Nullable.t(Stats.t)) => unit) => unit =
     "run";
 
-  [@send] external close: (compiler, 'closeError => unit) => unit = "close";
+  [@bs.send] external close: (compiler, 'closeError => unit) => unit = "close";
 };
 
 module WebpackDevServer = {
   type t;
 
-  [@new] [@module "webpack-dev-server"]
+  [@bs.new] [@bs.module "webpack-dev-server"]
   external make: (Js.t({..}), Webpack.compiler) => t = "default";
 
-  [@send]
+  [@bs.send]
   external startWithCallback: (t, unit => unit) => unit = "startCallback";
 
-  [@send]
+  [@bs.send]
   external stopWithCallback: (t, unit => unit) => unit = "stopCallback";
 };
 

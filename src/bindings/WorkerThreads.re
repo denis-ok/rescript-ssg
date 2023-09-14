@@ -2,20 +2,20 @@ type parentPort;
 
 type worker;
 
-[@module "worker_threads"] external workerData: 'a = "workerData";
+[@bs.module "worker_threads"] external workerData: 'a = "workerData";
 
-[@module "worker_threads"] external parentPort: parentPort = "parentPort";
+[@bs.module "worker_threads"] external parentPort: parentPort = "parentPort";
 
 module Worker = {
   type workerDataArg('a) = {workerData: 'a};
 
-  [@new] [@module "worker_threads"]
+  [@bs.new] [@bs.module "worker_threads"]
   external make: (string, workerDataArg('a)) => worker = "Worker";
 
-  [@send] external on: (worker, string, 'a) => unit = "on";
+  [@bs.send] external on: (worker, string, 'a) => unit = "on";
 };
 
-[@send] external postMessage: (parentPort, 'a) => unit = "postMessage";
+[@bs.send] external postMessage: (parentPort, 'a) => unit = "postMessage";
 
 // Compiler doesn't know what will be returned by runWorker function.
 // We need to carefully annotate the call of this function in place.
