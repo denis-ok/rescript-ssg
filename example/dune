@@ -5,4 +5,4 @@
  (alias example)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (libraries reason-react))
+ (libraries reason-react styled-ppx.bs-css-emotion))
