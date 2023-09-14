@@ -12,4 +12,3 @@ _build
 example/build
 coverage
 tests/output
-_build
