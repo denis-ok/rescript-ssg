@@ -1,7 +1,5 @@
-(include_subdirs unqualified)
-
 (melange.emit
  (target rescript_ssg)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (libraries reason-react))
+ (libraries reason-react shared))

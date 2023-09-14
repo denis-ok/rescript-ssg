@@ -1,6 +1,6 @@
 let dirname = Utils.getDirname();
 
-[@val] external process: Js.t('a) = "process";
+external process: Js.t('a) = "process";
 
 [@mel.module] external util: Js.t('a) = "util";
 
@@ -133,11 +133,11 @@ module BuildPageHtmlAndReactApp = {
       pageWrapper: None,
       component: ComponentWithoutData(<TestPage />),
       modulePath: TestPage.modulePath,
-      headCssFilepaths: [],
+      headCssFilepaths: [||],
       path: Root,
       globalValues: None,
-      headScripts: [],
-      bodyScripts: [],
+      headScripts: [||],
+      bodyScripts: [||],
     };
 
     let expectedAppContent = {js|
@@ -166,11 +166,11 @@ switch (ReactDOM.querySelector("#root")) {
         }),
       component: ComponentWithoutData(<TestPage />),
       modulePath: TestPage.modulePath,
-      headCssFilepaths: [],
+      headCssFilepaths: [||],
       path: Root,
       globalValues: None,
-      headScripts: [],
-      bodyScripts: [],
+      headScripts: [||],
+      bodyScripts: [||],
     };
 
     let expectedAppContent = {js|
@@ -204,11 +204,11 @@ switch (ReactDOM.querySelector("#root")) {
             }),
         }),
       modulePath: TestPageWithData.modulePath,
-      headCssFilepaths: [],
+      headCssFilepaths: [||],
       path: Root,
       globalValues: None,
-      headScripts: [],
-      bodyScripts: [],
+      headScripts: [||],
+      bodyScripts: [||],
     };
 
     let expectedAppContent = {js|
@@ -263,11 +263,11 @@ switch (ReactDOM.querySelector("#root")) {
             }),
         }),
       modulePath: TestPageWithData.modulePath,
-      headCssFilepaths: [],
+      headCssFilepaths: [||],
       path: Root,
       globalValues: None,
-      headScripts: [],
-      bodyScripts: [],
+      headScripts: [||],
+      bodyScripts: [||],
     };
 
     let expectedAppContent = {js|
@@ -289,12 +289,12 @@ switch (ReactDOM.querySelector("#root")) {
   };
 
   let tests =
-    [
+    [|
       SimplePage.testPromise,
       PageWithWrapper.testPromise,
       PageWithData.testPromise,
       PageWrapperWithDataAndPageWithData.testPromise,
-    ]
+    |]
     ->Promise.seqRun
     ->Promise.map(_ => Js.log("BuildPageHtmlAndReactApp tests passed!"))
     ->ignore;

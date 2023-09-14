@@ -1,0 +1,9 @@
+(include_subdirs unqualified)
+
+(library
+ (name shared)
+ (modes melange)
+ (wrapped false)
+ (libraries reason-react)
+ (preprocess
+  (pps melange.ppx reason-react-ppx)))

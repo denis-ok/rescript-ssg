@@ -5,4 +5,4 @@
  (alias test)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (libraries reason-react))
+ (libraries shared reason-react))
