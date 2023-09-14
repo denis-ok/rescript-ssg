@@ -1,7 +1,5 @@
-(library
- (name rescript_ssg)
+(melange.emit
+ (target rescript_ssg)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (libraries reason-react)
- (public_name rescript-ssg)
- (modes melange))
+ (libraries reason-react))
