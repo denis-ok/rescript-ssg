@@ -1,3 +1,5 @@
+(include_subdirs unqualified)
+
 (melange.emit
  (target rescript_ssg)
  (preprocess

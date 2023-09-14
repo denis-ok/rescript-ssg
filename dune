@@ -1,5 +1,1 @@
-(dirs src)
-
-(subdir
- src
- (include_subdirs unqualified))
+(dirs :standard \ node_modules)
