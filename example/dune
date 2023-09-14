@@ -1,6 +1,0 @@
-(melange.emit
- (target example)
- (alias example)
- (libraries rescript-ssg reason-react)
- (preprocess
-  (pps melange.ppx reason-react-ppx)))
