@@ -1,0 +1,13 @@
+(dirs example src tests)
+
+(subdir
+ src
+ (include_subdirs unqualified))
+
+(subdir
+ example
+ (include_subdirs unqualified))
+
+(subdir
+ tests
+ (include_subdirs unqualified))

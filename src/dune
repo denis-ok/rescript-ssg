@@ -1,3 +1,7 @@
-; todo: probably needs to be rethought / moved somewhere else
 (library
- (name rescript_ssg))
+ (name rescript_ssg)
+ (preprocess
+  (pps melange.ppx reason-react-ppx))
+ (libraries reason-react)
+ (public_name rescript-ssg)
+ (modes melange))
