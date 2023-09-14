@@ -8,9 +8,9 @@ type buildResult = {
   metafile: Js.Json.t,
 };
 
-[@module "esbuild"] external esbuild: esbuild = "default";
+[@bs.module "esbuild"] external esbuild: esbuild = "default";
 
-[@send]
+[@bs.send]
 external build: (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
 
 module HtmlPlugin = {
@@ -23,7 +23,7 @@ module HtmlPlugin = {
     scriptLoading: string,
   };
 
-  [@module "@craftamap/esbuild-plugin-html"]
+  [@bs.module "@craftamap/esbuild-plugin-html"]
   external make: (. options) => plugin = "htmlPlugin";
 };
 
