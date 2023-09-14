@@ -1,3 +1,5 @@
+open Ssg;
+
 let dirname = Utils.getDirname();
 
 external process: Js.t('a) = "process";

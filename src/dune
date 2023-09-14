@@ -2,4 +2,4 @@
  (target rescript_ssg)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (libraries reason-react shared))
+ (libraries reason-react ssg))

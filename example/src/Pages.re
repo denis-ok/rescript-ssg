@@ -1,3 +1,5 @@
+open Ssg;
+
 let currentDir = Utils.getDirname();
 
 let outputDir = Path.join2(currentDir, "../build");
@@ -9,17 +11,17 @@ let globalEnvValues = [|
   ("GLOBAL_VAR", "BAR"),
 |];
 
-let wrapperWithoutData: RescriptSsg.PageBuilder.pageWrapper = (
+let wrapperWithoutData: PageBuilder.pageWrapper = (
   {
     PageBuilder.component:
       WrapperWithChildren(
         children => <WrapperWithoutData> children </WrapperWithoutData>,
       ),
     modulePath: WrapperWithoutData.modulePath,
-  }: RescriptSsg.PageBuilder.pageWrapper
+  }: Ssg.PageBuilder.pageWrapper
 );
 
-let wrapperWithData: RescriptSsg.PageBuilder.pageWrapper = (
+let wrapperWithData: Ssg.PageBuilder.pageWrapper = (
   {
     component:
       WrapperWithDataAndChildren({
@@ -28,7 +30,7 @@ let wrapperWithData: RescriptSsg.PageBuilder.pageWrapper = (
         data: "LALA \"escaped quotes\"",
       }),
     modulePath: WrapperWithData.modulePath,
-  }: RescriptSsg.PageBuilder.pageWrapper
+  }: Ssg.PageBuilder.pageWrapper
 );
 
 let pageWithoutData: PageBuilder.page = (

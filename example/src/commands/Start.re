@@ -1,3 +1,5 @@
+open Ssg;
+
 let () =
   Commands.start(
     ~pages=Pages.pages,

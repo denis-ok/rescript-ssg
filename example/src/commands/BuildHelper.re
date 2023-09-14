@@ -1,3 +1,5 @@
+open Ssg;
+
 let currentDir = Utils.getDirname();
 
 let build = (~minimizer) =>
