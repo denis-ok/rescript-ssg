@@ -1,4 +1,4 @@
-let currentDir = Utils.getDirname()
+let currentDir = Utils.getDirname();
 
 let build = (~minimizer) =>
   Commands.build(
@@ -8,11 +8,12 @@ let build = (~minimizer) =>
     ~outputDir=Pages.outputDir,
     ~projectRootDir=Path.join2(currentDir, "../../../"),
     ~logLevel=Info,
-    ~compileCommand=Path.join2(currentDir, "../../../node_modules/.bin/rescript"),
+    ~compileCommand=
+      Path.join2(currentDir, "../../../node_modules/.bin/rescript"),
     ~minimizer,
-    ~webpackBundleAnalyzerMode=Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
-    // buildWorkersCount=1 makes pages build sequental to make console output readable
+    ~webpackBundleAnalyzerMode=
+      Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
     ~buildWorkersCount=1,
     ~generatedFilesSuffix=UnixTimestamp,
     (),
-  )
+  );
