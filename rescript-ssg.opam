@@ -3,6 +3,10 @@ name: "rescript-ssg"
 synopsis: "Rescript React static site generator"
 maintainer: "Denis Strelkov <strelkov.d.d@gmail.com>"
 authors: "Denis Strelkov <strelkov.d.d@gmail.com>"
+homepage: "https://github.com/denis-ok/rescript-ssg/"
+doc: "https://github.com/denis-ok/rescript-ssg/"
+bug-reports: "https://github.com/denis-ok/rescript-ssg/issues"
+dev-repo: "git+https://github.com/denis-ok/rescript-ssg.git"
 depends: [
   "dune" {>= "3.8"}
   "ocaml"
@@ -27,7 +31,6 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/denis-ok/rescript-ssg.git"
 pin-depends: [
   ["melange.2.0.0"         "git+https://github.com/melange-re/melange.git#e114ad55d185badeb32b3c766c9ab547495eac1b"]
   ["reason.3.10.0"         "git+https://github.com/reasonml/reason.git#972261dab3b651ff8ab9b8b9fcc32940595073dc"]
