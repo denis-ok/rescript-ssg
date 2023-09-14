@@ -23,7 +23,6 @@ install: ## Install development dependencies
 	npm install
 	opam update
 	opam install -y . --deps-only --with-test
-	opam-check-npm-deps
 
 .PHONY: build
 build: ## Build the project
