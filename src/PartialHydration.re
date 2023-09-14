@@ -9,10 +9,10 @@ let renderReactAppTemplate = (~modulesWithHydration__Mutable: array(string)) => 
   ->Js.Array2.map(moduleName => {
       let scriptId = makeScriptId(~moduleName);
       {j|
-switch ReactDOM.querySelector("#$(scriptId)") {
+switch (ReactDOM.querySelector("#$(scriptId)")) {
 | Some(root) => ReactDOM.hydrate(<$(moduleName) />, root)
 | None => ()
-}
+};
 |j};
     })
   ->Js.Array2.joinWith("\n");

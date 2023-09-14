@@ -106,7 +106,7 @@ module BuildPageHtmlAndReactApp = {
         )
 
         let testPageAppContent = Fs.readFileSyncAsUtf8(
-          Path.join2(artifactsOutputDir, reactAppModuleName ++ ".res"),
+          Path.join2(artifactsOutputDir, reactAppModuleName ++ ".re"),
         )
 
         isEqual(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent))
@@ -130,10 +130,10 @@ module BuildPageHtmlAndReactApp = {
     }
 
     let expectedAppContent = `
-switch ReactDOM.querySelector("#root") {
+switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(<TestPage />, root)
 | None => ()
-}
+};
 `
     let expectedHtmlContent = ``
 
@@ -157,10 +157,10 @@ switch ReactDOM.querySelector("#root") {
     }
 
     let expectedAppContent = `
-switch ReactDOM.querySelector("#root") {
+switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(<TestWrapper><TestPage /></TestWrapper>, root)
 | None => ()
-}
+};
 `
     let expectedHtmlContent = ``
 
@@ -192,13 +192,13 @@ switch ReactDOM.querySelector("#root") {
     }
 
     let expectedAppContent = `
-type pageData
-@module("./TestPageWithData_Data_688ca4c30fca5edb6793.js") external pageData: pageData = "data"
+type pageData;
+[@bs.module "./TestPageWithData_Data_688ca4c30fca5edb6793.js"] external pageData: pageData = "data";
 
-switch ReactDOM.querySelector("#root") {
+switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(<TestPageWithData data={pageData->Obj.magic} />, root)
 | None => ()
-}
+};
 `
     let expectedHtmlContent = ``
 
@@ -244,18 +244,16 @@ switch ReactDOM.querySelector("#root") {
     }
 
     let expectedAppContent = `
-type pageWrapperData
-@module("./__pageWrappersData/TestWrapperWithData_Data_688ca4c30fca5edb6793.js") external pageWrapperData: pageWrapperData = "data"
-type pageData
-@module("./TestPageWithData_Data_688ca4c30fca5edb6793.js") external pageData: pageData = "data"
+type pageWrapperData;
+[@bs.module "./__pageWrappersData/TestWrapperWithData_Data_688ca4c30fca5edb6793.js"] external pageWrapperData: pageWrapperData = "data";
 
-switch ReactDOM.querySelector("#root") {
-| Some(root) => ReactDOM.hydrate(
-<TestWrapperWithData data={pageWrapperData->Obj.magic} >
-<TestPageWithData data={pageData->Obj.magic} />
-</TestWrapperWithData>, root)
+type pageData;
+[@bs.module "./TestPageWithData_Data_688ca4c30fca5edb6793.js"] external pageData: pageData = "data";
+
+switch (ReactDOM.querySelector("#root")) {
+| Some(root) => ReactDOM.hydrate(<TestWrapperWithData data={pageWrapperData->Obj.magic} ><TestPageWithData data={pageData->Obj.magic} /></TestWrapperWithData>, root)
 | None => ()
-}
+};
 `
     let expectedHtmlContent = ``
 

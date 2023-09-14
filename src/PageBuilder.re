@@ -67,8 +67,8 @@ let makeStringToImportJsFileFromRescript =
     ) => {
   let valueName = PageData.toValueName(pageDataType);
   {j|
-type $(valueName)
-@module("$(relativePathToDataDir)/$(jsDataFilename)") external $(valueName): $(valueName) = "data"|j};
+type $(valueName);
+[@bs.module "$(relativePathToDataDir)/$(jsDataFilename)"] external $(valueName): $(valueName) = "data";|j};
 };
 
 let wrapJsTextWithScriptTag = (jsText: string) => {j|<script>$(jsText)</script>|j};
@@ -115,10 +115,10 @@ let renderReactAppTemplate =
 $(importPageWrapperDataString)
 $(importPageDataString)
 
-switch ReactDOM.querySelector("#root") {
+switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate($(elementString), root)
 | None => ()
-}
+};
 |j};
 };
 
@@ -520,7 +520,7 @@ let buildPageHtmlAndReactApp =
 
   let writeFilePromises =
     mkDirPromises->Promise.Result.flatMap(_createdDirs => {
-      let reactAppFilename = pageAppModuleName ++ ".res";
+      let reactAppFilename = pageAppModuleName ++ ".re";
 
       let resultHtmlFilePromise =
         Fs.Promises.writeFile(~path=resultHtmlPath, ~data=resultHtml)
