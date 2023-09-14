@@ -32,8 +32,8 @@ let make = (~data: option(data)) =>
           | B(_) => "B"->React.string
           }}
          {switch (polyVariant) {
-          | #hello => "hello"->React.string
-          | #world => "world"->React.string
+          | `hello => "hello"->React.string
+          | `world => "world"->React.string
           }}
          {switch (option) {
           | None => "None"->React.string
