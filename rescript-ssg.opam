@@ -1,0 +1,33 @@
+opam-version: "2.0"
+name: "rescript-ssg"
+synopsis: "Rescript React static site generator"
+maintainer: "Denis Strelkov <strelkov.d.d@gmail.com>"
+authors: "Denis Strelkov <strelkov.d.d@gmail.com>"
+depends: [
+  "dune" {>= "3.8"}
+  "ocaml"
+  "melange" {>= "2.0.0"}
+  "reason" {>= "3.10.0"}
+  "melange-webapi" {with-test}
+  "ocaml-lsp-server" {with-test} # todo: use with-dev-setup once opam 2.2 is out
+  "odoc" {with-doc}
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]
+dev-repo: "git+https://github.com/denis-ok/rescript-ssg.git"
+pin-depends: [
+  [ "melange.2.0.0"         "git+https://github.com/melange-re/melange.git#e114ad55d185badeb32b3c766c9ab547495eac1b" ]
+  [ "reason.3.10.0"         "git+https://github.com/reasonml/reason.git#972261dab3b651ff8ab9b8b9fcc32940595073dc" ]
+]
