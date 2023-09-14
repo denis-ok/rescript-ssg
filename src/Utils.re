@@ -4,7 +4,7 @@ type jsError;
 
 [@mel.get] external getStack: jsError => string = "stack";
 
-[@mel.val] external window: _ = "window";
+external window: _ = "window";
 
 // Commented to avoid error in webpack
 // @module("path") external dirnameFromFilepath: string => string = "dirname"
