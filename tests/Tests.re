@@ -5,7 +5,7 @@ let dirname = Utils.getDirname();
 [@mel.module] external util: Js.t('a) = "util";
 
 let inspect = (value): string =>
-  util#inspect(value, {"compact": false, "depth": 20, "colors": true});
+  util##inspect(value, {"compact": false, "depth": 20, "colors": true});
 
 let exitWithError = () => process#exit(1);
 
