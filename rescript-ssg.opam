@@ -15,6 +15,7 @@ depends: [
   "reason-react"
   "reason-react-ppx"
   "ocaml-lsp-server" {with-test} # todo: use with-dev-setup once opam 2.2 is out
+  "ocaml-format" {= "0.26.0" & with-test} # todo: use with-dev-setup once opam 2.2 is out
   "odoc" {with-doc}
 ]
 build: [

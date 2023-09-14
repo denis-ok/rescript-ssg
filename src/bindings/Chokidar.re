@@ -6,7 +6,8 @@ type watcher;
 
 [@mel.send] external watchFile: (chokidar, string) => watcher = "watch";
 
-[@mel.send] external watchFiles: (chokidar, array(string)) => watcher = "watch";
+[@mel.send]
+external watchFiles: (chokidar, array(string)) => watcher = "watch";
 
 [@mel.send] external onEvent: (watcher, string, string => unit) => unit = "on";
 
@@ -18,7 +19,8 @@ external onEventWithUnitCallback: (watcher, string, unit => unit) => unit =
 
 [@mel.send] external unwatch: (watcher, array(string)) => unit = "unwatch";
 
-[@mel.send] external getWatched: (watcher, unit) => array(string) = "getWatched";
+[@mel.send]
+external getWatched: (watcher, unit) => array(string) = "getWatched";
 
 let onChange = (chokidar, callback) => chokidar->onEvent("change", callback);
 

@@ -98,7 +98,8 @@ module Webpack = {
 
     [@mel.send] external hasErrors: t => bool = "hasErrors";
     [@mel.send] external hasWarnings: t => bool = "hasWarnings";
-    [@mel.send] external toString': (t, toStringOptions) => string = "toString";
+    [@mel.send]
+    external toString': (t, toStringOptions) => string = "toString";
     [@mel.send] external toJson': (t, string) => Js.Json.t = "toJson";
 
     let toString = stats =>
@@ -116,7 +117,8 @@ module Webpack = {
   external run: (compiler, ('err, Js.Nullable.t(Stats.t)) => unit) => unit =
     "run";
 
-  [@mel.send] external close: (compiler, 'closeError => unit) => unit = "close";
+  [@mel.send]
+  external close: (compiler, 'closeError => unit) => unit = "close";
 };
 
 module WebpackDevServer = {
