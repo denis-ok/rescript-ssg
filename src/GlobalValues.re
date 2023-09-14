@@ -1,5 +1,5 @@
-[@bs.val] external globalThis: Js.Dict.t(string) = "globalThis";
-[@bs.val] external globalThisJson: Js.Dict.t(Js.Json.t) = "globalThis";
+[@mel.val] external globalThis: Js.Dict.t(string) = "globalThis";
+[@mel.val] external globalThisJson: Js.Dict.t(Js.Json.t) = "globalThis";
 
 let unsafeAdd = (globalValues: array((string, string))) => {
   globalValues->Js.Array2.forEach(((key, value)) => {

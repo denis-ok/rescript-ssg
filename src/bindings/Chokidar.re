@@ -2,23 +2,23 @@ type chokidar;
 
 type watcher;
 
-[@bs.module "chokidar"] external chokidar: chokidar = "default";
+[@mel.module "chokidar"] external chokidar: chokidar = "default";
 
-[@bs.send] external watchFile: (chokidar, string) => watcher = "watch";
+[@mel.send] external watchFile: (chokidar, string) => watcher = "watch";
 
-[@bs.send] external watchFiles: (chokidar, array(string)) => watcher = "watch";
+[@mel.send] external watchFiles: (chokidar, array(string)) => watcher = "watch";
 
-[@bs.send] external onEvent: (watcher, string, string => unit) => unit = "on";
+[@mel.send] external onEvent: (watcher, string, string => unit) => unit = "on";
 
-[@bs.send]
+[@mel.send]
 external onEventWithUnitCallback: (watcher, string, unit => unit) => unit =
   "on";
 
-[@bs.send] external add: (watcher, array(string)) => unit = "add";
+[@mel.send] external add: (watcher, array(string)) => unit = "add";
 
-[@bs.send] external unwatch: (watcher, array(string)) => unit = "unwatch";
+[@mel.send] external unwatch: (watcher, array(string)) => unit = "unwatch";
 
-[@bs.send] external getWatched: (watcher, unit) => array(string) = "getWatched";
+[@mel.send] external getWatched: (watcher, unit) => array(string) = "getWatched";
 
 let onChange = (chokidar, callback) => chokidar->onEvent("change", callback);
 

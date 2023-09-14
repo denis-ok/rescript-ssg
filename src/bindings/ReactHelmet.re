@@ -20,5 +20,5 @@ type helmetInstance = {
 
 // https://github.com/nfl/react-helmet#server-usage
 
-[@bs.module "react-helmet"] [@bs.scope "Helmet"]
+[@mel.module "react-helmet"] [@mel.scope "Helmet"]
 external renderStatic: unit => helmetInstance = "renderStatic";

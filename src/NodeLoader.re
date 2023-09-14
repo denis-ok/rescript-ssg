@@ -1,4 +1,4 @@
-[@bs.send] external replaceAll: (string, string, string) => string = "replaceAll";
+[@mel.send] external replaceAll: (string, string, string) => string = "replaceAll";
 
 // 'v16.15.0' => 16150
 let nodeVersionToInt = (s: string) => {

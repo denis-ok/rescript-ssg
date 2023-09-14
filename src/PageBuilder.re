@@ -68,7 +68,7 @@ let makeStringToImportJsFileFromRescript =
   let valueName = PageData.toValueName(pageDataType);
   {j|
 type $(valueName);
-[@bs.module "$(relativePathToDataDir)/$(jsDataFilename)"] external $(valueName): $(valueName) = "data";|j};
+[@mel.module "$(relativePathToDataDir)/$(jsDataFilename)"] external $(valueName): $(valueName) = "data";|j};
 };
 
 let wrapJsTextWithScriptTag = (jsText: string) => {j|<script>$(jsText)</script>|j};

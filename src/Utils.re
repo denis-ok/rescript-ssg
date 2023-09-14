@@ -1,10 +1,10 @@
 type jsError;
 
-[@bs.new] external makeError: unit => jsError = "Error";
+[@mel.new] external makeError: unit => jsError = "Error";
 
-[@bs.get] external getStack: jsError => string = "stack";
+[@mel.get] external getStack: jsError => string = "stack";
 
-[@bs.val] external window: _ = "window";
+[@mel.val] external window: _ = "window";
 
 // Commented to avoid error in webpack
 // @module("path") external dirnameFromFilepath: string => string = "dirname"
