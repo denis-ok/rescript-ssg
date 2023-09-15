@@ -56,10 +56,22 @@ test: ## Run the tests
 test-watch: ## Run the tests and watch for changes
 	$(DUNE) build -w @runtest
 
-RESCRIPT_SSG_BIN = _build/default/app/src/js/bin.mjs
-
 MAKEFILE_DIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
+MELANGE_ARTIFACTS_DIR = _build/default/app
+
+RESCRIPT_SSG_BIN = $(MELANGE_ARTIFACTS_DIR)/src/js/bin.mjs
+
+NODE_BINS = node_modules/.bin
+
 .PHONY: build-example
-build-example: build
-	RESCRIPT_SSG_BUNDLER=ESBUILD PROJECT_ROOT=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) _build/default/app/example/src/commands/Build.bs.js
+build-example: build  ## Build the whole project and build example site
+	PROJECT_ROOT=$(MAKEFILE_DIR) ENV_VAR=FOO $(RESCRIPT_SSG_BIN) $(MELANGE_ARTIFACTS_DIR)/example/src/commands/Build.bs.js
+
+.PHONY: start-example
+start-example: ## Start example site in watch mode
+	PROJECT_ROOT=$(MAKEFILE_DIR) ENV_VAR=FOO $(RESCRIPT_SSG_BIN) $(MELANGE_ARTIFACTS_DIR)/example/src/commands/Start.bs.js
+
+.PHONY: serve-example
+serve-example: ## Serve example site (use after build-example)
+	$(NODE_BINS)/serve -l 3005 example/build/public
