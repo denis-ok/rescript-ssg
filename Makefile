@@ -69,7 +69,7 @@ clean-example: ## Clean example site artifacts
 	rm -rf example/build
 
 .PHONY: build-example
-build-example: build ## Build the whole project and build example site
+build-example: clean-example build ## Build the whole project and build example site
 	PROJECT_ROOT=$(MAKEFILE_DIR) ENV_VAR=FOO $(RESCRIPT_SSG_BIN) $(MELANGE_ARTIFACTS_DIR)/example/src/commands/Build.bs.js
 
 .PHONY: start-example
