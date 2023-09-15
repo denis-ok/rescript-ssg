@@ -4,5 +4,9 @@
  (name example)
  (modes melange)
  (libraries ssg styled-ppx.bs-css-emotion)
+ (melange.runtime_deps
+  src/content.css
+  src/css/normalize.css
+  src/images/cat.jpeg)
  (preprocess
   (pps melange.ppx reason-react-ppx)))

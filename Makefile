@@ -55,3 +55,11 @@ test: ## Run the tests
 .PHONY: test-watch
 test-watch: ## Run the tests and watch for changes
 	$(DUNE) build -w @runtest
+
+RESCRIPT_SSG_BIN = _build/default/app/src/js/bin.mjs
+
+MAKEFILE_DIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+
+.PHONY: build-example
+build-example: build
+	RESCRIPT_SSG_BUNDLER=ESBUILD PROJECT_ROOT=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) _build/default/app/example/src/commands/Build.bs.js

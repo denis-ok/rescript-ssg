@@ -1,10 +1,22 @@
 open Ssg;
 
-let currentDir = Utils.getDirname();
+external projectRoot: option(string) = "process.env.PROJECT_ROOT";
 
-let outputDir = Path.join2(currentDir, "../build");
+let projectRoot =
+  switch (projectRoot) {
+  | Some(dir) => dir
+  | _ =>
+    Js.Console.error("PROJECT_ROOT env var is missing");
+    Process.exit(1);
+  };
 
-let normalizeCssFilePath = Path.join2(currentDir, "/css/normalize.css");
+let outputDir = Path.join2(projectRoot, "example/build");
+
+let melangeOutputDir =
+  Path.join2(projectRoot, "_build/default/app/example/build");
+
+let normalizeCssFilePath =
+  Path.join2(projectRoot, "example/src/css/normalize.css");
 
 let globalEnvValues = [|
   ("process.env.ENV_VAR", Env.envVar),
@@ -70,7 +82,9 @@ let pageWithData: PageBuilder.page = (
           }),
       }),
     modulePath: PageWithData.modulePath,
-    headCssFilepaths: [|normalizeCssFilePath|],
+    headCssFilepaths: [|
+      Path.join2(projectRoot, "example/src/css/normalize.css"),
+    |],
     path: Path([|Page.toSlug(PageWithData)|]),
     globalValues: None,
     headScripts: [||],
@@ -161,4 +175,4 @@ let localizedPages =
     )
   );
 
-let pages = Js.Array2.concat([|pages|], localizedPages);
+let pages = [|[|{...pageWithoutData, path: Root}|]|];
