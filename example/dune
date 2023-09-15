@@ -5,4 +5,5 @@
  (alias example)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (libraries ssg reason-react styled-ppx.bs-css-emotion))
+ (libraries ssg reason-react styled-ppx.bs-css-emotion)
+ (module_systems es6))

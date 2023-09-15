@@ -2,4 +2,5 @@
  (target rescript_ssg)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (libraries reason-react ssg))
+ (libraries reason-react ssg)
+ (module_systems es6))

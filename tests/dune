@@ -5,4 +5,5 @@
  (alias test)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (libraries ssg reason-react))
+ (libraries ssg reason-react)
+ (module_systems es6))
