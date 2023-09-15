@@ -175,4 +175,4 @@ let localizedPages =
     )
   );
 
-let pages = [|[|{...pageWithoutData, path: Root}|]|];
+let pages = Js.Array2.concat([|pages|], localizedPages);
