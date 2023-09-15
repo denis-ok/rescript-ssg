@@ -1,4 +1,4 @@
-(dirs src example tests)
+(dirs :standard \ node_modules)
 
 (melange.emit
  (target app)
@@ -6,3 +6,29 @@
  (module_systems
   (es6 bs.js))
  (runtime_deps package.json))
+
+(subdir
+ app
+ (subdir
+  node_modules
+  (subdir
+   melange
+   (rule
+    (action
+     (with-stdout-to
+      package.json
+      (run echo "{\"type\": \"module\"}")))))
+  (subdir
+   melange.belt
+   (rule
+    (action
+     (with-stdout-to
+      package.json
+      (run echo "{\"type\": \"module\"}")))))
+  (subdir
+   melange.js
+   (rule
+    (action
+     (with-stdout-to
+      package.json
+      (run echo "{\"type\": \"module\"}")))))))
