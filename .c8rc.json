@@ -4,7 +4,7 @@
     "html"
   ],
   "include": [
-    "src/PageBuilder.bs.js",
-    "src/Utils.bs.js"
+    "_build/default/app/src/shared/PageBuilder.bs.js",
+    "_build/default/app/src/shared/Utils.bs.js"
   ]
 }
