@@ -1,9 +1,8 @@
 (include_subdirs unqualified)
 
-(melange.emit
- (target example)
- (alias example)
+(library
+ (name example)
+ (modes melange)
+ (libraries ssg styled-ppx.bs-css-emotion)
  (preprocess
-  (pps melange.ppx reason-react-ppx))
- (libraries ssg reason-react styled-ppx.bs-css-emotion)
- (module_systems es6))
+  (pps melange.ppx reason-react-ppx)))

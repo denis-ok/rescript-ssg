@@ -1,1 +1,5 @@
-(dirs :standard \ node_modules)
+(melange.emit
+ (target app)
+ (libraries src example tests)
+ (module_systems es6)
+ (runtime_deps package.json))

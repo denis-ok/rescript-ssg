@@ -1,9 +1,8 @@
 (include_subdirs unqualified)
 
-(melange.emit
- (target test)
- (alias test)
+(library
+ (name tests)
+ (modes melange)
+ (libraries ssg)
  (preprocess
-  (pps melange.ppx reason-react-ppx))
- (libraries ssg reason-react)
- (module_systems es6))
+  (pps melange.ppx reason-react-ppx)))

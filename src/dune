@@ -1,6 +1,7 @@
-(melange.emit
- (target rescript_ssg)
+(library
+ (name src)
+ (modes melange)
+ (libraries reason-react ssg)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (libraries reason-react ssg)
- (module_systems es6))
+ (melange.runtime_deps js/bin.mjs js/node-loader.mjs))
