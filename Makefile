@@ -80,9 +80,11 @@ start-example: ## Start example site in watch mode
 serve-example: ## Serve example site (use after build)
 	$(NODE_BINS)/serve -l 3005 example/build/public
 
+.PHONY: clean-tests
 clean-tests: ## Clean test artifacts
 	rm -rf tests/output
 	rm -rf coverage
 
+.PHONY: tests
 tests: clean-tests ## Run tests
 	PROJECT_ROOT=$(MAKEFILE_DIR) $(NODE_BINS)/c8 node $(MELANGE_ARTIFACTS_DIR)/tests/Tests.bs.js
