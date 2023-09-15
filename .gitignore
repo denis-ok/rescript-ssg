@@ -10,6 +10,5 @@
 /_opam
 _build
 example/build
-
 coverage
 tests/output
