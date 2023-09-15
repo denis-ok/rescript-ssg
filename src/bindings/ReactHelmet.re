@@ -1,4 +1,4 @@
-[@react.component] [@module "react-helmet"]
+[@react.component] [@bs.module "react-helmet"]
 external make: (~children: React.element) => React.element = "Helmet";
 
 type helmetProperty = {
