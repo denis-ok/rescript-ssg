@@ -1,3 +1,5 @@
+(dirs src example tests)
+
 (melange.emit
  (target app)
  (libraries src example tests)
