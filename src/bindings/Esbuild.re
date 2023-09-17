@@ -75,7 +75,7 @@ module HtmlPlugin = {
 
 let makeConfig =
     (
-            ~mode: Bundler.mode,
+      ~mode: Bundler.mode,
       ~outputDir: string,
       ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
@@ -146,7 +146,13 @@ let build =
   Js.Console.timeStart(durationLabel);
 
   let config =
-    makeConfig(~mode=Build, ~outputDir, ~projectRootDir, ~globalEnvValues, ~renderedPages);
+    makeConfig(
+      ~mode=Build,
+      ~outputDir,
+      ~projectRootDir,
+      ~globalEnvValues,
+      ~renderedPages,
+    );
 
   esbuild
   ->build(config)
@@ -171,11 +177,18 @@ let build =
 let watch =
     (
       ~outputDir,
+      ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
     ) => {
   let config =
-    makeConfig(~mode=Watch, ~outputDir, ~globalEnvValues, ~renderedPages);
+    makeConfig(
+      ~mode=Watch,
+      ~outputDir,
+      ~projectRootDir,
+      ~globalEnvValues,
+      ~renderedPages,
+    );
 
   let watchDurationLabel = "[Esbuild.watch] Watch mode started! Duration";
   let serveDurationLabel = "[Esbuild.watch] Serve mode started! Duration";

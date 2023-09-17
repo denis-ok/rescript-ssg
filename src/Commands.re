@@ -77,21 +77,23 @@ let initializeAndBuildPages =
   let logger = Log.makeLogger(logLevel);
 
   let pages =
-    pages->Js.Array2.map(page =>
-      switch (Bundler.bundler, bundlerMode) {
-      | (Esbuild, Watch) =>
-        // Add a script to implement live reloading with esbuild
-        // https://esbuild.github.io/api/#live-reload
-        {
-          ...page,
-          headScripts:
-            Js.Array2.concat(
-              [|Esbuild.subscribeToRebuildScript|],
-              page.headScripts,
-            ),
+    pages->Js.Array2.map(pages =>
+      pages->Js.Array2.map(page =>
+        switch (Bundler.bundler, bundlerMode) {
+        | (Esbuild, Watch) =>
+          // Add a script to implement live reloading with esbuild
+          // https://esbuild.github.io/api/#live-reload
+          {
+            ...page,
+            headScripts:
+              Js.Array2.concat(
+                [|Esbuild.subscribeToRebuildScript|],
+                page.headScripts,
+              ),
+          }
+        | _ => page
         }
-      | _ => page
-      }
+      )
     );
 
   let renderedPages =
@@ -178,6 +180,7 @@ let build =
 let start =
     (
       ~outputDir: string,
+      ~projectRootDir: string,
       ~melangeOutputDir: option(string)=?,
       ~mode: Webpack.Mode.t,
       ~logLevel: Log.level,
@@ -207,7 +210,13 @@ let start =
   ->Promise.map(renderedPages => {
       switch (Bundler.bundler) {
       | Esbuild =>
-        let () = Esbuild.watch(~outputDir, ~globalEnvValues, ~renderedPages);
+        let () =
+          Esbuild.watch(
+            ~outputDir,
+            ~projectRootDir,
+            ~globalEnvValues,
+            ~renderedPages,
+          );
         ();
       | Webpack =>
         let () =
