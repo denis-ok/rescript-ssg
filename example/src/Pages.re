@@ -30,10 +30,10 @@ let wrapperWithoutData: PageBuilder.pageWrapper = (
         children => <WrapperWithoutData> children </WrapperWithoutData>,
       ),
     modulePath: WrapperWithoutData.modulePath,
-  }: Ssg.PageBuilder.pageWrapper
+  }: PageBuilder.pageWrapper
 );
 
-let wrapperWithData: Ssg.PageBuilder.pageWrapper = (
+let wrapperWithData: PageBuilder.pageWrapper = (
   {
     component:
       WrapperWithDataAndChildren({
@@ -42,7 +42,7 @@ let wrapperWithData: Ssg.PageBuilder.pageWrapper = (
         data: "LALA \"escaped quotes\"",
       }),
     modulePath: WrapperWithData.modulePath,
-  }: Ssg.PageBuilder.pageWrapper
+  }: PageBuilder.pageWrapper
 );
 
 let pageWithoutData: PageBuilder.page = (
