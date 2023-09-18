@@ -9,17 +9,17 @@ let globalEnvValues = [|
   ("GLOBAL_VAR", "BAR"),
 |];
 
-let wrapperWithoutData: RescriptSsg.PageBuilder.pageWrapper = (
+let wrapperWithoutData: PageBuilder.pageWrapper = (
   {
     PageBuilder.component:
       WrapperWithChildren(
         children => <WrapperWithoutData> children </WrapperWithoutData>,
       ),
     modulePath: WrapperWithoutData.modulePath,
-  }: RescriptSsg.PageBuilder.pageWrapper
+  }: PageBuilder.pageWrapper
 );
 
-let wrapperWithData: RescriptSsg.PageBuilder.pageWrapper = (
+let wrapperWithData: PageBuilder.pageWrapper = (
   {
     component:
       WrapperWithDataAndChildren({
@@ -28,7 +28,7 @@ let wrapperWithData: RescriptSsg.PageBuilder.pageWrapper = (
         data: "LALA \"escaped quotes\"",
       }),
     modulePath: WrapperWithData.modulePath,
-  }: RescriptSsg.PageBuilder.pageWrapper
+  }: PageBuilder.pageWrapper
 );
 
 let pageWithoutData: PageBuilder.page = (
