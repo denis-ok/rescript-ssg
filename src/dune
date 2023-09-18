@@ -1,7 +1,9 @@
+(include_subdirs unqualified)
+
 (library
- (name src)
+ (name ssg)
  (modes melange)
- (libraries reason-react ssg)
+ (libraries reason-react)
  (preprocess
   (pps melange.ppx reason-react-ppx))
  (melange.runtime_deps js/bin.mjs js/node-loader.mjs))

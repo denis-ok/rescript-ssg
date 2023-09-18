@@ -1,5 +1,3 @@
-open Ssg;
-
 let dirname = Utils.getDirname();
 
 let nodeLoaderPath = Path.join2(dirname, "./js/node-loader.mjs");

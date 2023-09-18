@@ -2,7 +2,7 @@
 
 (melange.emit
  (target app)
- (libraries src example tests)
+ (libraries ssg example tests)
  (module_systems
   (es6 bs.js))
  (runtime_deps package.json))

@@ -1,4 +1,4 @@
-import * as NodeLoader from "../shared/NodeLoader.bs.js";
+import * as NodeLoader from "../NodeLoader.bs.js";
 
 export async function load(url, context, nextLoad) {
   if (NodeLoader.isBsArtifact(url)) {
