@@ -206,36 +206,7 @@ let start =
       ~bundlerMode=Watch,
     );
 
-  renderedPages
-  ->Promise.map(renderedPages => {
-      switch (Bundler.bundler) {
-      | Esbuild =>
-        let () =
-          Esbuild.watch(
-            ~outputDir,
-            ~projectRootDir,
-            ~globalEnvValues,
-            ~renderedPages,
-          );
-        ();
-      | Webpack =>
-        let () =
-          Webpack.startDevServer(
-            ~devServerOptions,
-            ~webpackBundleAnalyzerMode,
-            ~mode,
-            ~logger,
-            ~outputDir,
-            ~minimizer,
-            ~globalEnvValues,
-            ~renderedPages,
-          );
-        ();
-      }
-    })
-  ->ignore;
-
-  let () =
+  let startFileWatcher = () =>
     Watcher.startWatcher(
       ~outputDir,
       ~melangeOutputDir,
@@ -244,5 +215,53 @@ let start =
       pages,
     );
 
-  ();
+  // rescript-ssg just emitted reason artifacts and JS compilation is happening...
+  // Starting dev server after a little delay.
+  // Ideally, we want to start dev server and file watcher after JS compilation is done
+  // to avoid redundant rebuilds while JS is still compiling.
+  let delayBeforeDevServerStart = 3000;
+
+  Js.Global.setTimeout(
+    () => {
+      renderedPages
+      ->Promise.map(renderedPages =>
+          switch (Bundler.bundler) {
+          | Esbuild =>
+            Esbuild.watchAndServe(
+              ~outputDir,
+              ~projectRootDir,
+              ~globalEnvValues,
+              ~renderedPages,
+            )
+            ->Promise.map(serveResult => {
+                let () =
+                  ProxyServer.startServer(
+                    ~targetHost=serveResult.host,
+                    ~targetPort=serveResult.port,
+                  );
+                let () = startFileWatcher();
+                ();
+              })
+            ->ignore
+          | Webpack =>
+            let () =
+              Webpack.startDevServer(
+                ~devServerOptions,
+                ~webpackBundleAnalyzerMode,
+                ~mode,
+                ~logger,
+                ~outputDir,
+                ~minimizer,
+                ~globalEnvValues,
+                ~renderedPages,
+                ~onStart=startFileWatcher,
+              );
+            ();
+          }
+        )
+      ->ignore
+    },
+    delayBeforeDevServerStart,
+  )
+  ->ignore;
 };

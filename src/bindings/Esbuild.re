@@ -174,13 +174,14 @@ let build =
     });
 };
 
-let watch =
+let watchAndServe =
     (
       ~outputDir,
       ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
-    ) => {
+    )
+    : Promise.t(serveResult) => {
   let config =
     makeConfig(
       ~mode=Watch,
@@ -210,25 +211,17 @@ let watch =
       Js.Console.timeStart(serveDurationLabel);
 
       contextPromise->Promise.flatMap(context =>
-        context->serve({
-          port: 8000,
-          servedir: Some(config#outdir),
-        })
+        context->serve({port: 8000, servedir: Some(config#outdir)})
       );
     })
   ->Promise.map(serveResult => {
       Js.Console.timeEnd(serveDurationLabel);
-      Js.log2("[Esbuild.watch] Serve mode settings:", serveResult);
-      let () = ProxyServer.startServer(~targetHost=serveResult.host, ~targetPort=serveResult.port);
-      ();
+      serveResult;
     })
   ->Promise.catch(error => {
       Js.Console.error2("[Esbuild.watch] Failed to start serve mode:", error);
       Process.exit(1);
-    })
-  ->ignore;
-
-  ();
+    });
 };
 
 let subscribeToRebuildScript = "new EventSource('/esbuild').addEventListener('change', () => location.reload());";
