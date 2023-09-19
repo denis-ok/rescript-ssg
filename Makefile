@@ -27,7 +27,7 @@ build-example:
 
 .PHONY: start-example
 start-example:
-	ENV_VAR=FOO $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/Start.bs.js
+	ENV_VAR=FOO RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/Start.bs.js
 
 .PHONY: serve-example
 serve-example:
