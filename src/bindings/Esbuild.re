@@ -180,6 +180,7 @@ let watchAndServe =
       ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
+      ~port: int,
     )
     : Promise.t(serveResult) => {
   let config =
@@ -190,11 +191,9 @@ let watchAndServe =
       ~globalEnvValues,
       ~renderedPages,
     );
-
+  Js.log("[Esbuild.watch] Starting esbuild...");
   let watchDurationLabel = "[Esbuild.watch] Watch mode started! Duration";
   let serveDurationLabel = "[Esbuild.watch] Serve mode started! Duration";
-
-  Js.log("[Esbuild.watch] Starting watch mode...");
   Js.Console.timeStart(watchDurationLabel);
 
   let contextPromise = esbuild->context(config);
@@ -207,11 +206,9 @@ let watchAndServe =
       Process.exit(1);
     })
   ->Promise.flatMap(() => {
-      Js.log("[Esbuild.watch] Starting serve mode...");
       Js.Console.timeStart(serveDurationLabel);
-
       contextPromise->Promise.flatMap(context =>
-        context->serve({port: 8000, servedir: Some(config#outdir)})
+        context->serve({port, servedir: Some(config#outdir)})
       );
     })
   ->Promise.map(serveResult => {

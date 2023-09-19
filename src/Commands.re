@@ -192,6 +192,8 @@ let start =
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
+      ~esbuildMainServerPort: int=8000,
+      ~esbuildProxyServerPort: int=8001,
       (),
     ) => {
   let (logger, pages, renderedPages) =
@@ -232,11 +234,12 @@ let start =
               ~projectRootDir,
               ~globalEnvValues,
               ~renderedPages,
+              ~port=esbuildMainServerPort,
             )
             ->Promise.map(serveResult => {
                 let () =
                   ProxyServer.start(
-                    ~startOnPort=3009,
+                    ~port=esbuildProxyServerPort,
                     ~targetHost=serveResult.host,
                     ~targetPort=serveResult.port,
                   );
