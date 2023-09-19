@@ -221,4 +221,4 @@ let watchAndServe =
     });
 };
 
-let subscribeToRebuildScript = "new EventSource('/esbuild').addEventListener('change', () => location.reload());";
+let subscribeToRebuildEventScript = "new EventSource('/esbuild').addEventListener('change', () => location.reload());";

@@ -87,7 +87,7 @@ let initializeAndBuildPages =
             ...page,
             headScripts:
               Js.Array2.concat(
-                [|Esbuild.subscribeToRebuildScript|],
+                [|Esbuild.subscribeToRebuildEventScript|],
                 page.headScripts,
               ),
           }
