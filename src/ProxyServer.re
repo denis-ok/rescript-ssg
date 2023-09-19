@@ -57,7 +57,7 @@ external nodeRequest:
   (nodeRequestOptions, IncommingMessage.t => unit) => clientRequest =
   "request";
 
-let startServer = (~targetHost: string, ~targetPort: int) => {
+let start = (~startOnPort: int, ~targetHost: string, ~targetPort: int) => {
   let server =
     nodeCreateServer((req, res) => {
       let options = {
@@ -92,7 +92,7 @@ let startServer = (~targetHost: string, ~targetPort: int) => {
       req->IncommingMessage.pipeToClientRequest(proxy, {end_: true});
     });
 
-  server->Server.listen(3009, () => Js.log("Proxy server started"));
+  server->Server.listen(startOnPort, () => Js.log("Proxy server started on port " ++ string_of_int(startOnPort)));
 
   ();
 };

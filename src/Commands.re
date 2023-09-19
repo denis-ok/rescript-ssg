@@ -235,7 +235,8 @@ let start =
             )
             ->Promise.map(serveResult => {
                 let () =
-                  ProxyServer.startServer(
+                  ProxyServer.start(
+                    ~startOnPort=3009,
                     ~targetHost=serveResult.host,
                     ~targetPort=serveResult.port,
                   );
