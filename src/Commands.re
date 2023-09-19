@@ -77,24 +77,24 @@ let initializeAndBuildPages =
   let logger = Log.makeLogger(logLevel);
 
   let pages =
-    pages->Js.Array2.map(pages =>
-      pages->Js.Array2.map(page =>
-        switch (Bundler.bundler, bundlerMode) {
-        | (Esbuild, Watch) =>
-          // Add a script to implement live reloading with esbuild
-          // https://esbuild.github.io/api/#live-reload
+    switch (Bundler.bundler, bundlerMode) {
+    | (Esbuild, Watch) =>
+      pages->Js.Array2.map(pages =>
+        pages->Js.Array2.map(page =>
           {
             ...page,
+            // Add a script to implement live reloading with esbuild
+            // https://esbuild.github.io/api/#live-reload
             headScripts:
               Js.Array2.concat(
                 [|Esbuild.subscribeToRebuildEventScript|],
                 page.headScripts,
               ),
           }
-        | _ => page
-        }
+        )
       )
-    );
+    | _ => pages
+    };
 
   let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
