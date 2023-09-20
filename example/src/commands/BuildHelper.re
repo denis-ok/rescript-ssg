@@ -1,14 +1,12 @@
 open Ssg;
 
-let currentDir = Utils.getDirname();
-
 let build = (~minimizer) =>
   Commands.build(
     ~pages=Pages.pages,
     ~globalEnvValues=Pages.globalEnvValues,
     ~mode=Production,
     ~outputDir=Pages.outputDir,
-    ~projectRootDir=Path.join2(currentDir, "../../../"),
+    ~projectRootDir=Pages.projectRoot,
     ~logLevel=Info,
     ~compileCommand="make build",
     ~melangeOutputDir=Pages.melangeOutputDir,

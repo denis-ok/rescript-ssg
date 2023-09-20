@@ -8,8 +8,7 @@ let () =
     ~devServerOptions={listenTo: Port(9007), proxy: None},
     ~mode=Development,
     ~outputDir=Pages.outputDir,
-    // This is correct path by luck, it should be fixed.
-    ~projectRootDir=Path.join2(currentDir, "../../../"),
+    ~projectRootDir=Pages.projectRoot,
     ~melangeOutputDir=Pages.melangeOutputDir,
     ~logLevel=Info,
     ~globalEnvValues=Pages.globalEnvValues,
