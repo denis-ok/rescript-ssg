@@ -93,7 +93,7 @@ let start = (~port: int, ~targetHost: string, ~targetPort: int) => {
     });
 
   server->Server.listen(port, () =>
-    Js.log("Proxy server started on port " ++ string_of_int(port))
+    Js.log("[Dev server] Listening on port " ++ string_of_int(port))
   );
 
   ();

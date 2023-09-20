@@ -24,7 +24,6 @@ module Plugin = {
   let watchModePlugin = {
     name: "watchPlugin",
     setup: buildCallbacks => {
-      buildCallbacks.onStart(() => Js.log("[Esbuild] Rebuild started..."));
       buildCallbacks.onEnd(_buildResult =>
         Js.log("[Esbuild] Rebuild finished!")
       );
@@ -141,8 +140,8 @@ let build =
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
     ) => {
-  Js.log("[Esbuild.build] Bundling...");
-  let durationLabel = "[Esbuild.build] Success! Duration";
+  Js.log("[Esbuild] Bundling...");
+  let durationLabel = "[Esbuild] Success! Duration";
   Js.Console.timeStart(durationLabel);
 
   let config =
@@ -167,7 +166,7 @@ let build =
     })
   ->Promise.catch(error => {
       Js.Console.error2(
-        "[Esbuild.build] Build failed! Promise.catch:",
+        "[Esbuild] Build failed! Promise.catch:",
         error->Util.inspect,
       );
       Process.exit(1);
@@ -191,9 +190,9 @@ let watchAndServe =
       ~globalEnvValues,
       ~renderedPages,
     );
-  Js.log("[Esbuild.watch] Starting esbuild...");
-  let watchDurationLabel = "[Esbuild.watch] Watch mode started! Duration";
-  let serveDurationLabel = "[Esbuild.watch] Serve mode started! Duration";
+  Js.log("[Esbuild] Starting esbuild...");
+  let watchDurationLabel = "[Esbuild] Watch mode started! Duration";
+  let serveDurationLabel = "[Esbuild] Serve mode started! Duration";
   Js.Console.timeStart(watchDurationLabel);
 
   let contextPromise = esbuild->context(config);
@@ -202,7 +201,7 @@ let watchAndServe =
   ->Promise.flatMap(context => context->watch())
   ->Promise.map(() => Js.Console.timeEnd(watchDurationLabel))
   ->Promise.catch(error => {
-      Js.Console.error2("[Esbuild.watch] Failed to start watch mode:", error);
+      Js.Console.error2("[Esbuild] Failed to start watch mode:", error);
       Process.exit(1);
     })
   ->Promise.flatMap(() => {
@@ -216,7 +215,7 @@ let watchAndServe =
       serveResult;
     })
   ->Promise.catch(error => {
-      Js.Console.error2("[Esbuild.watch] Failed to start serve mode:", error);
+      Js.Console.error2("[Esbuild] Failed to start serve mode:", error);
       Process.exit(1);
     });
 };
