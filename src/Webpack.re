@@ -617,6 +617,7 @@ let startDevServer =
       ~globalEnvValues: array((string, string)),
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~renderedPages: array(RenderedPage.t),
+      ~onStart: unit => unit,
     ) => {
   logger.info(() => Js.log("[Webpack] Starting dev server..."));
   let startupDurationLabel = "[Webpack] WebpackDevServer startup duration";
@@ -650,6 +651,7 @@ let startDevServer =
       logger.info(() => {
         Js.log("[Webpack] WebpackDevServer started");
         Js.Console.timeEnd(startupDurationLabel);
+        onStart();
       })
     });
   };
