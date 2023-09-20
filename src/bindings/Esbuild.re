@@ -69,7 +69,7 @@ module HtmlPlugin = {
   };
 
   [@mel.module "@craftamap/esbuild-plugin-html"]
-  external make: (. options) => plugin = "htmlPlugin";
+  external make: (. options) => Plugin.t = "htmlPlugin";
 };
 
 let makeConfig =
