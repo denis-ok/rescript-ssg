@@ -1,12 +1,12 @@
+MAKEFILE_DIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+
 NODE_BINS = node_modules/.bin
 
 EXAMPLE_DIR = example
 
-RESCRIPT_SSG_BIN = ./src/js/bin.mjs
+RESCRIPT_SSG_BIN = ENV_VAR=FOO ./src/js/bin.mjs
 
 COMMANDS_DIR = $(EXAMPLE_DIR)/src/commands
-
-BUILD_COMMAND_WITHOUT_FILE = ENV_VAR=FOO $(RESCRIPT_SSG_BIN)
 
 .PHONY: clean-rescript
 clean-rescript:
@@ -23,11 +23,11 @@ start-rescript:
 
 .PHONY: build-example
 build-example:
-	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/Build.bs.js
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/Build.bs.js
 
 .PHONY: start-example
 start-example:
-	ENV_VAR=FOO RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/Start.bs.js
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/Start.bs.js
 
 .PHONY: serve-example
 serve-example:
@@ -47,7 +47,7 @@ clean:
 .PHONY: build-webpack
 build-webpack: clean
 	make build-rescript
-	RESCRIPT_SSG_BUNDLER=webpack make build-example
+	make build-example
 
 .PHONY: build-esbuild build
 build-esbuild build: clean
@@ -61,13 +61,13 @@ build-ci: clean
 	make clean-test
 	make build-esbuild
 	make clean-example
-	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithTerser.bs.js
+	$(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerser.bs.js
 	make clean-example
-	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithEsbuildPlugin.bs.js
+	$(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithEsbuildPlugin.bs.js
 	make clean-example
-	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithTerserPluginWithEsbuild.bs.js
+	$(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerserPluginWithEsbuild.bs.js
 	make clean-example
-	$(BUILD_COMMAND_WITHOUT_FILE) $(COMMANDS_DIR)/BuildWithTerserPluginWithSwc.bs.js
+	$(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerserPluginWithSwc.bs.js
 
 .PHONY: build-serve
 build-serve:

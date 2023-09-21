@@ -1,8 +1,23 @@
-let currentDir = Utils.getDirname();
+// It's more reliable to have a constant for the project root directory and build paths relative to it
+// instead of building paths relative to the directory of the current module.
+// In the case of Melange, JS files are emitted to a different directory with a different nesting structure
+// which can lead to issues. So better to use project root dir as the base.
 
-let outputDir = Path.join2(currentDir, "../build");
+[@val]
+external projectRootDir': option(string) = "process.env.PROJECT_ROOT_DIR";
 
-let normalizeCssFilePath = Path.join2(currentDir, "/css/normalize.css");
+let projectRootDir =
+  switch (projectRootDir') {
+  | Some(dir) => dir
+  | _ =>
+    Js.Console.error("PROJECT_ROOT_DIR env var is missing");
+    Process.exit(1);
+  };
+
+let outputDir = Path.join2(projectRootDir, "example/build");
+
+let normalizeCssFilePath =
+  Path.join2(projectRootDir, "example/src/css/normalize.css");
 
 let globalEnvValues = [|
   ("process.env.ENV_VAR", Env.envVar),
