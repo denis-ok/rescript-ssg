@@ -207,7 +207,7 @@ let watchAndServe =
   ->Promise.flatMap(() => {
       Js.Console.timeStart(serveDurationLabel);
       contextPromise->Promise.flatMap(context =>
-        context->serve({port, servedir: Some(config#outdir)})
+        context->serve({port, servedir: Some(config##outdir)})
       );
     })
   ->Promise.map(serveResult => {
