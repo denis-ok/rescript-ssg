@@ -47,7 +47,7 @@ module IncommingMessage = {
     "pipe";
 };
 
-[@bs.module "node:http"] [@bs.module "node:http"]
+[@bs.module "node:http"]
 external nodeCreateServer:
   ((IncommingMessage.t, ServerResponse.t) => unit) => Server.t =
   "createServer";
