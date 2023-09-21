@@ -70,11 +70,11 @@ clean-example: ## Clean example site artifacts
 
 .PHONY: build-example
 build-example: clean-example build ## Build the whole project and build example site
-	PROJECT_ROOT=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(MELANGE_ARTIFACTS_DIR)/example/src/commands/Build.bs.js
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(MELANGE_ARTIFACTS_DIR)/example/src/commands/Build.bs.js
 
 .PHONY: start-example
 start-example: ## Start example site in watch mode
-	PROJECT_ROOT=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(MELANGE_ARTIFACTS_DIR)/example/src/commands/Start.bs.js
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(MELANGE_ARTIFACTS_DIR)/example/src/commands/Start.bs.js
 
 .PHONY: serve-example
 serve-example: ## Serve example site (use after build)
