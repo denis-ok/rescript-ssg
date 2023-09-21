@@ -1,6 +1,8 @@
 module Server = {
   type t;
   [@send] external listen: (t, int, unit => unit) => unit = "listen";
+
+  [@send] external close: (t, unit => unit) => unit = "close";
 };
 
 // https://nodejs.org/api/http.html#class-httpclientrequest
@@ -92,9 +94,39 @@ let start = (~port: int, ~targetHost: string, ~targetPort: int) => {
       req->IncommingMessage.pipeToClientRequest(proxy, {end_: true});
     });
 
-  server->Server.listen(port, () =>
-    Js.log("[Dev server] Listening on port " ++ string_of_int(port))
-  );
+  let startServer = () =>
+    server->Server.listen(port, () =>
+      Js.log("[Dev server] Listening on port " ++ string_of_int(port))
+    );
+
+  switch (startServer()) {
+  | () => ()
+  | exception exn =>
+    Js.Console.error2("[Dev server] Failed to start, error:", exn);
+    Process.exit(1);
+  };
+
+  GracefulShutdown.addTask(() => {
+    Js.log("[Dev server] Stopping dev server...");
+
+    Promise.make((~resolve, ~reject as _reject) => {
+      let unit = ();
+
+      server->Server.close(() => {
+        Js.log("[Dev server] Stopped.");
+        resolve(. unit);
+      });
+
+      Js.Global.setTimeout(
+        () => {
+          Js.log("[Dev server] Failed to gracefully shutdown.");
+          resolve(. unit);
+        },
+        1000,
+      )
+      ->ignore;
+    });
+  });
 
   ();
 };

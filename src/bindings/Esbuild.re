@@ -197,6 +197,31 @@ let watchAndServe =
 
   let contextPromise = esbuild->context(config);
 
+  GracefulShutdown.addTask(() => {
+    Js.log("[Esbuild] Stopping esbuild...");
+
+    Promise.make((~resolve, ~reject as _reject) => {
+      let unit = ();
+
+      contextPromise
+      ->Promise.flatMap(context => context->dispose())
+      ->Promise.map(() => {
+          Js.log("[Esbuild] Stopped.");
+          resolve(. unit);
+        })
+      ->ignore;
+
+      Js.Global.setTimeout(
+        () => {
+          Js.log("[Esbuild] Failed to gracefully shutdown.");
+          resolve(. unit);
+        },
+        1000,
+      )
+      ->ignore;
+    });
+  });
+
   contextPromise
   ->Promise.flatMap(context => context->watch())
   ->Promise.map(() => Js.Console.timeEnd(watchDurationLabel))
