@@ -35,7 +35,7 @@ module IncommingMessage = {
   [@get] external headers: t => Js.Dict.t(string) = "headers";
 
   type pipeOptions = {
-    [@bs.as "end"]
+    [@mel.as "end"]
     end_: bool,
   };
 
@@ -47,12 +47,12 @@ module IncommingMessage = {
     "pipe";
 };
 
-[@bs.module "node:http"] [@bs.module "node:http"]
+[@mel.module "node:http"]
 external nodeCreateServer:
   ((IncommingMessage.t, ServerResponse.t) => unit) => Server.t =
   "createServer";
 
-[@bs.module "node:http"]
+[@mel.module "node:http"]
 external nodeRequest:
   (nodeRequestOptions, IncommingMessage.t => unit) => clientRequest =
   "request";
