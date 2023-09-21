@@ -6,7 +6,7 @@ let build = (~minimizer) =>
     ~globalEnvValues=Pages.globalEnvValues,
     ~mode=Production,
     ~outputDir=Pages.outputDir,
-    ~projectRootDir=Pages.projectRoot,
+    ~projectRootDir=Pages.projectRootDir,
     ~logLevel=Info,
     ~compileCommand="make build",
     ~melangeOutputDir=Pages.melangeOutputDir,

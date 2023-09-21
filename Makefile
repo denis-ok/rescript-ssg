@@ -1,3 +1,5 @@
+MAKEFILE_DIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+
 project_name = rescript-ssg
 
 DUNE = opam exec -- dune

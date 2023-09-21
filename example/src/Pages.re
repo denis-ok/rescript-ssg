@@ -1,22 +1,27 @@
 open Ssg;
 
-external projectRoot: option(string) = "process.env.PROJECT_ROOT";
+// It's more reliable to have a constant for the project root directory and build paths relative to it
+// instead of building paths relative to the directory of the current module.
+// In the case of Melange, JS files are emitted to a different directory with a different nesting structure
+// which can lead to issues. So better to use project root dir as the base.
+[@val]
+external projectRootDir': option(string) = "process.env.PROJECT_ROOT_DIR";
 
-let projectRoot =
-  switch (projectRoot) {
+let projectRootDir =
+  switch (projectRootDir') {
   | Some(dir) => dir
   | _ =>
-    Js.Console.error("PROJECT_ROOT env var is missing");
+    Js.Console.error("PROJECT_ROOT_DIR env var is missing");
     Process.exit(1);
   };
 
-let outputDir = Path.join2(projectRoot, "example/build");
+let outputDir = Path.join2(projectRootDir, "example/build");
 
 let melangeOutputDir =
-  Path.join2(projectRoot, "_build/default/app/example/build");
+  Path.join2(projectRootDir, "_build/default/app/example/build");
 
 let normalizeCssFilePath =
-  Path.join2(projectRoot, "example/src/css/normalize.css");
+  Path.join2(projectRootDir, "example/src/css/normalize.css");
 
 let globalEnvValues = [|
   ("process.env.ENV_VAR", Env.envVar),
@@ -82,9 +87,7 @@ let pageWithData: PageBuilder.page = (
           }),
       }),
     modulePath: PageWithData.modulePath,
-    headCssFilepaths: [|
-      Path.join2(projectRoot, "example/src/css/normalize.css"),
-    |],
+    headCssFilepaths: [|normalizeCssFilePath|],
     path: Path([|Page.toSlug(PageWithData)|]),
     globalValues: None,
     headScripts: [||],
