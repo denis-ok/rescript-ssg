@@ -212,7 +212,10 @@ let watchAndServe =
       ->ignore;
 
       Js.Global.setTimeout(
-        () => Js.log("[Esbuild] Failed to gracefully shutdown."),
+        () => {
+          Js.log("[Esbuild] Failed to gracefully shutdown.");
+          Process.exit(1);
+        },
         GracefulShutdown.gracefulShutdownTimeout,
       )
       ->ignore;

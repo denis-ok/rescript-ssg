@@ -16,7 +16,9 @@ Process.onTerminate(() => {
 
   shutdownRunningTasks()
   ->Promise.map(_ => {
-      Js.log("[rescript-ssg] Bye-bye! Graceful shutdown performed successfully");
+      Js.log(
+        "[rescript-ssg] Bye-bye! Graceful shutdown performed successfully",
+      );
       Process.exit(0);
     })
   ->Promise.catch(error => {

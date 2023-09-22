@@ -118,7 +118,10 @@ let start = (~port: int, ~targetHost: string, ~targetPort: int) => {
       });
 
       Js.Global.setTimeout(
-        () => Js.log("[Dev server] Failed to gracefully shutdown."),
+        () => {
+          Js.log("[Dev server] Failed to gracefully shutdown.");
+          Process.exit(1);
+        },
         GracefulShutdown.gracefulShutdownTimeout,
       )
       ->ignore;
