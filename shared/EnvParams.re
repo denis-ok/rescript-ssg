@@ -1,4 +1,4 @@
 let assetPrefix =
-  Process.env
+  Bindings.Process.env
   ->Js.Dict.get("RESCRIPT_SSG_ASSET_PREFIX")
   ->Belt.Option.getWithDefault("");

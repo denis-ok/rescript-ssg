@@ -1,3 +1,5 @@
+module Bundler = Shared.Bundler;
+
 type esbuild;
 
 type context;
@@ -167,7 +169,7 @@ let build =
   ->Promise.catch(error => {
       Js.Console.error2(
         "[Esbuild] Build failed! Promise.catch:",
-        error->Util.inspect,
+        error->Shared.Bindings.Util.inspect,
       );
       Process.exit(1);
     });

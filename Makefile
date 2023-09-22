@@ -60,7 +60,7 @@ test-watch: ## Run the tests and watch for changes
 
 MELANGE_ARTIFACTS_DIR = _build/default/app
 
-RESCRIPT_SSG_BIN = ENV_VAR=FOO $(MELANGE_ARTIFACTS_DIR)/src/js/bin.mjs
+RESCRIPT_SSG_BIN = ENV_VAR=FOO $(DUNE) exec rescript-ssg
 
 NODE_BINS = node_modules/.bin
 

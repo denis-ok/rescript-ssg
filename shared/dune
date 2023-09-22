@@ -1,0 +1,6 @@
+(library
+ (name shared)
+ (public_name rescript-ssg.shared)
+ (preprocess
+  (pps melange.ppx))
+ (modes melange))

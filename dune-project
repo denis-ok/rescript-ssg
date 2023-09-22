@@ -3,3 +3,5 @@
 (using melange 0.1)
 
 (name rescript-ssg)
+
+(using directory-targets 0.1)

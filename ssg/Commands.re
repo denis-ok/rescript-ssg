@@ -1,3 +1,5 @@
+module Bundler = Shared.Bundler;
+
 let checkDuplicatedPagePaths = (pages: array(array(PageBuilder.page))) => {
   Js.log("[rescript-ssg] Checking duplicated page paths...");
 

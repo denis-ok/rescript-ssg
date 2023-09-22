@@ -14,7 +14,7 @@ let fromString = (bundler: string) =>
   };
 
 let bundler =
-  Process.env
+  Bindings.Process.env
   ->Js.Dict.get("RESCRIPT_SSG_BUNDLER")
   ->Belt.Option.getWithDefault("")
   ->Js.String2.toLowerCase
@@ -58,7 +58,7 @@ let getGlobalEnvValuesDict = (globalEnvValues: array((string, string))) => {
   dict;
 };
 
-let getOutputDir = (~outputDir) => Path.join2(outputDir, "public");
+let getOutputDir = (~outputDir) => Bindings.Path.join2(outputDir, "public");
 
 let assetPrefix =
   EnvParams.assetPrefix->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;

@@ -1,3 +1,5 @@
+module Fs = Shared.Bindings.Fs;
+
 type componentWithData('a) = {
   component: 'a => React.element,
   data: 'a,
@@ -183,7 +185,7 @@ let renderHtmlTemplate =
     | cssFiles =>
       Some(
         cssFiles
-        ->Js.Array2.map(filepath => Fs.readFileSyncAsUtf8(filepath))
+        ->Js.Array2.map(filepath => Shared.Bindings.Fs.readFileSyncAsUtf8(filepath))
         ->Js.Array2.joinWith("\n"),
       )
     };
@@ -289,7 +291,7 @@ let makeProcessedDataProp =
 
   let stringifiedData = unsafeStringifyPropValue(data);
 
-  let propDataHash = Crypto.Hash.stringToHash(stringifiedData);
+  let propDataHash = Shared.Bindings.Crypto.Hash.stringToHash(stringifiedData);
 
   let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".js";
 

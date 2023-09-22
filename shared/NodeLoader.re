@@ -1,3 +1,5 @@
+open Bindings;
+
 [@mel.send]
 external replaceAll: (string, string, string) => string = "replaceAll";
 
@@ -26,9 +28,9 @@ let isAsset = fileUrl => {
 // Maybe it makes sense to raise this question again.
 // Source: https://github.com/evanw/esbuild/issues/3113#issuecomment-1542394482
 let getEsbuildFileHash = (buffer: Buffer.t) => {
-  HashWasm.createXXHash64AndReturnBinaryDigest(buffer)
+  Bindings.HashWasm.createXXHash64AndReturnBinaryDigest(buffer)
   ->Promise.map(buffer => {
-      Base32Encode.base32Encode(buffer)->Js.String2.slice(~from=0, ~to_=8)
+      Bindings.Base32Encode.base32Encode(buffer)->Js.String2.slice(~from=0, ~to_=8)
     });
 };
 

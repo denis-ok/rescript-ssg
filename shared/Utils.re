@@ -4,21 +4,12 @@ type jsError;
 
 [@mel.get] external getStack: jsError => string = "stack";
 
-external window: _ = "window";
-
 // Commented to avoid error in webpack
 // @module("path") external dirnameFromFilepath: string => string = "dirname"
 
-let dirnameFromFilepath = filepath => {
-  filepath
-  ->Js.String2.split("/")
-  ->Js.Array2.slice(~start=0, ~end_=-1)
-  ->Js.Array2.joinWith("/");
-};
 
 // Reusable functions that can be simply called from any module instead of
 // dealing with import.meta.url etc.
-
 let getFilepathFromError = jsError => {
   let lineWithPath =
     jsError
@@ -37,42 +28,26 @@ let getFilepathFromError = jsError => {
   };
 };
 
-let getFilepath = () =>
-  switch (Js.typeof(window) == "undefined") {
-  // Get filepath only in node
-  | false => ""
-  | true => makeError()->getFilepathFromError
-  };
-
-let getDirname = () => makeError()->getFilepathFromError->dirnameFromFilepath;
-
-let getModuleNameFromModulePath = modulePath => {
-  let segments = modulePath->Js.String2.split("/");
-
-  let filename =
-    segments->Js.Array2.copy->Js.Array2.reverseInPlace->Belt.Array.get(0);
-
-  switch (filename) {
-  | None
-  | Some("") =>
-    Js.Console.error(
-      "[Utils.getModuleNameFromModulePath] Filename is empty or None",
-    );
-    Process.exit(1);
-  | Some(filename) => filename->Js.String2.replace(".bs.js", "")
-  };
+let dirnameFromFilepath = filepath => {
+  filepath
+  ->Js.String2.split("/")
+  ->Js.Array2.slice(~start=0, ~end_=-1)
+  ->Js.Array2.joinWith("/");
 };
 
-let maybeAddSlashPrefix = path =>
-  if (path->Js.String2.startsWith("http") || path->Js.String2.startsWith("/")) {
-    path;
-  } else {
-    "/" ++ path;
-  };
+
+let getDirname = () => makeError()->getFilepathFromError->dirnameFromFilepath;
 
 let maybeAddSlashSuffix = path =>
   if (path->Js.String2.endsWith("/")) {
     path;
   } else {
     path ++ "/";
+  };
+
+let maybeAddSlashPrefix = path =>
+  if (path->Js.String2.startsWith("http") || path->Js.String2.startsWith("/")) {
+    path;
+  } else {
+    "/" ++ path;
   };

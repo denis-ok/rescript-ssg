@@ -1,5 +1,7 @@
 open Ssg;
 
+module Fs = Shared.Bindings.Fs;
+
 [@mel.module] external util: Js.t('a) = "util";
 
 let inspect = (value): string =>

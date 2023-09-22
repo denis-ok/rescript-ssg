@@ -1,6 +1,9 @@
-let dirname = Utils.getDirname();
+module Bindings = Shared.Bindings;
+module Process = Bindings.Process;
 
-let nodeLoaderPath = Path.join2(dirname, "./js/node-loader.mjs");
+let dirname = Shared.Utils.getDirname();
+
+let nodeLoaderPath = Bindings.Path.join2(dirname, "./node-loader.mjs");
 
 let nodeOptions = [|
   {j|--experimental-loader=$(nodeLoaderPath)|j},
@@ -9,7 +12,7 @@ let nodeOptions = [|
 
 let run = () => {
   switch (
-    ChildProcess.spawnSync(
+    Bindings.ChildProcess.spawnSync(
       "node",
       Js.Array2.concat(
         nodeOptions,

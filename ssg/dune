@@ -1,0 +1,9 @@
+(include_subdirs unqualified)
+
+(library
+ (name ssg)
+ (public_name rescript-ssg.ssg)
+ (modes melange)
+ (libraries reason-react shared)
+ (preprocess
+  (pps melange.ppx reason-react-ppx)))

@@ -1,7 +1,6 @@
-type webpackPlugin;
+module Bundler = Shared.Bundler;
 
-module NodeLoader = NodeLoader; /* Workaround bug in dune and melange: https://github.com/ocaml/dune/pull/6625 */
-module Crypto = Crypto; /* Workaround bug in dune and melange: https://github.com/ocaml/dune/pull/6625 */
+type webpackPlugin;
 
 module HtmlWebpackPlugin = {
   [@mel.module "html-webpack-plugin"] [@mel.new]
@@ -256,8 +255,8 @@ let makeConfig =
       "filename": Bundler.assetsDirname ++ "/" ++ "js/[name]_[chunkhash].js",
       "assetModuleFilename":
         Bundler.assetsDirname ++ "/" ++ "[name].[hash][ext]",
-      "hashFunction": Crypto.Hash.createMd5,
-      "hashDigestLength": Crypto.Hash.digestLength,
+      "hashFunction": Shared.Bindings.Crypto.Hash.createMd5,
+      "hashDigestLength": Shared.Bindings.Crypto.Hash.digestLength,
       // Clean the output directory before emit.
       "clean": true,
     },
