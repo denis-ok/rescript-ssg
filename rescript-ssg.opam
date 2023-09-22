@@ -14,7 +14,7 @@ depends: [
   "reason" {>= "3.10.0"}
   "reason-react"
   "reason-react-ppx"
-  "styled-ppx"
+  "styled-ppx" {with-test} # only used for the example
   "ocaml-lsp-server" {with-test} # todo: use with-dev-setup once opam 2.2 is out
   "ocamlformat" {= "0.26.0" & with-test} # todo: use with-dev-setup once opam 2.2 is out
   "odoc" {with-doc}
@@ -34,8 +34,6 @@ build: [
   ]
 ]
 pin-depends: [
-  ["melange.2.0.0"         "git+https://github.com/melange-re/melange.git#e114ad55d185badeb32b3c766c9ab547495eac1b"]
-  ["reason.3.10.0"         "git+https://github.com/reasonml/reason.git#972261dab3b651ff8ab9b8b9fcc32940595073dc"]
   ["reason-react.dev"      "git+https://github.com/reasonml/reason-react.git#2e99c8ee87cefe241b698c191c74226da54cf9db"]
   ["reason-react-ppx.dev"  "git+https://github.com/reasonml/reason-react.git#2e99c8ee87cefe241b698c191c74226da54cf9db"]
   ["styled-ppx.dev"        "git+https://github.com/davesnx/styled-ppx.git#acf6edee39edf7ee07da9bccd77d4fb4110a1331"]

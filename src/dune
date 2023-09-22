@@ -2,6 +2,7 @@
 
 (library
  (name ssg)
+ (public_name rescript-ssg.ssg)
  (modes melange)
  (libraries reason-react)
  (preprocess
