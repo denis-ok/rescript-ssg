@@ -113,16 +113,13 @@ let start = (~port: int, ~targetHost: string, ~targetPort: int) => {
       let unit = ();
 
       server->Server.close(() => {
-        Js.log("[Dev server] Stopped.");
+        Js.log("[Dev server] Stopped successfully");
         resolve(. unit);
       });
 
       Js.Global.setTimeout(
-        () => {
-          Js.log("[Dev server] Failed to gracefully shutdown.");
-          resolve(. unit);
-        },
-        1000,
+        () => Js.log("[Dev server] Failed to gracefully shutdown."),
+        GracefulShutdown.gracefulShutdownTimeout,
       )
       ->ignore;
     });

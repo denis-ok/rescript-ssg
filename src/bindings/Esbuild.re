@@ -206,17 +206,14 @@ let watchAndServe =
       contextPromise
       ->Promise.flatMap(context => context->dispose())
       ->Promise.map(() => {
-          Js.log("[Esbuild] Stopped.");
+          Js.log("[Esbuild] Stopped successfully");
           resolve(. unit);
         })
       ->ignore;
 
       Js.Global.setTimeout(
-        () => {
-          Js.log("[Esbuild] Failed to gracefully shutdown.");
-          resolve(. unit);
-        },
-        1000,
+        () => Js.log("[Esbuild] Failed to gracefully shutdown."),
+        GracefulShutdown.gracefulShutdownTimeout,
       )
       ->ignore;
     });
