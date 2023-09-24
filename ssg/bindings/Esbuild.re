@@ -92,6 +92,7 @@ let makeConfig =
     "publicPath": Bundler.assetPrefix,
     "format": "esm",
     "bundle": true,
+    "platform": "node",
     "minify": {
       switch (mode) {
       | Build => true

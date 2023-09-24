@@ -11,6 +11,8 @@
  (action
   (with-stdout-to
    node_modules.sexp
+   ; can be used to generate files with exe/node_modules/melange,
+   ; exe/node_modules/melange.belt, and exe/node_modules/melange.js
    (system "echo '(' exe/node_modules/rescript-ssg.shared/* ')'"))))
 
 (install
