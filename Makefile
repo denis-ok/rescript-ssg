@@ -61,13 +61,13 @@ build-ci: clean
 	make clean-test
 	make build-esbuild
 	make clean-example
-	$(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerser.bs.js
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerser.bs.js
 	make clean-example
-	$(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithEsbuildPlugin.bs.js
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithEsbuildPlugin.bs.js
 	make clean-example
-	$(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerserPluginWithEsbuild.bs.js
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerserPluginWithEsbuild.bs.js
 	make clean-example
-	$(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerserPluginWithSwc.bs.js
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerserPluginWithSwc.bs.js
 
 .PHONY: build-serve
 build-serve:
