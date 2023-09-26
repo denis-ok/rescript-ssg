@@ -3,10 +3,10 @@ module ReactDOMServer = {
   // Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/denis/projects/builder/node_modules/react-dom/server' imported from /Users/denis/projects/builder/src/PageBuilder.bs.js
   // Did you mean to import react-dom/server.js?
 
-  [@bs.module "react-dom/server.js"] [@scope "default"]
+  [@mel.module "react-dom/server.js"] [@scope "default"]
   external renderToString: React.element => string = "renderToString";
 
-  [@bs.module "react-dom/server.js"] [@scope "default"]
+  [@mel.module "react-dom/server.js"] [@scope "default"]
   external renderToStaticMarkup: React.element => string =
     "renderToStaticMarkup";
 };

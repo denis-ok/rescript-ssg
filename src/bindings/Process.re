@@ -1,6 +1,6 @@
 type process;
 
-[@val] external process: process = "process";
+external process: process = "process";
 
 [@send] external exit': (process, int) => 'a = "exit";
 
@@ -10,4 +10,4 @@ let exit = int => process->exit'(int);
 
 let getArgs = () => process->argv;
 
-[@val] external env: Js.Dict.t(string) = "process.env";
+external env: Js.Dict.t(string) = "process.env";
