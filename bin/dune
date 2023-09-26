@@ -10,12 +10,14 @@
 
 (rule
  (alias gen_install_sexp)
- (deps (alias_rec exe) generate_install_sexp.sh)
+ (deps
+  (alias_rec exe)
+  (:script generate_install_sexp.sh))
  (target install.sexp)
  (mode promote)
  (action
   (with-stdout-to
    %{target}
-   (bash ./%{deps}))))
+   (bash ./%{script}))))
 
 (include install.sexp)
