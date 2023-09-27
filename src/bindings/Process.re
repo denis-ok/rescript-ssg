@@ -1,13 +1,19 @@
 type process;
 
-[@val] external process: process = "process";
+[@bs.val] external process: process = "process";
 
-[@send] external exit': (process, int) => 'a = "exit";
+[@bs.send] external exit': (process, int) => 'a = "exit";
 
-[@get] external argv: process => array(string) = "argv";
+[@bs.get] external argv: process => array(string) = "argv";
 
 let exit = int => process->exit'(int);
 
 let getArgs = () => process->argv;
 
-[@val] external env: Js.Dict.t(string) = "process.env";
+[@bs.val] external env: Js.Dict.t(string) = "process.env";
+
+[@bs.send] external on: (process, string, unit => unit) => unit = "on";
+
+let onTerminate = callback =>
+  [|"SIGINT", "SIGTERM"|]
+  ->Js.Array2.forEach(signal => process->on(signal, callback));

@@ -1,5 +1,6 @@
 type t;
 
-[@val] external fromString: (string, ~encoding: string) => t = "Buffer.from";
+[@bs.val]
+external fromString: (string, ~encoding: string) => t = "Buffer.from";
 
-[@send] external toString: (t, string) => string = "toString";
+[@bs.send] external toString: (t, string) => string = "toString";

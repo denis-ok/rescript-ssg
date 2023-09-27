@@ -80,8 +80,8 @@ let makeStringToImportJsFileFromRescript =
     ) => {
   let valueName = PageData.toValueName(pageDataType);
   {j|
-type $(valueName)
-@module("$(relativePathToDataDir)/$(jsDataFilename)") external $(valueName): $(valueName) = "data"|j};
+type $(valueName);
+[@bs.module "$(relativePathToDataDir)/$(jsDataFilename)"] external $(valueName): $(valueName) = "data";|j};
 };
 
 let wrapJsTextWithScriptTag = (jsText: string) => {j|<script>$(jsText)</script>|j};
@@ -128,10 +128,10 @@ let renderReactAppTemplate =
 $(importPageWrapperDataString)
 $(importPageDataString)
 
-switch ReactDOM.querySelector("#root") {
+switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate($(elementString), root)
 | None => ()
-}
+};
 |j};
 };
 
@@ -287,8 +287,12 @@ let makeProcessedDataProp =
       }
 
     | PageWrapperData =>
-      let relativePath =
-        Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir);
+      let from =
+        switch (melangePageOutputDir) {
+        | None => pageOutputDir
+        | Some(melangePageOutputDir) => melangePageOutputDir
+        };
+      let relativePath = Path.relative(~from, ~to_=pageWrappersDataDir);
       if (relativePath->Js.String2.startsWith(pageWrappersDataDirname)) {
         "./" ++ relativePath;
       } else {
@@ -533,7 +537,7 @@ let buildPageHtmlAndReactApp =
 
   let writeFilePromises =
     mkDirPromises->Promise.Result.flatMap(_createdDirs => {
-      let reactAppFilename = pageAppModuleName ++ ".res";
+      let reactAppFilename = pageAppModuleName ++ ".re";
 
       let resultHtmlFilePromise =
         Fs.Promises.writeFile(~path=resultHtmlPath, ~data=resultHtml)

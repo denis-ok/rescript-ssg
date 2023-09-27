@@ -11,7 +11,7 @@ module DomParser = {
   let () = globalThis->Js.Dict.set("DOMParser", domParser);
 };
 
-[@val] external import_: string => Js.Promise.t('a) = "import";
+[@bs.val] external import_: string => Js.Promise.t('a) = "import";
 
 let showPage = (page: BuildPageWorkerT.workerPage) => {
   Log.makeMinimalPrintablePageObj(

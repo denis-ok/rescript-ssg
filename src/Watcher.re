@@ -54,9 +54,7 @@ let startWatcher =
     )
     : unit => {
   let pages = Array.flat1(pages);
-  logger.info(() => Js.log("[Watcher] Starting file watcher..."));
-
-  let durationLabel = "[Watcher] Startup duration";
+  let durationLabel = "[Watcher] Watching for file changes... Startup duration";
   Js.Console.timeStart(durationLabel);
 
   // Multiple pages can use the same root module. The common case is localized pages.
@@ -156,10 +154,7 @@ let startWatcher =
   let watcher = Chokidar.chokidar->Chokidar.watchFiles(allDependencies);
 
   watcher->Chokidar.onReady(() =>
-    logger.info(() => {
-      Js.Console.timeEnd(durationLabel);
-      Js.log("[Watcher] Started, ready for changes.");
-    })
+    logger.info(() => Js.Console.timeEnd(durationLabel))
   );
 
   let rebuildQueueRef: ref(array(PageBuilder.page)) = ref([||]);
