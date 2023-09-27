@@ -12,7 +12,7 @@ let renderReactAppTemplate = (~modulesWithHydration__Mutable: array(string)) => 
 switch (ReactDOM.querySelector("#$(scriptId)")) {
 | Some(root) => ReactDOM.hydrate(<$(moduleName) />, root)
 | None => ()
-}
+};
 |j};
     })
   ->Js.Array2.joinWith("\n");

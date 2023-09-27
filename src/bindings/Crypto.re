@@ -3,18 +3,18 @@ module Hash = {
 
   type hash;
 
-  [@module "crypto"] external crypto: crypto = "default";
+  [@bs.module "crypto"] external crypto: crypto = "default";
 
-  [@send "createHash"]
+  [@bs.send "createHash"]
   external createHash': (crypto, string) => hash = "createHash";
 
-  [@send "update"]
+  [@bs.send "update"]
   external updateBufferWithBuffer: (hash, Buffer.t) => hash = "update";
 
-  [@send "update"]
+  [@bs.send "update"]
   external updateBufferWithString: (hash, string) => hash = "update";
 
-  [@send "digest"] external digest: (hash, string) => string = "digest";
+  [@bs.send "digest"] external digest: (hash, string) => string = "digest";
 
   let digestLength = 20;
 

@@ -9,7 +9,7 @@
 // };
 
 // module Css = {
-//   [@module "@emotion/css"] external defaultCache: cache = "cache";
+//   [@bs.module "@emotion/css"] external defaultCache: cache = "cache";
 // };
 
 // Custom cache doesn't work for some reason. But is it needed? Seems not.
@@ -18,7 +18,7 @@
 
 // module Cache = {
 //   type createCacheInput = {key: string};
-//   [@module "@emotion/cache/dist/emotion-cache.cjs.js"] [@scope "default"]
+//   [@bs.module "@emotion/cache/dist/emotion-cache.cjs.js"] [@bs.scope "default"]
 //   external createCache: createCacheInput => cache = "default";
 // };
 
@@ -36,16 +36,16 @@ module Server = {
   // All exports from "@emotion/server" index are the results of internal calling "createEmotionServer(cache)"
   // where passed cache is default cache imported from "@emotion/css".
 
-  [@module "@emotion/server"]
+  [@bs.module "@emotion/server"]
   external extractCritical: string => extractCriticalResult =
     "extractCritical";
 
-  [@module "@emotion/server"]
+  [@bs.module "@emotion/server"]
   external renderStylesToString: string => string = "renderStylesToString";
   // Below is a function to build emotion server manually with a custom cache.
-  // [@module
+  // [@bs.module
   //   "@emotion/server/create-instance/dist/emotion-server-create-instance.cjs.js"
   // ]
-  // [@scope "default"]
+  // [@bs.scope "default"]
   // external createEmotionServer: cache => createEmotionServerResult = "default";
 };

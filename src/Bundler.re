@@ -2,6 +2,10 @@ type t =
   | Webpack
   | Esbuild;
 
+type mode =
+  | Build
+  | Watch;
+
 let fromString = (bundler: string) =>
   switch (bundler) {
   | "webpack" => Webpack

@@ -131,7 +131,7 @@ $(importPageDataString)
 switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate($(elementString), root)
 | None => ()
-}
+};
 |j};
 };
 
@@ -287,8 +287,12 @@ let makeProcessedDataProp =
       }
 
     | PageWrapperData =>
-      let relativePath =
-        Path.relative(~from=pageOutputDir, ~to_=pageWrappersDataDir);
+      let from =
+        switch (melangePageOutputDir) {
+        | None => pageOutputDir
+        | Some(melangePageOutputDir) => melangePageOutputDir
+        };
+      let relativePath = Path.relative(~from, ~to_=pageWrappersDataDir);
       if (relativePath->Js.String2.startsWith(pageWrappersDataDirname)) {
         "./" ++ relativePath;
       } else {

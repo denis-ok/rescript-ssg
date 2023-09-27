@@ -1,5 +1,5 @@
 type t('a);
-[@new] external fromArray: array('a) => t('a) = "Set";
+[@bs.new] external fromArray: array('a) => t('a) = "Set";
 
 type arrayModule;
 

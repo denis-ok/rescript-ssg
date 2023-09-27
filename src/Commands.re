@@ -70,10 +70,31 @@ let initializeAndBuildPages =
       ~melangeOutputDir,
       ~globalEnvValues,
       ~generatedFilesSuffix,
+      ~bundlerMode: Bundler.mode,
     ) => {
   let () = checkDuplicatedPagePaths(pages);
 
   let logger = Log.makeLogger(logLevel);
+
+  let pages =
+    switch (Bundler.bundler, bundlerMode) {
+    | (Esbuild, Watch) =>
+      pages->Js.Array2.map(pages =>
+        pages->Js.Array2.map(page =>
+          {
+            ...page,
+            // Add a script to implement live reloading with esbuild
+            // https://esbuild.github.io/api/#live-reload
+            headScripts:
+              Js.Array2.concat(
+                [|Esbuild.subscribeToRebuildEventScript|],
+                page.headScripts,
+              ),
+          }
+        )
+      )
+    | _ => pages
+    };
 
   let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
@@ -92,7 +113,7 @@ let initializeAndBuildPages =
         },
     );
 
-  (logger, renderedPages);
+  (logger, pages, renderedPages);
 };
 
 let build =
@@ -112,7 +133,7 @@ let build =
       ~buildWorkersCount: option(int)=?,
       (),
     ) => {
-  let (logger, renderedPages) =
+  let (logger, _pages, renderedPages) =
     initializeAndBuildPages(
       ~logLevel,
       ~buildWorkersCount,
@@ -121,6 +142,7 @@ let build =
       ~melangeOutputDir,
       ~globalEnvValues,
       ~generatedFilesSuffix,
+      ~bundlerMode=Build,
     );
 
   renderedPages
@@ -158,6 +180,7 @@ let build =
 let start =
     (
       ~outputDir: string,
+      ~projectRootDir: string,
       ~melangeOutputDir: option(string)=?,
       ~mode: Webpack.Mode.t,
       ~logLevel: Log.level,
@@ -169,9 +192,11 @@ let start =
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
+      ~esbuildMainServerPort: int=8000,
+      ~esbuildProxyServerPort: int=8001,
       (),
     ) => {
-  let (logger, renderedPages) =
+  let (logger, pages, renderedPages) =
     initializeAndBuildPages(
       ~logLevel,
       ~buildWorkersCount,
@@ -180,26 +205,10 @@ let start =
       ~melangeOutputDir,
       ~globalEnvValues,
       ~generatedFilesSuffix,
+      ~bundlerMode=Watch,
     );
 
-  renderedPages
-  ->Promise.map(renderedPages => {
-      let () =
-        Webpack.startDevServer(
-          ~devServerOptions,
-          ~webpackBundleAnalyzerMode,
-          ~mode,
-          ~logger,
-          ~outputDir,
-          ~minimizer,
-          ~globalEnvValues,
-          ~renderedPages,
-        );
-      ();
-    })
-  ->ignore;
-
-  let () =
+  let startFileWatcher = () =>
     Watcher.startWatcher(
       ~outputDir,
       ~melangeOutputDir,
@@ -208,5 +217,55 @@ let start =
       pages,
     );
 
-  ();
+  // rescript-ssg just emitted reason artifacts and JS compilation is happening...
+  // Starting dev server after a little delay.
+  // Ideally, we want to start dev server and file watcher after JS compilation is done
+  // to avoid redundant rebuilds while JS is still compiling.
+  let delayBeforeDevServerStart = 3000;
+
+  Js.Global.setTimeout(
+    () => {
+      renderedPages
+      ->Promise.map(renderedPages =>
+          switch (Bundler.bundler) {
+          | Esbuild =>
+            Esbuild.watchAndServe(
+              ~outputDir,
+              ~projectRootDir,
+              ~globalEnvValues,
+              ~renderedPages,
+              ~port=esbuildMainServerPort,
+            )
+            ->Promise.map(serveResult => {
+                let () =
+                  ProxyServer.start(
+                    ~port=esbuildProxyServerPort,
+                    ~targetHost=serveResult.host,
+                    ~targetPort=serveResult.port,
+                  );
+                let () = startFileWatcher();
+                ();
+              })
+            ->ignore
+          | Webpack =>
+            let () =
+              Webpack.startDevServer(
+                ~devServerOptions,
+                ~webpackBundleAnalyzerMode,
+                ~mode,
+                ~logger,
+                ~outputDir,
+                ~minimizer,
+                ~globalEnvValues,
+                ~renderedPages,
+                ~onStart=startFileWatcher,
+              );
+            ();
+          }
+        )
+      ->ignore
+    },
+    delayBeforeDevServerStart,
+  )
+  ->ignore;
 };

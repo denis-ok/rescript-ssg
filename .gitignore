@@ -8,8 +8,10 @@
 /demo/bundle
 .trash
 /_opam
+/_opam_mel
+/_opam_bs
+_build
 example/build
-
 coverage
 tests/output
 /_build/
