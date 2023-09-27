@@ -130,8 +130,7 @@ module WebpackDevServer = {
   [@mel.send]
   external startWithCallback: (t, unit => unit) => unit = "startCallback";
 
-  [@mel.send]
-  external stopWithCallback: (t, unit => unit) => unit = "stopCallback";
+  [@mel.send] external stop: (t, unit) => Js.Promise.t(unit) = "stop";
 };
 
 module Mode = {
@@ -374,6 +373,9 @@ let makeConfig =
       | None => None
       | Some({listenTo, proxy}) =>
         Some({
+          // Prevent Webpack from handling SIGINT and SIGTERM signals
+          // because we handle them in our graceful shutdown logic
+          "setupExitSignals": false,
           "devMiddleware": {
             "stats": {
               switch (logger.logLevel) {
@@ -653,6 +655,25 @@ let startDevServer =
         Js.Console.timeEnd(startupDurationLabel);
         onStart();
       })
+    });
+
+    GracefulShutdown.addTask(() => {
+      Js.log("[Webpack] Stopping dev server...");
+
+      Js.Global.setTimeout(
+        () => {
+          Js.log("[Webpack] Failed to gracefully shutdown.");
+          Process.exit(1);
+        },
+        GracefulShutdown.gracefulShutdownTimeout,
+      )
+      ->ignore;
+
+      devServer
+      ->WebpackDevServer.stop()
+      ->Promise.map(() =>
+          Js.log("[Webpack] Dev server stopped successfully")
+        );
     });
   };
 };
