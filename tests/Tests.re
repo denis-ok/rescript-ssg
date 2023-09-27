@@ -1,8 +1,8 @@
 let dirname = Utils.getDirname();
 
-[@val] external process: Js.t('a) = "process";
+external process: Js.t('a) = "process";
 
-[@bs.module] external util: Js.t('a) = "util";
+[@mel.module] external util: Js.t('a) = "util";
 
 let inspect = (value): string =>
   util##inspect(value, {"compact": false, "depth": 20, "colors": true});
@@ -213,7 +213,7 @@ switch (ReactDOM.querySelector("#root")) {
 
     let expectedAppContent = {js|
 type pageData;
-[@bs.module "./TestPageWithData_Data_688ca4c30fca5edb6793.js"] external pageData: pageData = "data";
+[@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.js"] external pageData: pageData = "data";
 
 switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(<TestPageWithData data={pageData->Obj.magic} />, root)
@@ -272,10 +272,10 @@ switch (ReactDOM.querySelector("#root")) {
 
     let expectedAppContent = {js|
 type pageWrapperData;
-[@bs.module "./__pageWrappersData/TestWrapperWithData_Data_688ca4c30fca5edb6793.js"] external pageWrapperData: pageWrapperData = "data";
+[@mel.module "./__pageWrappersData/TestWrapperWithData_Data_688ca4c30fca5edb6793.js"] external pageWrapperData: pageWrapperData = "data";
 
 type pageData;
-[@bs.module "./TestPageWithData_Data_688ca4c30fca5edb6793.js"] external pageData: pageData = "data";
+[@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.js"] external pageData: pageData = "data";
 
 switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(<TestWrapperWithData data={pageWrapperData->Obj.magic} ><TestPageWithData data={pageData->Obj.magic} /></TestWrapperWithData>, root)

@@ -1,4 +1,4 @@
-[@bs.send]
+[@mel.send]
 external replaceAll: (string, string, string) => string = "replaceAll";
 
 // 'v16.15.0' => 16150

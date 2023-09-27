@@ -1,14 +1,14 @@
 include Js.Promise;
 
-[@bs.send]
+[@mel.send]
 external map: (Js.Promise.t('a), 'a => 'b) => Js.Promise.t('b) = "then";
 
-[@bs.send]
+[@mel.send]
 external flatMap:
   (Js.Promise.t('a), 'a => Js.Promise.t('b)) => Js.Promise.t('b) =
   "then";
 
-[@bs.send]
+[@mel.send]
 external catch:
   (Js.Promise.t('a), Js.Promise.error => Js.Promise.t('b)) =>
   Js.Promise.t('b) =

@@ -1,11 +1,11 @@
 module Css = Content_Css;
 
-[@bs.module "./images/cat.jpeg"] external catImage: string = "default";
+[@mel.module "./images/cat.jpeg"] external catImage: string = "default";
 
-[@bs.module "./content.css"] external css: string = "default";
+[@mel.module "./content.css"] external css: string = "default";
 css->ignore;
 
-[@bs.module "lite-flag-icon/css/flag-icon.min.css"]
+[@mel.module "lite-flag-icon/css/flag-icon.min.css"]
 external flagsCss: string = "default";
 flagsCss->ignore;
 
