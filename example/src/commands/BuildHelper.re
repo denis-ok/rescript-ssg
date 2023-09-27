@@ -7,7 +7,7 @@ let build = (~minimizer) =>
     ~projectRootDir=Pages.projectRootDir,
     ~logLevel=Info,
     ~compileCommand=
-      Path.join2(Pages.projectRootDir, "node_modules/.bin/rescript"),
+      Path.join2(Pages.projectRootDir, "node_modules/.bin/bsb"),
     ~minimizer,
     ~webpackBundleAnalyzerMode=
       Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
