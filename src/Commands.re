@@ -194,6 +194,7 @@ let start =
       ~buildWorkersCount: option(int)=?,
       ~esbuildMainServerPort: int=8000,
       ~esbuildProxyServerPort: int=8001,
+      ~esbuildProxyRules: array(ProxyServer.ProxyRule.t)=[||],
       (),
     ) => {
   let (logger, pages, renderedPages) =
@@ -242,6 +243,7 @@ let start =
                     ~port=esbuildProxyServerPort,
                     ~targetHost=serveResult.host,
                     ~targetPort=serveResult.port,
+                    ~proxyRules=esbuildProxyRules,
                   );
                 let () = startFileWatcher();
                 ();

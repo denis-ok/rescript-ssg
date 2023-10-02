@@ -11,5 +11,18 @@ let () =
     ~globalEnvValues=Pages.globalEnvValues,
     ~webpackBundleAnalyzerMode=None,
     ~buildWorkersCount=1,
+    ~esbuildProxyRules=[|
+      {
+        from: "/v4/",
+        to_: {
+          target: {
+            host: None,
+            port: None,
+            unixSocket: Some("foo.sock"),
+          },
+          pathRewrite: Some({rewriteFrom: "/v4/", rewriteTo: "/api/"}),
+        },
+      },
+    |],
     (),
   );
