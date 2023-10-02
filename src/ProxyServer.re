@@ -70,7 +70,7 @@ external nodeRequest:
 module URL = {
   type t;
   [@bs.new] [@bs.scope "global"]
-  external makeExn: (string, string) => t = "URL";
+  external makeExn: (string, ~base: option(string)) => t = "URL";
   [@bs.get] external hash: t => string = "hash";
   [@bs.get] external host: t => string = "host";
   [@bs.get] external hostname: t => string = "hostname";
@@ -78,23 +78,23 @@ module URL = {
   [@bs.get] external origin: t => string = "origin";
   [@bs.get] external protocol: t => string = "protocol";
   [@bs.get] external pathname: t => string = "pathname";
+  // Yes, port parsed as string
+  // https://nodejs.org/api/url.html#urlport
   [@bs.get] external port: t => string = "port";
   [@bs.get] external search: t => string = "search";
   [@bs.get] external searchParams: t => Js.Dict.t(string) = "searchParams";
 
-  let make = (path, base) =>
-    switch (makeExn(path, base)) {
+  let make = (path, ~base) =>
+    switch (makeExn(path, ~base)) {
     | url => Some(url)
     | exception _ => None
     };
 };
 
 module ProxyRule = {
-  type target = {
-    host: option(string),
-    port: option(int),
-    unixSocket: option(string),
-  };
+  type target =
+    | Host(string)
+    | UnixSocket(string);
 
   type pathRewrite = {
     rewriteFrom: string,
@@ -127,7 +127,7 @@ let start =
       let reqHost =
         reqHeaders->Js.Dict.get("host")->Belt.Option.getWithDefault("");
       let urlBase = "http://" ++ reqHost;
-      let url = URL.make(reqUrl, urlBase);
+      let url = URL.make(reqUrl, ~base=Some(urlBase));
       let path =
         switch (url) {
         | None => reqUrl
@@ -139,8 +139,18 @@ let start =
           path->Js.String2.startsWith(rule.from)
         );
 
-      let targetOptions: nodeRequestOptions =
+      let targetOptions: nodeRequestOptions = {
+        let defaultTarget = {
+          hostname: Some(targetHost),
+          port: Some(targetPort),
+          path: req->IncommingMessage.url,
+          method: req->IncommingMessage.method,
+          headers: req->IncommingMessage.headers,
+          socketPath: None,
+        };
+
         switch (matchedRule) {
+        | None => defaultTarget
         | Some({from: _, to_: {target, pathRewrite}} as proxyRule) =>
           Js.log2("Proxy rule matched:", proxyRule);
           let path =
@@ -151,24 +161,37 @@ let start =
               newPath;
             | None => path
             };
-
-          {
-            hostname: target.host,
-            port: target.port,
-            socketPath: target.unixSocket,
-            path,
-            method: req->IncommingMessage.method,
-            headers: req->IncommingMessage.headers,
+          switch (target) {
+          | UnixSocket(socketPath) => {
+              hostname: None,
+              port: None,
+              socketPath: Some(socketPath),
+              path,
+              method: req->IncommingMessage.method,
+              headers: req->IncommingMessage.headers,
+            }
+          | Host(host) =>
+            let url = URL.make(host, ~base=None);
+            switch (url) {
+            | None => defaultTarget
+            | Some(url) =>
+              let hostname = url->URL.hostname;
+              let port = url->URL.port;
+              {
+                hostname: Some(hostname),
+                port:
+                  Some(
+                    port->Belt.Int.fromString->Belt.Option.getWithDefault(80),
+                  ),
+                socketPath: None,
+                path,
+                method: req->IncommingMessage.method,
+                headers: req->IncommingMessage.headers,
+              };
+            };
           };
-        | None => {
-            hostname: Some(targetHost),
-            port: Some(targetPort),
-            path: req->IncommingMessage.url,
-            method: req->IncommingMessage.method,
-            headers: req->IncommingMessage.headers,
-            socketPath: None,
-          }
         };
+      };
 
       let proxyReq =
         nodeRequest(targetOptions, targetRes =>

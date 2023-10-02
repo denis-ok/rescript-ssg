@@ -13,14 +13,24 @@ let () =
     ~buildWorkersCount=1,
     ~esbuildProxyRules=[|
       {
-        from: "/v4/",
+        from: "/v1/",
         to_: {
-          target: {
-            host: None,
-            port: None,
-            unixSocket: Some("foo.sock"),
-          },
-          pathRewrite: Some({rewriteFrom: "/v4/", rewriteTo: "/api/"}),
+          target: UnixSocket("foo.sock"),
+          pathRewrite: Some({rewriteFrom: "/v1/", rewriteTo: "/api/v1"}),
+        },
+      },
+      {
+        from: "/v2/",
+        to_: {
+          target: Host("http://localhost:1234"),
+          pathRewrite: Some({rewriteFrom: "/v2/", rewriteTo: "/api/v2"}),
+        },
+      },
+      {
+        from: "/v3/",
+        to_: {
+          target: Host("http://lala.com"),
+          pathRewrite: Some({rewriteFrom: "/v3/", rewriteTo: "/api/v3"}),
         },
       },
     |],
