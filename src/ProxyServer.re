@@ -67,7 +67,7 @@ external nodeRequest:
   (nodeRequestOptions, IncommingMessage.t => unit) => ClientRequest.t =
   "request";
 
-module URL = {
+module Url = {
   type t;
   [@bs.new] [@bs.scope "global"]
   external makeExn: (string, ~base: option(string)) => t = "URL";
@@ -114,7 +114,7 @@ module ProxyRule = {
 
 module ValidProxyRule = {
   type target =
-    | Url(URL.t)
+    | Url(Url.t)
     | UnixSocket(string);
 
   type settingTo = {
@@ -132,10 +132,10 @@ module ValidProxyRule = {
       switch (proxyRule.to_.target) {
       | UnixSocket(path) => UnixSocket(path)
       | Url(str) =>
-        let url = URL.make(str, ~base=None);
+        let url = Url.make(str, ~base=None);
         switch (url) {
         | None =>
-          Js.Console.error2("[Dev server] Error, failed to parse URL:", str);
+          Js.Console.error2("[Dev server] Error, failed to parse URL string:", str);
           Process.exit(1);
         | Some(url) => Url(url)
         };
@@ -164,44 +164,42 @@ let start =
   let server =
     nodeCreateServer((req, res) => {
       let reqUrl = req->IncommingMessage.url;
-      Js.log2("Request to:", reqUrl);
       let reqHeaders = req->IncommingMessage.headers;
       let reqHost =
         reqHeaders->Js.Dict.get("host")->Belt.Option.getWithDefault("");
       let urlBase = "http://" ++ reqHost;
-      let url = URL.make(reqUrl, ~base=Some(urlBase));
-      let path =
+      let url = Url.make(reqUrl, ~base=Some(urlBase));
+      let reqPath =
         switch (url) {
         | None => reqUrl
-        | Some(url) => url->URL.pathname
+        | Some(url) => url->Url.pathname
         };
 
       let matchedRule =
         proxyRules->Js.Array2.find(rule =>
-          path->Js.String2.startsWith(rule.from)
+          reqPath->Js.String2.startsWith(rule.from)
         );
 
-      let targetOptions: nodeRequestOptions = {
-        let defaultTarget = {
-          hostname: Some(targetHost),
-          port: Some(targetPort),
-          path: req->IncommingMessage.url,
-          method: req->IncommingMessage.method,
-          headers: req->IncommingMessage.headers,
-          socketPath: None,
-        };
-
+      let targetOptions: nodeRequestOptions =
         switch (matchedRule) {
-        | None => defaultTarget
+        | None => {
+            hostname: Some(targetHost),
+            port: Some(targetPort),
+            path: req->IncommingMessage.url,
+            method: req->IncommingMessage.method,
+            headers: req->IncommingMessage.headers,
+            socketPath: None,
+          }
         | Some({from: _, to_: {target, pathRewrite}} as proxyRule) =>
-          Js.log2("Proxy rule matched:", proxyRule);
+          Js.log2("[Dev server] Proxy rule matched:", proxyRule);
           let path =
             switch (pathRewrite) {
             | Some({rewriteFrom, rewriteTo}) =>
-              let newPath = path->Js.String2.replace(rewriteFrom, rewriteTo);
-              Js.log2("Path rewritten, new path:", newPath);
+              let newPath =
+                reqPath->Js.String2.replace(rewriteFrom, rewriteTo);
+              Js.log2("[Dev server] Path rewritten, new path:", newPath);
               newPath;
-            | None => path
+            | None => reqPath
             };
           switch (target) {
           | UnixSocket(socketPath) => {
@@ -212,23 +210,22 @@ let start =
               method: req->IncommingMessage.method,
               headers: req->IncommingMessage.headers,
             }
-          | Url(url) =>
-            let hostname = url->URL.hostname;
-            let port = url->URL.port;
-            {
-              hostname: Some(hostname),
+          | Url(url) => {
+              hostname: Some(url->Url.hostname),
               port:
                 Some(
-                  port->Belt.Int.fromString->Belt.Option.getWithDefault(80),
+                  url
+                  ->Url.port
+                  ->Belt.Int.fromString
+                  ->Belt.Option.getWithDefault(80),
                 ),
               socketPath: None,
               path,
               method: req->IncommingMessage.method,
               headers: req->IncommingMessage.headers,
-            };
+            }
           };
         };
-      };
 
       let proxyReq =
         nodeRequest(targetOptions, targetRes =>
