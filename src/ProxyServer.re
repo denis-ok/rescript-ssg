@@ -93,7 +93,7 @@ module URL = {
 
 module ProxyRule = {
   type target =
-    | Host(string)
+    | Url(string)
     | UnixSocket(string);
 
   type pathRewrite = {
@@ -112,6 +112,45 @@ module ProxyRule = {
   };
 };
 
+module ValidProxyRule = {
+  type target =
+    | Url(URL.t)
+    | UnixSocket(string);
+
+  type settingTo = {
+    target,
+    pathRewrite: option(ProxyRule.pathRewrite),
+  };
+
+  type t = {
+    from: string,
+    to_: settingTo,
+  };
+
+  let fromProxyRule = (proxyRule: ProxyRule.t): t => {
+    let target =
+      switch (proxyRule.to_.target) {
+      | UnixSocket(path) => UnixSocket(path)
+      | Url(str) =>
+        let url = URL.make(str, ~base=None);
+        switch (url) {
+        | None =>
+          Js.Console.error2("[Dev server] Error, failed to parse URL:", str);
+          Process.exit(1);
+        | Some(url) => Url(url)
+        };
+      };
+
+    {
+      from: proxyRule.from,
+      to_: {
+        target,
+        pathRewrite: proxyRule.to_.pathRewrite,
+      },
+    };
+  };
+};
+
 let start =
     (
       ~port: int,
@@ -119,6 +158,9 @@ let start =
       ~targetPort: int,
       ~proxyRules: array(ProxyRule.t),
     ) => {
+  let proxyRules =
+    proxyRules->Js.Array2.map(rule => ValidProxyRule.fromProxyRule(rule));
+
   let server =
     nodeCreateServer((req, res) => {
       let reqUrl = req->IncommingMessage.url;
@@ -170,24 +212,19 @@ let start =
               method: req->IncommingMessage.method,
               headers: req->IncommingMessage.headers,
             }
-          | Host(host) =>
-            let url = URL.make(host, ~base=None);
-            switch (url) {
-            | None => defaultTarget
-            | Some(url) =>
-              let hostname = url->URL.hostname;
-              let port = url->URL.port;
-              {
-                hostname: Some(hostname),
-                port:
-                  Some(
-                    port->Belt.Int.fromString->Belt.Option.getWithDefault(80),
-                  ),
-                socketPath: None,
-                path,
-                method: req->IncommingMessage.method,
-                headers: req->IncommingMessage.headers,
-              };
+          | Url(url) =>
+            let hostname = url->URL.hostname;
+            let port = url->URL.port;
+            {
+              hostname: Some(hostname),
+              port:
+                Some(
+                  port->Belt.Int.fromString->Belt.Option.getWithDefault(80),
+                ),
+              socketPath: None,
+              path,
+              method: req->IncommingMessage.method,
+              headers: req->IncommingMessage.headers,
             };
           };
         };

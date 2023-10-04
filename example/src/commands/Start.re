@@ -22,14 +22,14 @@ let () =
       {
         from: "/v2/",
         to_: {
-          target: Host("http://localhost:1234"),
+          target: Url("http://localhost:1234"),
           pathRewrite: Some({rewriteFrom: "/v2/", rewriteTo: "/api/v2"}),
         },
       },
       {
         from: "/v3/",
         to_: {
-          target: Host("http://lala.com"),
+          target: Url("http://lala.com"),
           pathRewrite: Some({rewriteFrom: "/v3/", rewriteTo: "/api/v3"}),
         },
       },
