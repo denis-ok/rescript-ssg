@@ -135,7 +135,10 @@ module ValidProxyRule = {
         let url = Url.make(str, ~base=None);
         switch (url) {
         | None =>
-          Js.Console.error2("[Dev server] Error, failed to parse URL string:", str);
+          Js.Console.error2(
+            "[Dev server] Error, failed to parse URL string:",
+            str,
+          );
           Process.exit(1);
         | Some(url) => Url(url)
         };
@@ -159,7 +162,27 @@ let start =
       ~proxyRules: array(ProxyRule.t),
     ) => {
   let proxyRules =
-    proxyRules->Js.Array2.map(rule => ValidProxyRule.fromProxyRule(rule));
+    proxyRules
+    ->Js.Array2.map(rule => ValidProxyRule.fromProxyRule(rule))
+    ->Js.Array2.sortInPlaceWith((a, b) => {
+        // Sort proxy rules to make sure that more specific rules are matched first.
+        let countSegments = s =>
+          s
+          ->Js.String2.split("/")
+          ->Js.Array2.filter(s => s != "")
+          ->Js.Array2.length;
+
+        let segCount1 = countSegments(a.from);
+        let segCount2 = countSegments(b.from);
+
+        if (segCount1 == segCount2) {
+          0;
+        } else if (segCount1 < segCount2) {
+          1;
+        } else {
+          (-1);
+        };
+      });
 
   let server =
     nodeCreateServer((req, res) => {
