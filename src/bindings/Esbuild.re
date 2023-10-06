@@ -109,7 +109,7 @@ let makeConfig =
     "plugins": {
       let htmlPluginFiles =
         renderedPages->Js.Array2.map(renderedPage => {
-          let pagePath = renderedPage.path->PageBuilderT.PagePath.toString;
+          let pagePath = renderedPage.path->PagePath.toString;
 
           // entryPoint must be relative path to the root of user's project
           let entryPathRelativeToProjectRoot =

@@ -236,7 +236,7 @@ let makeConfig =
   let entries =
     renderedPages
     ->Js.Array2.map(({path, entryPath, _}) =>
-        (PageBuilderT.PagePath.toWebpackEntryName(path), entryPath)
+        (PagePath.toWebpackEntryName(path), entryPath)
       )
     ->Js.Dict.fromArray;
 
@@ -275,9 +275,8 @@ let makeConfig =
         renderedPages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
           HtmlWebpackPlugin.make({
             "template": htmlTemplatePath,
-            "filename":
-              Path.join2(PageBuilderT.PagePath.toString(path), "index.html"),
-            "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
+            "filename": Path.join2(PagePath.toString(path), "index.html"),
+            "chunks": [|PagePath.toWebpackEntryName(path)|],
             "inject": true,
             "minify": {
               "collapseWhitespace": shouldMinimize,
@@ -424,7 +423,7 @@ let makeConfig =
                       let to_ =
                         Path.join3(
                           "/",
-                          PageBuilderT.PagePath.toString(page.path),
+                          PagePath.toString(page.path),
                           "index.html",
                         );
 

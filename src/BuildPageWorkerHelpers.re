@@ -135,7 +135,7 @@ let buildPagesWithWorkers =
       | Error(path) =>
         Js.Console.error2(
           "[Commands.buildPagesWithWorkers] One of the pages failed to build:",
-          PageBuilderT.PagePath.toString(path),
+          PagePath.toString(path),
         );
         if (exitOnPageBuildError) {
           Process.exit(1);
