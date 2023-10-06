@@ -154,8 +154,6 @@ module ValidProxyRule = {
   };
 };
 
-let dynamicPathSegment = "__dynamic-segment__";
-
 let sortPathsBySegmentCount = (a, b) => {
   // Sort paths to make sure that more specific rules are matched first.
   let countSegments = s =>
@@ -187,7 +185,7 @@ let isPageWithDynamicPathSegmentRequested =
     | ([], _)
     | (_, []) => false
     | ([reqSegment, ...reqTail], [pageSegment, ...pageTail]) =>
-      pageSegment == dynamicPathSegment || reqSegment == pageSegment
+      pageSegment == PagePath.dynamicSegment || reqSegment == pageSegment
         ? isMatch(reqTail, pageTail) : false
     };
   };
@@ -204,7 +202,9 @@ let start =
     ) => {
   let pagePathsWithDynamicSegment =
     pagePaths
-    ->Js.Array2.filter(path => path->Js.String2.includes(dynamicPathSegment))
+    ->Js.Array2.filter(path =>
+        path->Js.String2.includes(PagePath.dynamicSegment)
+      )
     ->Js.Array2.sortInPlaceWith(sortPathsBySegmentCount);
 
   let proxyRules =

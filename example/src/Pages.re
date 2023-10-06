@@ -120,7 +120,7 @@ let pageWithoutDataDynamicPath: PageBuilder.page = (
     ...pageWithoutData,
     component: ComponentWithoutData(<PageDynamic />),
     modulePath: PageDynamic.modulePath,
-    path: Path([|Page.toSlug(PageWithoutData), "dynamic__id"|]),
+    path: Path([|Page.toSlug(PageWithoutData), PagePath.dynamicSegment|]),
   }: PageBuilder.page
 );
 

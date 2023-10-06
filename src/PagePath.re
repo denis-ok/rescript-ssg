@@ -13,3 +13,5 @@ let toWebpackEntryName = t =>
   | Root => "root"
   | Path(segments) => segments->Js.Array2.joinWith("/")
   };
+
+let dynamicSegment = "__dynamic-segment__";

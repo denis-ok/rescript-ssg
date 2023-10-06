@@ -220,8 +220,6 @@ module DevServerOptions = {
   };
 };
 
-let dynamicPageSegmentPrefix = "dynamic__";
-
 let makeConfig =
     (
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
@@ -397,9 +395,7 @@ let makeConfig =
                     let hasDynamicPart =
                       segments
                       ->Js.Array2.find(segment =>
-                          segment->Js.String2.startsWith(
-                            dynamicPageSegmentPrefix,
-                          )
+                          segment == PagePath.dynamicSegment
                         )
                       ->Belt.Option.isSome;
 
@@ -408,11 +404,8 @@ let makeConfig =
                     | _true =>
                       let pathWithAsterisks =
                         segments
-                        ->Js.Array2.map(part =>
-                            part->Js.String2.startsWith(
-                              dynamicPageSegmentPrefix,
-                            )
-                              ? ".*" : part
+                        ->Js.Array2.map(segment =>
+                            segment == PagePath.dynamicSegment ? ".*" : segment
                           )
                         ->Js.Array2.joinWith("/");
 
