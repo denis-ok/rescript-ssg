@@ -244,6 +244,10 @@ let start =
                     ~targetHost=serveResult.host,
                     ~targetPort=serveResult.port,
                     ~proxyRules=esbuildProxyRules,
+                    ~pagePaths=
+                      renderedPages->Js.Array2.map(page =>
+                        PageBuilderT.PagePath.toString(page.path)
+                      ),
                   );
                 let () = startFileWatcher();
                 ();
