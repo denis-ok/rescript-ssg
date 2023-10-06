@@ -154,6 +154,26 @@ module ValidProxyRule = {
   };
 };
 
+let sortPathsBySegmentCount = (a, b) => {
+  // Sort paths to make sure that more specific rules are matched first.
+  let countSegments = s =>
+    s
+    ->Js.String2.split("/")
+    ->Js.Array2.filter(s => s != "")
+    ->Js.Array2.length;
+
+  let segCount1 = countSegments(a);
+  let segCount2 = countSegments(b);
+
+  if (segCount1 == segCount2) {
+    0;
+  } else if (segCount1 < segCount2) {
+    1;
+  } else {
+    (-1);
+  };
+};
+
 let start =
     (
       ~port: int,
@@ -165,23 +185,7 @@ let start =
     proxyRules
     ->Js.Array2.map(rule => ValidProxyRule.fromProxyRule(rule))
     ->Js.Array2.sortInPlaceWith((a, b) => {
-        // Sort proxy rules to make sure that more specific rules are matched first.
-        let countSegments = s =>
-          s
-          ->Js.String2.split("/")
-          ->Js.Array2.filter(s => s != "")
-          ->Js.Array2.length;
-
-        let segCount1 = countSegments(a.from);
-        let segCount2 = countSegments(b.from);
-
-        if (segCount1 == segCount2) {
-          0;
-        } else if (segCount1 < segCount2) {
-          1;
-        } else {
-          (-1);
-        };
+        sortPathsBySegmentCount(a.from, b.from)
       });
 
   let server =
@@ -198,12 +202,11 @@ let start =
         | Some(url) => url->Url.pathname
         };
 
-      let matchedRule =
-        proxyRules->Js.Array2.find(rule =>
-          reqPath->Js.String2.startsWith(rule.from)
-        );
-
-      let targetOptions: nodeRequestOptions =
+      let targetOptions: nodeRequestOptions = {
+        let matchedRule =
+          proxyRules->Js.Array2.find(rule =>
+            reqPath->Js.String2.startsWith(rule.from)
+          );
         switch (matchedRule) {
         | None => {
             hostname: Some(targetHost),
@@ -249,6 +252,7 @@ let start =
             }
           };
         };
+      };
 
       let proxyReq =
         nodeRequest(targetOptions, targetRes =>
