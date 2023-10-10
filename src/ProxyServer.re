@@ -181,8 +181,16 @@ let sortPathsBySegmentCount = (a, b) => {
 
 let isPageWithDynamicPathSegmentRequested =
     (reqPath: string, pagePath: string) => {
-  let reqPathSegments = reqPath->Js.String2.split("/")->Belt.List.fromArray;
-  let pagePathSegments = pagePath->Js.String2.split("/")->Belt.List.fromArray;
+  let makeSegments = path =>
+    path
+    ->Utils.maybeAddSlashPrefix
+    ->Utils.maybeAddSlashSuffix
+    ->Js.String2.split("/")
+    ->Js.Array2.filter(s => s != "")
+    ->Belt.List.fromArray;
+
+  let reqPathSegments = reqPath->makeSegments;
+  let pagePathSegments = pagePath->makeSegments;
 
   let rec isMatch = (reqPathSegments, pagePathSegments) => {
     switch (reqPathSegments, pagePathSegments) {
@@ -334,10 +342,10 @@ let start =
         );
 
       proxyReq->ClientRequest.on("error", error => {
-        Js.Console.error2("Error with proxy request:", error);
+        Js.Console.error2("[Dev server] Error with proxy request:", error);
         res
         ->ServerResponse.writeHead(~statusCode=404, ~headers=None)
-        ->ServerResponse.end_("Internal server error");
+        ->ServerResponse.end_("[Dev server] Internal server error");
       });
 
       req->IncommingMessage.pipeToClientRequest(proxyReq, {end_: true});
@@ -372,7 +380,7 @@ let start =
 
       Js.Global.setTimeout(
         () => {
-          Js.log("[Dev server] Failed to gracefully shutdown.");
+          Js.Console.error("[Dev server] Failed to gracefully shutdown.");
           Process.exit(1);
         },
         GracefulShutdown.gracefulShutdownTimeout,

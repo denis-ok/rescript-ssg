@@ -247,6 +247,8 @@ let start =
                     ~pagePaths=
                       renderedPages->Js.Array2.map(page =>
                         PagePath.toString(page.path)
+                        ->Utils.maybeAddSlashPrefix
+                        ->Utils.maybeAddSlashSuffix
                       ),
                   );
                 let () = startFileWatcher();
