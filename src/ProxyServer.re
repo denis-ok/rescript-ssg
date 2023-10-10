@@ -235,10 +235,11 @@ let start =
         reqHeaders->Js.Dict.get("host")->Belt.Option.getWithDefault("");
       let urlBase = "http://" ++ reqHost;
       let url = Url.make(reqUrl, ~base=Some(urlBase));
-      let reqPath =
+
+      let (reqPath, reqQueryString) =
         switch (url) {
-        | None => reqUrl
-        | Some(url) => url->Url.pathname
+        | None => (reqUrl, "")
+        | Some(url) => (url->Url.pathname, url->Url.search)
         };
 
       let targetOptions: nodeRequestOptions = {
@@ -256,7 +257,7 @@ let start =
           {
             hostname: Some(targetHost),
             port: Some(targetPort),
-            path: pagePath,
+            path: pagePath ++ reqQueryString,
             method: req->IncommingMessage.method,
             headers: req->IncommingMessage.headers,
             socketPath: None,
@@ -275,8 +276,8 @@ let start =
               headers: req->IncommingMessage.headers,
               socketPath: None,
             }
-          | Some({from: _, to_: {target, pathRewrite}} as proxyRule) =>
-            Js.log2("[Dev server] Proxy rule matched:", proxyRule);
+          | Some({from, to_: {target, pathRewrite}}) =>
+            Js.log2("[Dev server] Proxy rule matched:", from);
             let path =
               switch (pathRewrite) {
               | Some({rewriteFrom, rewriteTo}) =>
@@ -291,7 +292,7 @@ let start =
                 hostname: None,
                 port: None,
                 socketPath: Some(socketPath),
-                path,
+                path: path ++ reqQueryString,
                 method: req->IncommingMessage.method,
                 headers: req->IncommingMessage.headers,
               }
@@ -305,7 +306,7 @@ let start =
                     ->Belt.Option.getWithDefault(80),
                   ),
                 socketPath: None,
-                path,
+                path: path ++ reqQueryString,
                 method: req->IncommingMessage.method,
                 headers: req->IncommingMessage.headers,
               }
