@@ -192,8 +192,8 @@ let start =
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
-      ~esbuildMainServerPort: int=8000,
-      ~esbuildProxyServerPort: int=8001,
+      ~esbuildMainServerPort: int=8010,
+      ~esbuildProxyServerPort: int=8011,
       ~esbuildProxyRules: array(ProxyServer.ProxyRule.t)=[||],
       (),
     ) => {
