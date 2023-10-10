@@ -3,6 +3,11 @@ module Server = {
   [@send] external listen: (t, int, unit => unit) => unit = "listen";
 
   [@send] external close: (t, unit => unit) => unit = "close";
+
+  [@send]
+  external closeAllConnections: (t, unit) => unit = "closeAllConnections";
+
+  [@set] external setKeepAliveTimeoutMs: (t, int) => unit = "keepAliveTimeout";
 };
 
 module ClientRequest = {
@@ -338,6 +343,8 @@ let start =
       req->IncommingMessage.pipeToClientRequest(proxyReq, {end_: true});
     });
 
+  server->Server.setKeepAliveTimeoutMs(1000);
+
   let startServer = () =>
     server->Server.listen(port, () =>
       Js.log("[Dev server] Listening on port " ++ string_of_int(port))
@@ -360,6 +367,8 @@ let start =
         Js.log("[Dev server] Stopped successfully");
         resolve(. unit);
       });
+
+      server->Server.closeAllConnections();
 
       Js.Global.setTimeout(
         () => {
