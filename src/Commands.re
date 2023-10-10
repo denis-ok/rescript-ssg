@@ -5,7 +5,7 @@ let checkDuplicatedPagePaths = (pages: array(array(PageBuilder.page))) => {
 
   pages->Js.Array2.forEach(pages' => {
     pages'->Js.Array2.forEach(page => {
-      let pagePath = PageBuilderT.PagePath.toString(page.path);
+      let pagePath = PagePath.toString(page.path);
       switch (pagesDict->Js.Dict.get(pagePath)) {
       | None => pagesDict->Js.Dict.set(pagePath, page)
       | Some(_) =>
@@ -192,8 +192,9 @@ let start =
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
-      ~esbuildMainServerPort: int=8000,
-      ~esbuildProxyServerPort: int=8001,
+      ~esbuildMainServerPort: int=8010,
+      ~esbuildProxyServerPort: int=8011,
+      ~esbuildProxyRules: array(ProxyServer.ProxyRule.t)=[||],
       (),
     ) => {
   let (logger, pages, renderedPages) =
@@ -242,6 +243,13 @@ let start =
                     ~port=esbuildProxyServerPort,
                     ~targetHost=serveResult.host,
                     ~targetPort=serveResult.port,
+                    ~proxyRules=esbuildProxyRules,
+                    ~pagePaths=
+                      renderedPages->Js.Array2.map(page =>
+                        PagePath.toString(page.path)
+                        ->Utils.maybeAddSlashPrefix
+                        ->Utils.maybeAddSlashSuffix
+                      ),
                   );
                 let () = startFileWatcher();
                 ();
