@@ -44,7 +44,7 @@ type page = {
   pageWrapper: option(pageWrapper),
   component,
   modulePath: string,
-  path: PageBuilderT.PagePath.t,
+  path: PagePath.t,
   headCssFilepaths: array(string),
   globalValues: option(array((string, Js.Json.t))),
   headScripts: array(string),
@@ -442,7 +442,7 @@ let buildPageHtmlAndReactApp =
 
   let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
 
-  let pagePath: string = page.path->PageBuilderT.PagePath.toString;
+  let pagePath: string = page.path->PagePath.toString;
 
   let pageOutputDir = Path.join2(artifactsOutputDir, pagePath);
 

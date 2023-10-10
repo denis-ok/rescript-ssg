@@ -7,9 +7,7 @@ let uniqueArray = (array: array('a), ~getId: 'a => string) => {
 };
 
 let uniquePageArray = (pages: array(PageBuilder.page)) => {
-  pages->uniqueArray(~getId=page =>
-    PageBuilderT.PagePath.toString(page.path)
-  );
+  pages->uniqueArray(~getId=page => PagePath.toString(page.path));
 };
 
 let showPages = (pages: array(PageBuilder.page)) => {

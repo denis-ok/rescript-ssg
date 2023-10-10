@@ -99,7 +99,7 @@ module BuildPageHtmlAndReactApp = {
 
         let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
 
-        let pagePath: string = page.path->PageBuilderT.PagePath.toString;
+        let pagePath: string = page.path->PagePath.toString;
 
         let reactAppModuleName =
           PageBuilder.pagePathToPageAppModuleName(

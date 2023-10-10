@@ -220,8 +220,6 @@ module DevServerOptions = {
   };
 };
 
-let dynamicPageSegmentPrefix = "dynamic__";
-
 let makeConfig =
     (
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
@@ -236,7 +234,7 @@ let makeConfig =
   let entries =
     renderedPages
     ->Js.Array2.map(({path, entryPath, _}) =>
-        (PageBuilderT.PagePath.toWebpackEntryName(path), entryPath)
+        (PagePath.toWebpackEntryName(path), entryPath)
       )
     ->Js.Dict.fromArray;
 
@@ -275,9 +273,8 @@ let makeConfig =
         renderedPages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
           HtmlWebpackPlugin.make({
             "template": htmlTemplatePath,
-            "filename":
-              Path.join2(PageBuilderT.PagePath.toString(path), "index.html"),
-            "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
+            "filename": Path.join2(PagePath.toString(path), "index.html"),
+            "chunks": [|PagePath.toWebpackEntryName(path)|],
             "inject": true,
             "minify": {
               "collapseWhitespace": shouldMinimize,
@@ -398,9 +395,7 @@ let makeConfig =
                     let hasDynamicPart =
                       segments
                       ->Js.Array2.find(segment =>
-                          segment->Js.String2.startsWith(
-                            dynamicPageSegmentPrefix,
-                          )
+                          segment == PagePath.dynamicSegment
                         )
                       ->Belt.Option.isSome;
 
@@ -409,11 +404,8 @@ let makeConfig =
                     | _true =>
                       let pathWithAsterisks =
                         segments
-                        ->Js.Array2.map(part =>
-                            part->Js.String2.startsWith(
-                              dynamicPageSegmentPrefix,
-                            )
-                              ? ".*" : part
+                        ->Js.Array2.map(segment =>
+                            segment == PagePath.dynamicSegment ? ".*" : segment
                           )
                         ->Js.Array2.joinWith("/");
 
@@ -424,7 +416,7 @@ let makeConfig =
                       let to_ =
                         Path.join3(
                           "/",
-                          PageBuilderT.PagePath.toString(page.path),
+                          PagePath.toString(page.path),
                           "index.html",
                         );
 
