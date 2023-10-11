@@ -124,6 +124,18 @@ let pageWithoutDataDynamicPath: PageBuilder.page = (
   }: PageBuilder.page
 );
 
+let pageWithoutDataRegularPath: PageBuilder.page = (
+  {
+    ...pageWithoutData,
+    component: ComponentWithoutData(<PageDynamic />),
+    modulePath: PageDynamic.modulePath,
+    // This page is needed to test esbuild watch mode.
+    // We need to make sure that proxy server doesn't handle this path as a path with dynamic segment.
+    // It makes sense to add a test for this case.
+    path: Path([|Page.toSlug(PageWithoutData), "foo"|]),
+  }: PageBuilder.page
+);
+
 let pageWithPartialHydration: PageBuilder.page = (
   {
     ...pageWithoutData,
@@ -153,6 +165,7 @@ let pages = [|
   pageWithDataAndWrapperWithoutData,
   pageWithDataAndWrapperWithData,
   pageWithoutDataDynamicPath,
+  pageWithoutDataRegularPath,
   pageWithPartialHydration,
   pageWithoutHydration,
 |];
