@@ -1,3 +1,7 @@
+type pageAppArtifact =
+  | Reason
+  | Js;
+
 type componentWithData('a) = {
   component: 'a => React.element,
   data: 'a,
@@ -419,12 +423,14 @@ let processPageComponentWithWrapper =
 
 let buildPageHtmlAndReactApp =
     (
+      ~pageAppArtifact: pageAppArtifact,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~generatedFilesSuffix: string,
       page: page,
     ) => {
+  let _ = pageAppArtifact;
   let artifactsOutputDir = getArtifactsOutputDir(~outputDir);
 
   let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
