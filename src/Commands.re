@@ -131,6 +131,8 @@ let build =
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
+      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
+      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
     ) => {
   let (logger, _pages, renderedPages) =
@@ -157,6 +159,9 @@ let build =
             ~projectRootDir,
             ~globalEnvValues,
             ~renderedPages,
+            ~logLevel=?esbuildLogLevel,
+            ~logOverride=?esbuildLogOverride,
+            (),
           )
           ->ignore;
         ();
@@ -195,6 +200,8 @@ let start =
       ~esbuildMainServerPort: int=8010,
       ~esbuildProxyServerPort: int=8011,
       ~esbuildProxyRules: array(ProxyServer.ProxyRule.t)=[||],
+      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
+      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
     ) => {
   let (logger, pages, renderedPages) =
@@ -236,6 +243,9 @@ let start =
               ~globalEnvValues,
               ~renderedPages,
               ~port=esbuildMainServerPort,
+              ~logLevel=?esbuildLogLevel,
+              ~logOverride=?esbuildLogOverride,
+              (),
             )
             ->Promise.map(serveResult => {
                 let () =
