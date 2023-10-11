@@ -72,6 +72,25 @@ module HtmlPlugin = {
   external make: (. options) => Plugin.t = "htmlPlugin";
 };
 
+module LogLevel = {
+  // https://esbuild.github.io/api/#log-level
+  type t =
+    | Silent
+    | Error
+    | Warning
+    | Info
+    | Debug;
+
+  let toString = (t: t) =>
+    switch (t) {
+    | Silent => "silent"
+    | Error => "error"
+    | Warning => "warning"
+    | Info => "info"
+    | Debug => "debug"
+    };
+};
+
 let makeConfig =
     (
       ~mode: Bundler.mode,
@@ -79,6 +98,8 @@ let makeConfig =
       ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
+      ~logOverride: Js.Dict.t(LogLevel.t),
+      ~logLevel: LogLevel.t,
     ) =>
   // https://esbuild.github.io/api/
   {
@@ -99,7 +120,17 @@ let makeConfig =
     "metafile": true,
     "splitting": true,
     "treeShaking": true,
-    "logLevel": "warning",
+    "logLevel": logLevel->LogLevel.toString,
+    "logOverride": {
+      let logOverride: Js.Dict.t(string) =
+        logOverride
+        ->Js.Dict.entries
+        ->Js.Array2.map(((error, logLevel)) =>
+            (error, logLevel->LogLevel.toString)
+          )
+        ->Js.Dict.fromArray;
+      logOverride;
+    },
     "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
     "loader": {
       Bundler.assetFileExtensionsWithoutCss
@@ -139,6 +170,9 @@ let build =
       ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
+      ~logLevel: LogLevel.t=Warning,
+      ~logOverride: Js.Dict.t(LogLevel.t)=Js.Dict.empty(),
+      (),
     ) => {
   Js.log("[Esbuild] Bundling...");
   let durationLabel = "[Esbuild] Success! Duration";
@@ -151,6 +185,8 @@ let build =
       ~projectRootDir,
       ~globalEnvValues,
       ~renderedPages,
+      ~logLevel,
+      ~logOverride,
     );
 
   esbuild
@@ -180,6 +216,9 @@ let watchAndServe =
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
       ~port: int,
+      ~logLevel: LogLevel.t=Warning,
+      ~logOverride: Js.Dict.t(LogLevel.t)=Js.Dict.empty(),
+      (),
     )
     : Promise.t(serveResult) => {
   let config =
@@ -189,6 +228,8 @@ let watchAndServe =
       ~projectRootDir,
       ~globalEnvValues,
       ~renderedPages,
+      ~logLevel,
+      ~logOverride,
     );
   Js.log("[Esbuild] Starting esbuild...");
   let watchDurationLabel = "[Esbuild] Watch mode started! Duration";
