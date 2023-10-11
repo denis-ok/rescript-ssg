@@ -251,7 +251,7 @@ let start =
         switch (pageWithDynamicPathSegment) {
         | Some(pagePath) =>
           Js.log2(
-            "[Dev server] A page with dynamic segment requested. Rewriting path to:",
+            "[Dev server] Page with dynamic segment requested, path rewritten to:",
             pagePath,
           );
           {
@@ -277,16 +277,23 @@ let start =
               socketPath: None,
             }
           | Some({from, to_: {target, pathRewrite}}) =>
-            Js.log2("[Dev server] Proxy rule matched:", from);
-            let path =
+            let (path, isPathRewritten) =
               switch (pathRewrite) {
+              | None => (reqPath, false)
               | Some({rewriteFrom, rewriteTo}) =>
                 let newPath =
                   reqPath->Js.String2.replace(rewriteFrom, rewriteTo);
-                Js.log2("[Dev server] Path rewritten, new path:", newPath);
-                newPath;
-              | None => reqPath
+                (newPath, true);
               };
+
+            switch (isPathRewritten) {
+            | false => Js.log2("[Dev server] Proxy rule matched:", from)
+            | true =>
+              Js.log(
+                {j|[Dev server] Proxy rule matched: $(from), path rewritten to: $(path)|j},
+              )
+            };
+
             switch (target) {
             | UnixSocket(socketPath) => {
                 hostname: None,
