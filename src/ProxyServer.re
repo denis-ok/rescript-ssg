@@ -213,7 +213,7 @@ let start =
       ~proxyRules: array(ProxyRule.t),
       ~pagePaths: array(string),
     ) => {
-  let pagePathsWithDynamicSegment =
+  let pagePathsWithDynamicSegments =
     pagePaths
     ->Js.Array2.filter(path =>
         path->Js.String2.includes(PagePath.dynamicSegment)
@@ -242,81 +242,105 @@ let start =
         | Some(url) => (url->Url.pathname, url->Url.search)
         };
 
-      let targetOptions: nodeRequestOptions = {
-        // Try to match if a page with dynamic segment requested first and then try to match proxy rule.
-        let pageWithDynamicPathSegment =
-          pagePathsWithDynamicSegment->Js.Array2.find(pagePath =>
-            isPageWithDynamicPathSegmentRequested(reqPath, pagePath)
-          );
-        switch (pageWithDynamicPathSegment) {
-        | Some(pagePath) =>
-          Js.log2(
-            "[Dev server] Page with dynamic segment requested, path rewritten to:",
-            pagePath,
-          );
+      let targetReqOptions: nodeRequestOptions = {
+        let defaultTarget = {
+          hostname: Some(targetHost),
+          port: Some(targetPort),
+          path: req->IncommingMessage.url,
+          method: req->IncommingMessage.method,
+          headers: req->IncommingMessage.headers,
+          socketPath: None,
+        };
+
+        let reqPathNormalized =
+          reqPath->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;
+
+        let exactPagePathRelatedToRequestedPath = {
+          pagePaths->Js.Array2.find(pagePath => pagePath == reqPathNormalized);
+        };
+
+        switch (exactPagePathRelatedToRequestedPath) {
+        | Some(_) =>
+          // esbuild server redirects request to a path with trailing slash if a path without trailing slash requested.
+          // To avoid this redirect we add trailing slash.
           {
-            hostname: Some(targetHost),
-            port: Some(targetPort),
-            path: pagePath ++ reqQueryString,
-            method: req->IncommingMessage.method,
-            headers: req->IncommingMessage.headers,
-            socketPath: None,
-          };
+            ...defaultTarget,
+            path: defaultTarget.path->Utils.maybeAddSlashSuffix,
+          }
         | None =>
-          let matchedRule =
-            proxyRules->Js.Array2.find(rule =>
-              reqPath->Js.String2.startsWith(rule.fromPath)
+          let relatedPagePathWithDynamicSegment =
+            pagePathsWithDynamicSegments->Js.Array2.find(pagePath =>
+              isPageWithDynamicPathSegmentRequested(reqPath, pagePath)
             );
-          switch (matchedRule) {
-          | None => {
+          switch (relatedPagePathWithDynamicSegment) {
+          | Some(relatedPagePathWithDynamicSegment) =>
+            Js.log2(
+              "[Dev server] Page with dynamic segment requested, path rewritten to:",
+              relatedPagePathWithDynamicSegment,
+            );
+            {
               hostname: Some(targetHost),
               port: Some(targetPort),
-              path: req->IncommingMessage.url,
+              path: relatedPagePathWithDynamicSegment ++ reqQueryString,
               method: req->IncommingMessage.method,
               headers: req->IncommingMessage.headers,
               socketPath: None,
-            }
-          | Some({fromPath, proxyTo: {target, pathRewrite}}) =>
-            let (path, isPathRewritten) =
-              switch (pathRewrite) {
-              | None => (reqPath, false)
-              | Some({pathRewriteFrom, pathRewriteTo}) =>
-                let newPath =
-                  reqPath->Js.String2.replace(pathRewriteFrom, pathRewriteTo);
-                (newPath, true);
+            };
+          | None =>
+            let matchedProxyRule =
+              proxyRules->Js.Array2.find(rule =>
+                reqPath->Js.String2.startsWith(rule.fromPath)
+              );
+            switch (matchedProxyRule) {
+            | None =>
+              // Technically, this is some kind of error:
+              // User requested a path that doesn't have related page and proxy rule for this request also not exist.
+              defaultTarget
+            | Some({fromPath, proxyTo: {target, pathRewrite}}) =>
+              let (path, isPathRewritten) =
+                switch (pathRewrite) {
+                | None => (reqPath, false)
+                | Some({pathRewriteFrom, pathRewriteTo}) =>
+                  let newPath =
+                    reqPath->Js.String2.replace(
+                      pathRewriteFrom,
+                      pathRewriteTo,
+                    );
+                  (newPath, true);
+                };
+
+              switch (isPathRewritten) {
+              | false => Js.log2("[Dev server] Proxy rule matched:", fromPath)
+              | true =>
+                Js.log(
+                  {j|[Dev server] Proxy rule matched: $(fromPath), path rewritten to: $(path)|j},
+                )
               };
 
-            switch (isPathRewritten) {
-            | false => Js.log2("[Dev server] Proxy rule matched:", fromPath)
-            | true =>
-              Js.log(
-                {j|[Dev server] Proxy rule matched: $(fromPath), path rewritten to: $(path)|j},
-              )
-            };
-
-            switch (target) {
-            | UnixSocket(socketPath) => {
-                hostname: None,
-                port: None,
-                socketPath: Some(socketPath),
-                path: path ++ reqQueryString,
-                method: req->IncommingMessage.method,
-                headers: req->IncommingMessage.headers,
-              }
-            | Url(url) => {
-                hostname: Some(url->Url.hostname),
-                port:
-                  Some(
-                    url
-                    ->Url.port
-                    ->Belt.Int.fromString
-                    ->Belt.Option.getWithDefault(80),
-                  ),
-                socketPath: None,
-                path: path ++ reqQueryString,
-                method: req->IncommingMessage.method,
-                headers: req->IncommingMessage.headers,
-              }
+              switch (target) {
+              | UnixSocket(socketPath) => {
+                  hostname: None,
+                  port: None,
+                  socketPath: Some(socketPath),
+                  path: path ++ reqQueryString,
+                  method: req->IncommingMessage.method,
+                  headers: req->IncommingMessage.headers,
+                }
+              | Url(url) => {
+                  hostname: Some(url->Url.hostname),
+                  port:
+                    Some(
+                      url
+                      ->Url.port
+                      ->Belt.Int.fromString
+                      ->Belt.Option.getWithDefault(80),
+                    ),
+                  socketPath: None,
+                  path: path ++ reqQueryString,
+                  method: req->IncommingMessage.method,
+                  headers: req->IncommingMessage.headers,
+                }
+              };
             };
           };
         };
@@ -324,7 +348,7 @@ let start =
 
       let proxyReq =
         nodeRequest(
-          targetOptions,
+          targetReqOptions,
           targetRes => {
             res
             ->ServerResponse.writeHead(
