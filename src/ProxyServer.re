@@ -260,7 +260,13 @@ let start =
         };
 
         switch (exactPagePathRelatedToRequestedPath) {
-        | Some(_) => defaultTarget
+        | Some(_) =>
+          // esbuild server redirects request to a path with trailing slash if a path without trailing slash requested.
+          // To avoid this redirect we add trailing slash.
+          {
+            ...defaultTarget,
+            path: defaultTarget.path->Utils.maybeAddSlashSuffix,
+          }
         | None =>
           let relatedPagePathWithDynamicSegment =
             pagePathsWithDynamicSegments->Js.Array2.find(pagePath =>
@@ -281,12 +287,15 @@ let start =
               socketPath: None,
             };
           | None =>
-            let matchedRule =
+            let matchedProxyRule =
               proxyRules->Js.Array2.find(rule =>
                 reqPath->Js.String2.startsWith(rule.fromPath)
               );
-            switch (matchedRule) {
-            | None => defaultTarget
+            switch (matchedProxyRule) {
+            | None =>
+              // Technically, this is some kind of error:
+              // User requested a path that doesn't have related page and proxy rule for this request also not exist.
+              defaultTarget
             | Some({fromPath, proxyTo: {target, pathRewrite}}) =>
               let (path, isPathRewritten) =
                 switch (pathRewrite) {
