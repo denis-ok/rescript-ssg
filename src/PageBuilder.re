@@ -430,7 +430,6 @@ let buildPageHtmlAndReactApp =
       ~generatedFilesSuffix: string,
       page: page,
     ) => {
-  let _ = pageAppArtifact;
   let artifactsOutputDir = getArtifactsOutputDir(~outputDir);
 
   let moduleName: string = Utils.getModuleNameFromModulePath(page.modulePath);
@@ -490,17 +489,26 @@ let buildPageHtmlAndReactApp =
     );
 
   let resultReactApp =
-    switch (page.hydrationMode) {
-    | FullHydration =>
-      renderReactAppTemplate(
-        ~importPageWrapperDataString=?
-          Belt.Option.map(pageWrapperDataProp, v => v.rescriptImportString),
-        ~importPageDataString=?
-          Belt.Option.map(pageDataProp, v => v.rescriptImportString),
-        elementString,
+    switch (pageAppArtifact) {
+    | Reason =>
+      switch (page.hydrationMode) {
+      | FullHydration =>
+        renderReactAppTemplate(
+          ~importPageWrapperDataString=?
+            Belt.Option.map(pageWrapperDataProp, v => v.rescriptImportString),
+          ~importPageDataString=?
+            Belt.Option.map(pageDataProp, v => v.rescriptImportString),
+          elementString,
+        )
+      | PartialHydration =>
+        PartialHydration.renderReactAppTemplate(
+          ~modulesWithHydration__Mutable,
+        )
+      }
+    | Js =>
+      PageBuilderJs.renderReactAppTemplate(
+        ~pageModuleArtifactPath=page.modulePath,
       )
-    | PartialHydration =>
-      PartialHydration.renderReactAppTemplate(~modulesWithHydration__Mutable)
     };
 
   let pageAppModuleName =
@@ -530,7 +538,16 @@ let buildPageHtmlAndReactApp =
 
   let writeFilePromises =
     mkDirPromises->Promise.Result.flatMap(_createdDirs => {
-      let reactAppFilename = pageAppModuleName ++ ".re";
+      let pageAppModuleExtension =
+        switch (pageAppArtifact) {
+        | Reason => ".re"
+        | Js =>
+          // This ext is not correct when we emit js artifacts, but it just works for now without extra changes.
+          // Probably it should be changed to ".mjs"
+          ".bs.js"
+        };
+
+      let reactAppFilename = pageAppModuleName ++ pageAppModuleExtension;
 
       let resultHtmlFilePromise =
         Fs.Promises.writeFile(~path=resultHtmlPath, ~data=resultHtml)

@@ -153,7 +153,11 @@ let build =
 
   renderedPages
   ->Promise.map(renderedPages => {
-      let () = compileRescript(~compileCommand, ~logger);
+      let () =
+        switch (pageAppArtifact) {
+        | Reason => compileRescript(~compileCommand, ~logger)
+        | Js => ()
+        };
 
       switch (Bundler.bundler) {
       | Esbuild =>
