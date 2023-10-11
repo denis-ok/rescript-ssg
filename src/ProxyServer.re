@@ -323,30 +323,20 @@ let start =
       };
 
       let proxyReq =
-        nodeRequest(targetOptions, targetRes =>
-          if (targetRes->IncommingMessage.statusCode == 404) {
-            res
-            ->ServerResponse.writeHead(
-                ~statusCode=404,
-                ~headers=
-                  Some(
-                    Js.Dict.fromArray([|("Content-Type", "text/html")|]),
-                  ),
-              )
-            ->ServerResponse.end_("<h1>Page not found</h1>");
-          } else {
+        nodeRequest(
+          targetOptions,
+          targetRes => {
             res
             ->ServerResponse.writeHead(
                 ~statusCode=targetRes->IncommingMessage.statusCode,
                 ~headers=Some(targetRes->IncommingMessage.headers),
               )
             ->ignore;
-
             targetRes->IncommingMessage.pipeToServerResponse(
               res,
               {end_: true},
             );
-          }
+          },
         );
 
       proxyReq->ClientRequest.on("error", error => {
