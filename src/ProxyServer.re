@@ -102,18 +102,18 @@ module ProxyRule = {
     | UnixSocket(string);
 
   type pathRewrite = {
-    rewriteFrom: string,
-    rewriteTo: string,
+    pathRewriteFrom: string,
+    pathRewriteTo: string,
   };
 
-  type settingTo = {
+  type proxyTo = {
     target,
     pathRewrite: option(pathRewrite),
   };
 
   type t = {
-    from: string,
-    to_: settingTo,
+    fromPath: string,
+    proxyTo,
   };
 };
 
@@ -122,19 +122,19 @@ module ValidProxyRule = {
     | Url(Url.t)
     | UnixSocket(string);
 
-  type settingTo = {
+  type proxyTo = {
     target,
     pathRewrite: option(ProxyRule.pathRewrite),
   };
 
   type t = {
-    from: string,
-    to_: settingTo,
+    fromPath: string,
+    proxyTo,
   };
 
   let fromProxyRule = (proxyRule: ProxyRule.t): t => {
     let target =
-      switch (proxyRule.to_.target) {
+      switch (proxyRule.proxyTo.target) {
       | UnixSocket(path) => UnixSocket(path)
       | Url(str) =>
         let url = Url.make(str, ~base=None);
@@ -150,10 +150,10 @@ module ValidProxyRule = {
       };
 
     {
-      from: proxyRule.from,
-      to_: {
+      fromPath: proxyRule.fromPath,
+      proxyTo: {
         target,
-        pathRewrite: proxyRule.to_.pathRewrite,
+        pathRewrite: proxyRule.proxyTo.pathRewrite,
       },
     };
   };
@@ -224,7 +224,7 @@ let start =
     proxyRules
     ->Js.Array2.map(rule => ValidProxyRule.fromProxyRule(rule))
     ->Js.Array2.sortInPlaceWith((a, b) =>
-        sortPathsBySegmentCount(a.from, b.from)
+        sortPathsBySegmentCount(a.fromPath, b.fromPath)
       );
 
   let server =
@@ -251,7 +251,7 @@ let start =
         switch (pageWithDynamicPathSegment) {
         | Some(pagePath) =>
           Js.log2(
-            "[Dev server] A page with dynamic segment requested. Rewriting path to:",
+            "[Dev server] Page with dynamic segment requested, path rewritten to:",
             pagePath,
           );
           {
@@ -265,7 +265,7 @@ let start =
         | None =>
           let matchedRule =
             proxyRules->Js.Array2.find(rule =>
-              reqPath->Js.String2.startsWith(rule.from)
+              reqPath->Js.String2.startsWith(rule.fromPath)
             );
           switch (matchedRule) {
           | None => {
@@ -276,17 +276,24 @@ let start =
               headers: req->IncommingMessage.headers,
               socketPath: None,
             }
-          | Some({from, to_: {target, pathRewrite}}) =>
-            Js.log2("[Dev server] Proxy rule matched:", from);
-            let path =
+          | Some({fromPath, proxyTo: {target, pathRewrite}}) =>
+            let (path, isPathRewritten) =
               switch (pathRewrite) {
-              | Some({rewriteFrom, rewriteTo}) =>
+              | None => (reqPath, false)
+              | Some({pathRewriteFrom, pathRewriteTo}) =>
                 let newPath =
-                  reqPath->Js.String2.replace(rewriteFrom, rewriteTo);
-                Js.log2("[Dev server] Path rewritten, new path:", newPath);
-                newPath;
-              | None => reqPath
+                  reqPath->Js.String2.replace(pathRewriteFrom, pathRewriteTo);
+                (newPath, true);
               };
+
+            switch (isPathRewritten) {
+            | false => Js.log2("[Dev server] Proxy rule matched:", fromPath)
+            | true =>
+              Js.log(
+                {j|[Dev server] Proxy rule matched: $(fromPath), path rewritten to: $(path)|j},
+              )
+            };
+
             switch (target) {
             | UnixSocket(socketPath) => {
                 hostname: None,
@@ -316,30 +323,20 @@ let start =
       };
 
       let proxyReq =
-        nodeRequest(targetOptions, targetRes =>
-          if (targetRes->IncommingMessage.statusCode == 404) {
-            res
-            ->ServerResponse.writeHead(
-                ~statusCode=404,
-                ~headers=
-                  Some(
-                    Js.Dict.fromArray([|("Content-Type", "text/html")|]),
-                  ),
-              )
-            ->ServerResponse.end_("<h1>Page not found</h1>");
-          } else {
+        nodeRequest(
+          targetOptions,
+          targetRes => {
             res
             ->ServerResponse.writeHead(
                 ~statusCode=targetRes->IncommingMessage.statusCode,
                 ~headers=Some(targetRes->IncommingMessage.headers),
               )
             ->ignore;
-
             targetRes->IncommingMessage.pipeToServerResponse(
               res,
               {end_: true},
             );
-          }
+          },
         );
 
       proxyReq->ClientRequest.on("error", error => {
