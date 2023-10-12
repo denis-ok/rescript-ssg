@@ -686,7 +686,12 @@ let buildPageHtmlAndReactApp =
   let (resultHtml, resultReactApp, pageDataProp, pageWrapperDataProp) =
     switch (pageAppArtifact) {
     | Reason =>
-      let {element, elementString, pageDataProp, pageWrapperDataProp} =
+      let {
+        ReasonArtifact.element,
+        elementString,
+        pageDataProp,
+        pageWrapperDataProp,
+      } =
         ReasonArtifact.processPageComponentWithWrapper(
           ~pageComponent=page.component,
           ~pageWrapper=page.pageWrapper,
@@ -727,7 +732,7 @@ let buildPageHtmlAndReactApp =
         pageWrapperDataProp->Belt.Option.map(v => v.processedDataProp),
       );
     | Js =>
-      let {element, pageDataProp, pageWrapperDataProp} =
+      let {JsArtifact.element, pageDataProp, pageWrapperDataProp} =
         JsArtifact.processPageComponentWithWrapperJs(
           ~pageComponent=page.component,
           ~pageWrapper=page.pageWrapper,
