@@ -298,7 +298,7 @@ type $(valueName);
 
     let propDataHash = Crypto.Hash.stringToHash(stringifiedData);
 
-    let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".js";
+    let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".mjs";
 
     let importString =
       makeStringToImportJsFileFromReason(
@@ -548,7 +548,7 @@ if (root !== null) {
 
     let propDataHash = Crypto.Hash.stringToHash(stringifiedData);
 
-    let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".js";
+    let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".mjs";
 
     let jsDataFileContent = {j|export const data = $(stringifiedData)|j};
 
@@ -787,10 +787,7 @@ let buildPageHtmlAndReactApp =
       let pageAppModuleExtension =
         switch (pageAppArtifact) {
         | Reason => ".re"
-        | Js =>
-          // This ext is not correct when we emit js artifacts, but it just works for now without extra changes.
-          // Probably it should be changed to ".mjs"
-          ".bs.js"
+        | Js => ".mjs"
         };
 
       let reactAppFilename = pageAppModuleName ++ pageAppModuleExtension;
@@ -839,7 +836,14 @@ let buildPageHtmlAndReactApp =
     });
 
   writeFilePromises->Promise.Result.map(_createdFiles => {
-    let compiledReactAppFilename = pageAppModuleName ++ ".bs.js";
+    let compiledReactAppFilename =
+      switch (pageAppArtifact) {
+      | Reason => ".bs.js"
+      | Js => ".mjs"
+      };
+
+    let compiledReactAppFilename =
+      pageAppModuleName ++ compiledReactAppFilename;
 
     let renderedPage: RenderedPage.t = {
       path: page.path,
