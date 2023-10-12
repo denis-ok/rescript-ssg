@@ -865,11 +865,16 @@ let buildPageHtmlAndReactApp =
 
     let renderedPage: RenderedPage.t = {
       path: page.path,
-      entryPath:
-        Path.join2(
-          melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
-          compiledReactAppFilename,
-        ),
+      entryPath: {
+        switch (pageAppArtifact) {
+        | Js => Path.join2(pageOutputDir, compiledReactAppFilename)
+        | Reason =>
+          Path.join2(
+            melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
+            compiledReactAppFilename,
+          )
+        };
+      },
       outputDir: pageOutputDir,
       htmlTemplatePath: resultHtmlPath,
     };
