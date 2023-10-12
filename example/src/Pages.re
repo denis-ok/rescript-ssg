@@ -159,15 +159,15 @@ let pageWithoutHydration: PageBuilder.page = (
 let pages = [|
   {...pageWithoutData, path: Root},
   pageWithoutData,
-  // pageWithoutDataAndWrapperWithoutData,
-  // pageWithoutDataAndWrapperWithData,
-  // pageWithData,
-  // pageWithDataAndWrapperWithoutData,
-  // pageWithDataAndWrapperWithData,
-  // pageWithoutDataDynamicPath,
-  // pageWithoutDataRegularPath,
-  // pageWithPartialHydration,
-  // pageWithoutHydration,
+  pageWithoutDataAndWrapperWithoutData,
+  pageWithoutDataAndWrapperWithData,
+  pageWithData,
+  pageWithDataAndWrapperWithoutData,
+  pageWithDataAndWrapperWithData,
+  pageWithoutDataDynamicPath,
+  pageWithoutDataRegularPath,
+  pageWithPartialHydration,
+  pageWithoutHydration,
 |];
 
 let fakeExtralanguages = [|"es"|];

@@ -421,6 +421,102 @@ let processPageComponentWithWrapper =
   };
 };
 
+module JsArtifact = {
+  type processedPageJs = {
+    element: React.element,
+    pageDataProp: option(processedDataProp),
+    pageWrapperDataProp: option(processedDataProp),
+  };
+
+  let makeProcessedDataProp =
+      (
+        ~data: 'a,
+        ~pageDataType: PageData.t,
+        ~moduleName: string,
+        ~pageOutputDir: string,
+        ~pageWrappersDataDir,
+      )
+      : processedDataProp => {
+    let stringifiedData = unsafeStringifyPropValue(data);
+
+    let propDataHash = Crypto.Hash.stringToHash(stringifiedData);
+
+    let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".js";
+
+    let jsDataFileContent = {j|export const data = $(stringifiedData)|j};
+
+    let jsDataFilepath =
+      switch (pageDataType) {
+      | PageData => Path.join2(pageOutputDir, jsDataFilename)
+      | PageWrapperData => Path.join2(pageWrappersDataDir, jsDataFilename)
+      };
+
+    {jsDataFileContent, jsDataFilepath, rescriptImportString: "NOT_NEEDED"};
+  };
+
+  let processPageComponentWithWrapperJs =
+      (
+        ~pageComponent: component,
+        ~pageWrapper: option(pageWrapper),
+        ~pageModuleName: string,
+        ~pageOutputDir: string,
+        ~pageWrappersDataDir: string,
+      )
+      : processedPageJs => {
+    let {element, pageDataProp, _} =
+      switch (pageComponent) {
+      | ComponentWithoutData(element) => {
+          element,
+          pageDataProp: None,
+          pageWrapperDataProp: None,
+        }
+      | ComponentWithData({component, data}) =>
+        let pageDataType = PageData.PageData;
+        let element = component(data);
+        let pageDataProp =
+          makeProcessedDataProp(
+            ~pageDataType,
+            ~data,
+            ~moduleName=pageModuleName,
+            ~pageOutputDir,
+            ~pageWrappersDataDir,
+          );
+        {
+          element,
+          pageDataProp: Some(pageDataProp),
+          pageWrapperDataProp: None,
+        };
+      };
+
+    switch (pageWrapper) {
+    | None => {element, pageDataProp, pageWrapperDataProp: None}
+    | Some({component, modulePath}) =>
+      let wrapperModuleName = Utils.getModuleNameFromModulePath(modulePath);
+      switch (component) {
+      | WrapperWithChildren(f) =>
+        let wrappedElement = f(element);
+        {element: wrappedElement, pageDataProp, pageWrapperDataProp: None};
+      | WrapperWithDataAndChildren({component, data}) =>
+        let pageDataType = PageData.PageWrapperData;
+        let wrappedElement = component(data, element);
+        let pageWrapperDataProp =
+          makeProcessedDataProp(
+            ~pageDataType,
+            ~data,
+            ~moduleName=wrapperModuleName,
+            ~pageOutputDir,
+            ~pageWrappersDataDir,
+          );
+        {
+          element: wrappedElement,
+          pageDataProp,
+          pageWrapperDataProp: Some(pageWrapperDataProp),
+        };
+      };
+    };
+  };
+};
+
 let buildPageHtmlAndReactApp =
     (
       ~pageAppArtifact: pageAppArtifact,
@@ -465,53 +561,90 @@ let buildPageHtmlAndReactApp =
     )
   );
 
-  let {element, elementString, pageDataProp, pageWrapperDataProp} =
-    processPageComponentWithWrapper(
-      ~pageComponent=page.component,
-      ~pageWrapper=page.pageWrapper,
-      ~pageModuleName=moduleName,
-      ~pageOutputDir,
-      ~melangePageOutputDir,
-      ~pageWrappersDataDir,
-    );
-
   let modulesWithHydration__Mutable = [||];
 
-  let resultHtml: string =
-    renderHtmlTemplate(
-      ~hydrationMode=page.hydrationMode,
-      ~modulesWithHydration__Mutable,
-      ~pageElement=element,
-      ~headCssFilepaths=page.headCssFilepaths,
-      ~globalValues=Belt.Option.getWithDefault(page.globalValues, [||]),
-      ~headScripts=page.headScripts,
-      ~bodyScripts=page.bodyScripts,
-    );
-
-  let resultReactApp =
+  let (resultHtml, resultReactApp, pageDataProp, pageWrapperDataProp) =
     switch (pageAppArtifact) {
     | Reason =>
-      switch (page.hydrationMode) {
-      | FullHydration =>
-        renderReactAppTemplate(
-          ~importPageWrapperDataString=?
-            Belt.Option.map(pageWrapperDataProp, v => v.rescriptImportString),
-          ~importPageDataString=?
-            Belt.Option.map(pageDataProp, v => v.rescriptImportString),
-          elementString,
-        )
-      | PartialHydration =>
-        PartialHydration.renderReactAppTemplate(
+      let {element, elementString, pageDataProp, pageWrapperDataProp} =
+        processPageComponentWithWrapper(
+          ~pageComponent=page.component,
+          ~pageWrapper=page.pageWrapper,
+          ~pageModuleName=moduleName,
+          ~pageOutputDir,
+          ~melangePageOutputDir,
+          ~pageWrappersDataDir,
+        );
+      let resultHtml: string =
+        renderHtmlTemplate(
+          ~hydrationMode=page.hydrationMode,
           ~modulesWithHydration__Mutable,
-        )
-      }
+          ~pageElement=element,
+          ~headCssFilepaths=page.headCssFilepaths,
+          ~globalValues=Belt.Option.getWithDefault(page.globalValues, [||]),
+          ~headScripts=page.headScripts,
+          ~bodyScripts=page.bodyScripts,
+        );
+      let resultReactApp =
+        switch (page.hydrationMode) {
+        | FullHydration =>
+          renderReactAppTemplate(
+            ~importPageWrapperDataString=?
+              Belt.Option.map(pageWrapperDataProp, v =>
+                v.rescriptImportString
+              ),
+            ~importPageDataString=?
+              Belt.Option.map(pageDataProp, v => v.rescriptImportString),
+            elementString,
+          )
+        | PartialHydration =>
+          PartialHydration.renderReactAppTemplate(
+            ~modulesWithHydration__Mutable,
+          )
+        };
+      (resultHtml, resultReactApp, pageDataProp, pageWrapperDataProp);
     | Js =>
-      PageBuilderJs.renderReactAppTemplate(
-        ~pageArtifactPath=page.modulePath,
-        ~pageWrapperArtifactPath=None,
-        ~pageDataPath=None,
-        ~pageWrapperDataPath=None,
-      )
+      let {element, pageDataProp, pageWrapperDataProp} =
+        JsArtifact.processPageComponentWithWrapperJs(
+          ~pageComponent=page.component,
+          ~pageWrapper=page.pageWrapper,
+          ~pageModuleName=moduleName,
+          ~pageOutputDir,
+          ~pageWrappersDataDir,
+        );
+      let resultHtml: string =
+        renderHtmlTemplate(
+          ~hydrationMode=page.hydrationMode,
+          ~modulesWithHydration__Mutable,
+          ~pageElement=element,
+          ~headCssFilepaths=page.headCssFilepaths,
+          ~globalValues=Belt.Option.getWithDefault(page.globalValues, [||]),
+          ~headScripts=page.headScripts,
+          ~bodyScripts=page.bodyScripts,
+        );
+      let resultReactApp =
+        PageBuilderJs.renderReactAppTemplate(
+          ~pageArtifactPath=page.modulePath,
+          ~pageWrapperArtifactPath={
+            switch (page.pageWrapper) {
+            | None => None
+            | Some(wrapper) => Some(wrapper.modulePath)
+            };
+          },
+          ~pageDataPath={
+            switch (pageDataProp) {
+            | None => None
+            | Some({jsDataFilepath, _}) => Some(jsDataFilepath)
+            };
+          },
+          ~pageWrapperDataPath={
+            switch (pageWrapperDataProp) {
+            | None => None
+            | Some({jsDataFilepath, _}) => Some(jsDataFilepath)
+            };
+          },
+        );
+      (resultHtml, resultReactApp, pageDataProp, pageWrapperDataProp);
     };
 
   let pageAppModuleName =
