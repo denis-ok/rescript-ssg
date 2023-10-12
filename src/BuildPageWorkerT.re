@@ -30,6 +30,7 @@ type workerPage = {
 };
 
 type workerData = {
+  pageAppArtifact: PageBuilder.pageAppArtifact,
   outputDir: string,
   melangeOutputDir: option(string),
   logLevel: Log.level,
