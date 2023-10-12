@@ -507,7 +507,10 @@ let buildPageHtmlAndReactApp =
       }
     | Js =>
       PageBuilderJs.renderReactAppTemplate(
-        ~pageModuleArtifactPath=page.modulePath,
+        ~pageArtifactPath=page.modulePath,
+        ~pageWrapperArtifactPath=None,
+        ~pageDataPath=None,
+        ~pageWrapperDataPath=None,
       )
     };
 
