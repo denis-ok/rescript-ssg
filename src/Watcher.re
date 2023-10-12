@@ -43,7 +43,7 @@ let getModuleDependencies = (~modulePath) =>
 
 let startWatcher =
     (
-      ~pageAppArtifact:PageBuilder.pageAppArtifact,
+      ~pageAppArtifact: PageBuilder.pageAppArtifact,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
