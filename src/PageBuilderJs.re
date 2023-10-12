@@ -53,7 +53,14 @@ let renderReactAppTemplate =
     | Some(pageWrapperArtifactPath) =>
       let pageWrapperImport = {j|import * as PageWrapper from "$(pageWrapperArtifactPath)";|j};
       switch (pageWrapperDataPath) {
-      | None => (pageWrapperImport, "", pageElement)
+      | None =>
+        let pageWrapperElement =
+          renderElementTemplate(
+            ~componentName="PageWrapper",
+            ~dataProp=None,
+            ~childrenProp=Some(pageElement),
+          );
+        (pageWrapperImport, "", pageWrapperElement);
       | Some(pageWrapperDataPath) =>
         let dataPropImport = {j|import {data as pageWrapperData} from "$(pageWrapperDataPath)";|j};
         let dataValueName = "pageWrapperData";
