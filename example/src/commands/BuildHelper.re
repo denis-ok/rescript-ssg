@@ -1,5 +1,6 @@
 let build = (~minimizer) =>
   Commands.build(
+    ~pageAppArtifact=Js,
     ~pages=Pages.pages,
     ~globalEnvValues=Pages.globalEnvValues,
     ~mode=Production,

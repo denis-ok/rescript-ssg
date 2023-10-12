@@ -63,6 +63,7 @@ type generatedFilesSuffix =
 
 let initializeAndBuildPages =
     (
+      ~pageAppArtifact: PageBuilder.pageAppArtifact,
       ~logLevel,
       ~buildWorkersCount,
       ~pages: array(array(PageBuilder.page)),
@@ -98,6 +99,7 @@ let initializeAndBuildPages =
 
   let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
+      ~pageAppArtifact,
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
@@ -118,6 +120,7 @@ let initializeAndBuildPages =
 
 let build =
     (
+      ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
       ~outputDir: string,
       ~projectRootDir: string,
       ~melangeOutputDir: option(string)=?,
@@ -137,6 +140,7 @@ let build =
     ) => {
   let (logger, _pages, renderedPages) =
     initializeAndBuildPages(
+      ~pageAppArtifact,
       ~logLevel,
       ~buildWorkersCount,
       ~pages,
@@ -149,7 +153,11 @@ let build =
 
   renderedPages
   ->Promise.map(renderedPages => {
-      let () = compileRescript(~compileCommand, ~logger);
+      let () =
+        switch (pageAppArtifact) {
+        | Reason => compileRescript(~compileCommand, ~logger)
+        | Js => ()
+        };
 
       switch (Bundler.bundler) {
       | Esbuild =>
@@ -184,6 +192,7 @@ let build =
 
 let start =
     (
+      ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
       ~outputDir: string,
       ~projectRootDir: string,
       ~melangeOutputDir: option(string)=?,
@@ -206,6 +215,7 @@ let start =
     ) => {
   let (logger, pages, renderedPages) =
     initializeAndBuildPages(
+      ~pageAppArtifact,
       ~logLevel,
       ~buildWorkersCount,
       ~pages,
@@ -216,8 +226,9 @@ let start =
       ~bundlerMode=Watch,
     );
 
-  let startFileWatcher = () =>
+  let startFileWatcher = (): unit =>
     Watcher.startWatcher(
+      ~pageAppArtifact,
       ~outputDir,
       ~melangeOutputDir,
       ~logger,

@@ -43,6 +43,7 @@ let getModuleDependencies = (~modulePath) =>
 
 let startWatcher =
     (
+      ~pageAppArtifact: PageBuilder.pageAppArtifact,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
@@ -171,6 +172,7 @@ let startWatcher =
       );
 
       BuildPageWorkerHelpers.buildPagesWithWorkers(
+        ~pageAppArtifact,
         ~buildWorkersCount,
         // TODO Here we probably should group pages to rebuild by globalValues (one globalValues per worker)
         ~pages=[|pagesToRebuild|],
