@@ -206,7 +206,6 @@ let renderHtmlTemplate =
 };
 
 type processedDataProp = {
-  rescriptImportString: string,
   jsDataFileContent: string,
   jsDataFilepath: string,
 };
@@ -231,14 +230,19 @@ switch (ReactDOM.querySelector("#root")) {
 |j};
   };
 
+  type processedDataPropReason = {
+    processedDataProp,
+    importString: string,
+  };
+
   type processedPage = {
     element: React.element,
     elementString: string,
-    pageDataProp: option(processedDataProp),
-    pageWrapperDataProp: option(processedDataProp),
+    pageDataProp: option(processedDataPropReason),
+    pageWrapperDataProp: option(processedDataPropReason),
   };
 
-  let makeStringToImportJsFileFromRescript =
+  let makeStringToImportJsFileFromReason =
       (
         ~pageDataType: PageData.t,
         ~jsDataFilename: string,
@@ -264,7 +268,7 @@ type $(valueName);
         ~melangePageOutputDir: option(string),
         ~pageWrappersDataDir,
       )
-      : processedDataProp => {
+      : processedDataPropReason => {
     let relativePathToDataDir =
       switch (pageDataType) {
       | PageData =>
@@ -296,8 +300,8 @@ type $(valueName);
 
     let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".js";
 
-    let rescriptImportString =
-      makeStringToImportJsFileFromRescript(
+    let importString =
+      makeStringToImportJsFileFromReason(
         ~pageDataType,
         ~relativePathToDataDir,
         ~jsDataFilename,
@@ -311,7 +315,13 @@ type $(valueName);
       | PageWrapperData => Path.join2(pageWrappersDataDir, jsDataFilename)
       };
 
-    {rescriptImportString, jsDataFileContent, jsDataFilepath};
+    {
+      processedDataProp: {
+        jsDataFileContent,
+        jsDataFilepath,
+      },
+      importString,
+    };
   };
 
   let dataPropName = "data";
@@ -458,7 +468,7 @@ module JsArtifact = {
       | PageWrapperData => Path.join2(pageWrappersDataDir, jsDataFilename)
       };
 
-    {jsDataFileContent, jsDataFilepath, rescriptImportString: "NOT_NEEDED"};
+    {jsDataFileContent, jsDataFilepath};
   };
 
   let processPageComponentWithWrapperJs =
@@ -597,11 +607,9 @@ let buildPageHtmlAndReactApp =
         | FullHydration =>
           ReasonArtifact.renderReactAppTemplate(
             ~importPageWrapperDataString=?
-              Belt.Option.map(pageWrapperDataProp, v =>
-                v.rescriptImportString
-              ),
+              Belt.Option.map(pageWrapperDataProp, v => v.importString),
             ~importPageDataString=?
-              Belt.Option.map(pageDataProp, v => v.rescriptImportString),
+              Belt.Option.map(pageDataProp, v => v.importString),
             elementString,
           )
         | PartialHydration =>
@@ -609,7 +617,12 @@ let buildPageHtmlAndReactApp =
             ~modulesWithHydration__Mutable,
           )
         };
-      (resultHtml, resultReactApp, pageDataProp, pageWrapperDataProp);
+      (
+        resultHtml,
+        resultReactApp,
+        pageDataProp->Belt.Option.map(v => v.processedDataProp),
+        pageWrapperDataProp->Belt.Option.map(v => v.processedDataProp),
+      );
     | Js =>
       let {element, pageDataProp, pageWrapperDataProp} =
         JsArtifact.processPageComponentWithWrapperJs(
