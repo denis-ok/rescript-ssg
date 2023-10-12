@@ -373,7 +373,7 @@ let start =
       req->IncommingMessage.pipeToClientRequest(proxyReq, {end_: true});
     });
 
-  server->Server.setKeepAliveTimeoutMs(1000);
+  server->Server.setKeepAliveTimeoutMs(2000);
 
   let startServer = () =>
     server->Server.listen(port, () =>

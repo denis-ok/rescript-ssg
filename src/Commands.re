@@ -236,16 +236,19 @@ let start =
       pages,
     );
 
-  // rescript-ssg just emitted reason artifacts and JS compilation is happening...
-  // Starting dev server after a little delay.
-  // Ideally, we want to start dev server and file watcher after JS compilation is done
-  // to avoid redundant rebuilds while JS is still compiling.
-  let delayBeforeDevServerStart = 3000;
+  let delayBeforeDevServerStart =
+    switch (pageAppArtifact) {
+    | Js => 100
+    | Reason =>
+      // A compilation most likely is still in progress after reason artifacts emitted,
+      // starting dev server + file watcher after a little delay.
+      2000
+    };
 
-  Js.Global.setTimeout(
-    () => {
-      renderedPages
-      ->Promise.map(renderedPages =>
+  renderedPages
+  ->Promise.map(renderedPages => {
+      Js.Global.setTimeout(
+        () => {
           switch (Bundler.bundler) {
           | Esbuild =>
             Esbuild.watchAndServe(
@@ -291,10 +294,10 @@ let start =
               );
             ();
           }
-        )
+        },
+        delayBeforeDevServerStart,
+      )
       ->ignore
-    },
-    delayBeforeDevServerStart,
-  )
+    })
   ->ignore;
 };
