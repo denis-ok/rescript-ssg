@@ -19,9 +19,9 @@ let showPages = (pages: array(PageBuilder.page)) => {
   });
 };
 
-let getModuleDependencies = (~modulePath) =>
+let getModuleDependencies = (~pageModulePath) =>
   DependencyTree.makeList({
-    filename: modulePath,
+    filename: pageModulePath,
     // TODO Fix me. Is it really needed? Should it be func argument?
     directory: ".",
     filter: path => path->Js.String2.indexOf("node_modules") == (-1),
@@ -37,8 +37,8 @@ let getModuleDependencies = (~modulePath) =>
 
 // The watcher logic looks like this:
 // We detect change in some file.
-// If the change is in a root module -> simply get pages from modulePathToPagesDict and rebuild them.
-// If the change is in a dependency -> get root modules from a dependency -> get pages from root modules.
+// If the change is in the exact page module -> simply get pages from modulePathToPagesDict and rebuild them.
+// If the change is in some dependency -> get root modules from a dependency -> get pages from root modules.
 // If the change is in a head CSS file -> get pages that use this css file and rebuild them.
 
 let startWatcher =
@@ -56,13 +56,14 @@ let startWatcher =
   let durationLabel = "[Watcher] Watching for file changes... Startup duration";
   Js.Console.timeStart(durationLabel);
 
-  // Multiple pages can use the same root module. The common case is localized pages.
+  // Multiple pages can use the same page module. The common case is localized pages.
   // We get modulePath -> array(pages) dict here.
   let modulePathToPagesDict = Js.Dict.empty();
   pages->Js.Array2.forEach(page => {
     switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
     | None => modulePathToPagesDict->Js.Dict.set(page.modulePath, [|page|])
     | Some(pages) =>
+      // Should we do array.push for faster processing?
       modulePathToPagesDict->Js.Dict.set(
         page.modulePath,
         Js.Array2.concat([|page|], pages),
@@ -72,53 +73,61 @@ let startWatcher =
 
   let pageModulePaths = modulePathToPagesDict->Js.Dict.keys;
 
-  let modulesAndDependencies =
-    pageModulePaths->Js.Array2.map(modulePath => {
-      let dependencies = getModuleDependencies(~modulePath);
-      (modulePath, dependencies);
+  let pageModulesAndTheirDependencies =
+    pageModulePaths->Js.Array2.map(pageModulePath => {
+      // This should be changed to esbuild function.
+      let dependencies = getModuleDependencies(~pageModulePath);
+      (pageModulePath, dependencies);
     });
 
-  // Dependency is a dependency of the root module (modulePath).
-  // Multiple root modules can depend on the same dependency.
-  // The dict below maps dependency to the array of root modules.
-
+  // Dependency is a some import in page's main module (page.modulePath).
+  // Multiple pages can depend on the same dependency.
+  // The dict below maps dependency path to the array of page module paths.
   let dependencyToPageModulesDict = Js.Dict.empty();
 
-  let updateDependencyToPageModulesDict = (~dependency, ~modulePath) => {
+  let updateDependencyToPageModulesDict = (~dependency, ~pageModulePath) => {
     switch (dependencyToPageModulesDict->Js.Dict.get(dependency)) {
     | None =>
-      dependencyToPageModulesDict->Js.Dict.set(dependency, [|modulePath|])
-    | Some(pageModules) =>
       dependencyToPageModulesDict->Js.Dict.set(
         dependency,
-        Js.Array2.concat([|modulePath|], pageModules)->uniqueStringArray,
+        [|pageModulePath|],
+      )
+    | Some(pageModulePaths) =>
+      // Should we do array push instead of concat before calling uniqueStringArray?
+      dependencyToPageModulesDict->Js.Dict.set(
+        dependency,
+        Js.Array2.concat([|pageModulePath|], pageModulePaths)
+        ->uniqueStringArray,
       )
     };
   };
 
-  modulesAndDependencies->Js.Array2.forEach(((modulePath, dependencies)) => {
+  pageModulesAndTheirDependencies->Js.Array2.forEach(
+    ((pageModulePath, dependencies)) => {
     dependencies->Js.Array2.forEach(dependency =>
-      updateDependencyToPageModulesDict(~dependency, ~modulePath)
+      updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
     )
   });
 
-  // We handle pageWrapper module as a dependency of the root module.
-  // So if pageWrapper module changes we check what root modules (pages) depend on it and rebuild them.
-
-  let pageWrapperModuleDependencies =
+  // We handle pageWrapper module as a dependency of the page's module.
+  // If pageWrapper module changes we check what page modules depend on it and rebuild them.
+  let pageWrapperModulePaths =
     pages->Belt.Array.keepMap(page => {
       switch (page.pageWrapper) {
       | None => None
       | Some(wrapper) =>
+        // Page wrapper can import other modules and have dependencies as well.
+        // This should be also handled.
         updateDependencyToPageModulesDict(
           ~dependency=wrapper.modulePath,
-          ~modulePath=page.modulePath,
+          ~pageModulePath=page.modulePath,
         );
         Some(wrapper.modulePath);
       }
     });
 
   let headCssFileToPagesDict = Js.Dict.empty();
+  // This should be done in the same first pages loop.
   pages->Js.Array2.forEach(page => {
     page.headCssFilepaths
     ->Js.Array2.forEach(headCssFile => {
@@ -133,17 +142,18 @@ let startWatcher =
       })
   });
 
-  let headCssDependencies = headCssFileToPagesDict->Js.Dict.keys;
+  let headCssModulePaths = headCssFileToPagesDict->Js.Dict.keys;
 
   let allDependencies = {
+    // Should we make empty array and push everything there instead of multiple concats?
     let dependencies =
       dependencyToPageModulesDict
       ->Js.Dict.entries
       ->Js.Array2.map(((dependency, _pageModules)) => dependency);
 
     Js.Array2.concat(pageModulePaths, dependencies)
-    ->Js.Array2.concat(pageWrapperModuleDependencies)
-    ->Js.Array2.concat(headCssDependencies);
+    ->Js.Array2.concat(pageWrapperModulePaths)
+    ->Js.Array2.concat(headCssModulePaths);
   };
 
   logger.debug(() =>
@@ -191,13 +201,13 @@ let startWatcher =
           );
 
           pagesToRebuild->Js.Array2.forEach(page => {
-            let modulePath = page.modulePath;
-            let newDependencies = getModuleDependencies(~modulePath);
+            let pageModulePath = page.modulePath;
+            let newDependencies = getModuleDependencies(~pageModulePath);
 
             logger.debug(() => {
               Js.log2(
                 "[Watcher] New dependencies of the module: ",
-                modulePath,
+                pageModulePath,
               );
               logger.debug(() =>
                 Js.log2("[Watcher] New dependencies are:\n", newDependencies)
@@ -205,7 +215,7 @@ let startWatcher =
             });
 
             newDependencies->Js.Array2.forEach(dependency =>
-              updateDependencyToPageModulesDict(~dependency, ~modulePath)
+              updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
             );
 
             watcher->Chokidar.add(newDependencies);
