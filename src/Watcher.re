@@ -53,13 +53,16 @@ let startWatcher =
     )
     : unit => {
   let pages = Array.flat1(pages);
+
   let durationLabel = "[Watcher] Watching for file changes... Startup duration";
   Js.Console.timeStart(durationLabel);
 
-  // Multiple pages can use the same page module. The common case is localized pages.
-  // We get modulePath -> array(pages) dict here.
   let modulePathToPagesDict = Js.Dict.empty();
+  let headCssFileToPagesDict = Js.Dict.empty();
+
   pages->Js.Array2.forEach(page => {
+    // Multiple pages can use the same page module. The common case is localized pages.
+    // We populate modulePathToPagesDict to get modulePath -> array(pages) dict here.
     switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
     | None => modulePathToPagesDict->Js.Dict.set(page.modulePath, [|page|])
     | Some(pages) =>
@@ -68,7 +71,19 @@ let startWatcher =
         page.modulePath,
         Js.Array2.concat([|page|], pages),
       )
-    }
+    };
+
+    page.headCssFilepaths
+    ->Js.Array2.forEach(headCssFile => {
+        switch (headCssFileToPagesDict->Js.Dict.get(headCssFile)) {
+        | None => headCssFileToPagesDict->Js.Dict.set(headCssFile, [|page|])
+        | Some(pages) =>
+          headCssFileToPagesDict->Js.Dict.set(
+            headCssFile,
+            Js.Array2.concat([|page|], pages)->uniquePageArray,
+          )
+        }
+      });
   });
 
   let pageModulePaths = modulePathToPagesDict->Js.Dict.keys;
@@ -125,22 +140,6 @@ let startWatcher =
         Some(wrapper.modulePath);
       }
     });
-
-  let headCssFileToPagesDict = Js.Dict.empty();
-  // This should be done in the same first pages loop.
-  pages->Js.Array2.forEach(page => {
-    page.headCssFilepaths
-    ->Js.Array2.forEach(headCssFile => {
-        switch (headCssFileToPagesDict->Js.Dict.get(headCssFile)) {
-        | None => headCssFileToPagesDict->Js.Dict.set(headCssFile, [|page|])
-        | Some(pages) =>
-          headCssFileToPagesDict->Js.Dict.set(
-            headCssFile,
-            Js.Array2.concat([|page|], pages)->uniquePageArray,
-          )
-        }
-      })
-  });
 
   let headCssModulePaths = headCssFileToPagesDict->Js.Dict.keys;
 
