@@ -138,18 +138,30 @@ let startWatcher =
     )
   });
 
-  let headCssModulePaths = headCssFileToPagesDict->Js.Dict.keys;
-
   let allDependencies = {
-    // Should we make empty array and push everything there instead of multiple concats?
-    let dependencies =
-      dependencyToPageModulesDict
-      ->Js.Dict.entries
-      ->Js.Array2.map(((dependency, _pageModules)) => dependency);
+    let dependencies = [||];
 
-    Js.Array2.concat(pageModulePaths, dependencies)
-    ->Js.Array2.concat(pageWrapperModulePaths)
-    ->Js.Array2.concat(headCssModulePaths);
+    headCssFileToPagesDict
+    ->Js.Dict.keys
+    ->Js.Array2.forEach(headCssPath =>
+        dependencies->Js.Array2.push(headCssPath)->ignore
+      );
+
+    dependencyToPageModulesDict
+    ->Js.Dict.keys
+    ->Js.Array2.forEach(dependencyPath =>
+        dependencies->Js.Array2.push(dependencyPath)->ignore
+      );
+
+    pageModulePaths->Js.Array2.forEach(pageModulePath =>
+      dependencies->Js.Array2.push(pageModulePath)->ignore
+    );
+
+    pageWrapperModulePaths->Js.Array2.forEach(pageWrapperModulePath =>
+      dependencies->Js.Array2.push(pageWrapperModulePath)->ignore
+    );
+
+    dependencies;
   };
 
   logger.debug(() =>
