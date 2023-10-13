@@ -6,7 +6,7 @@ let uniqueArray = (array: array('a), ~getId: 'a => string) => {
   items->Js.Dict.fromArray->Js.Dict.values;
 };
 
-let uniquePageArray = (pages: array(PageBuilder.page)) => {
+let makeUniquePageArray = (pages: array(PageBuilder.page)) => {
   pages->uniqueArray(~getId=page => PagePath.toString(page.path));
 };
 
@@ -65,12 +65,7 @@ let startWatcher =
     // We populate modulePathToPagesDict to get modulePath -> array(pages) dict here.
     switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
     | None => modulePathToPagesDict->Js.Dict.set(page.modulePath, [|page|])
-    | Some(pages) =>
-      // Should we do array.push for faster processing?
-      modulePathToPagesDict->Js.Dict.set(
-        page.modulePath,
-        Js.Array2.concat([|page|], pages),
-      )
+    | Some(pages) => pages->Js.Array2.push(page)->ignore
     };
 
     page.headCssFilepaths
@@ -78,10 +73,12 @@ let startWatcher =
         switch (headCssFileToPagesDict->Js.Dict.get(headCssFile)) {
         | None => headCssFileToPagesDict->Js.Dict.set(headCssFile, [|page|])
         | Some(pages) =>
+          pages->Js.Array2.push(page)->ignore;
+          // We can try storing a tuple (array, set) and check set before pushing
           headCssFileToPagesDict->Js.Dict.set(
             headCssFile,
-            Js.Array2.concat([|page|], pages)->uniquePageArray,
-          )
+            pages->makeUniquePageArray,
+          );
         }
       });
   });
@@ -108,12 +105,13 @@ let startWatcher =
         [|pageModulePath|],
       )
     | Some(pageModulePaths) =>
-      // Should we do array push instead of concat before calling uniqueStringArray?
+      // We can try storing a tuple (array, set) and check set before pushing
+      pageModulePaths->Js.Array2.push(pageModulePath)->ignore;
+
       dependencyToPageModulesDict->Js.Dict.set(
         dependency,
-        Js.Array2.concat([|pageModulePath|], pageModulePaths)
-        ->uniqueStringArray,
-      )
+        pageModulePaths->uniqueStringArray,
+      );
     };
   };
 
@@ -293,7 +291,7 @@ let startWatcher =
       };
 
     let newRebuildQueue =
-      Js.Array2.concat(pagesToRebuild, rebuildQueueRef^)->uniquePageArray;
+      Js.Array2.concat(pagesToRebuild, rebuildQueueRef^)->makeUniquePageArray;
 
     rebuildQueueRef := newRebuildQueue;
 
