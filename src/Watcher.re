@@ -98,14 +98,21 @@ let startWatcher =
     page.headCssFilepaths
     ->Js.Array2.forEach(headCssFile => {
         switch (headCssFileToPagesDict->Js.Dict.get(headCssFile)) {
-        | None => headCssFileToPagesDict->Js.Dict.set(headCssFile, [|page|])
-        | Some(pages) =>
-          // We should try storing a tuple (array, set) and check set before pushing
-          pages->Js.Array2.push(page)->ignore;
+        | None =>
           headCssFileToPagesDict->Js.Dict.set(
             headCssFile,
-            pages->makeUniquePageArray,
-          );
+            ([|page|], Set.fromArray([|page.path->PagePath.toString|])),
+          )
+        | Some((pages, pagePathsSet)) =>
+          switch (pagePathsSet->Set.has(page.path->PagePath.toString)) {
+          | true => ()
+          | _false =>
+            pages->Js.Array2.push(page)->ignore;
+            headCssFileToPagesDict->Js.Dict.set(
+              headCssFile,
+              (pages, pagePathsSet->Set.add(page.path->PagePath.toString)),
+            );
+          }
         }
       });
 
@@ -285,7 +292,7 @@ let startWatcher =
           pages;
         | None =>
           switch (headCssFileToPagesDict->Js.Dict.get(filepath)) {
-          | Some(pages) =>
+          | Some((pages, _pagePathsSet)) =>
             logger.debug(() =>
               Js.log2("[Watcher] Head CSS file changed: ", filepath)
             );
