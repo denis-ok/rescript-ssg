@@ -57,30 +57,69 @@ let startWatcher =
   let durationLabel = "[Watcher] Watching for file changes... Startup duration";
   Js.Console.timeStart(durationLabel);
 
+  // Dependency is a some import in page's main module (page.modulePath).
+  // Multiple pages can depend on the same dependency.
+  // The dict below maps dependency path to the array of page module paths.
+  let dependencyToPageModulesDict = Js.Dict.empty();
+  let updateDependencyToPageModulesDict = (~dependency, ~pageModulePath) => {
+    switch (dependencyToPageModulesDict->Js.Dict.get(dependency)) {
+    | None =>
+      dependencyToPageModulesDict->Js.Dict.set(
+        dependency,
+        [|pageModulePath|],
+      )
+    | Some(pageModulePaths) =>
+      // We should try storing a tuple (array, set) and check set before pushing
+      pageModulePaths->Js.Array2.push(pageModulePath)->ignore;
+      dependencyToPageModulesDict->Js.Dict.set(
+        dependency,
+        pageModulePaths->uniqueStringArray,
+      );
+    };
+  };
+
   let modulePathToPagesDict = Js.Dict.empty();
   let headCssFileToPagesDict = Js.Dict.empty();
+  let pageWrapperModulePaths = [||];
 
   pages->Js.Array2.forEach(page => {
     // Multiple pages can use the same page module. The common case is localized pages.
-    // We populate modulePathToPagesDict to get modulePath -> array(pages) dict here.
+    // We get modulePath -> array(pages) dict here.
+    // Fill modulePathToPagesDict
     switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
     | None => modulePathToPagesDict->Js.Dict.set(page.modulePath, [|page|])
     | Some(pages) => pages->Js.Array2.push(page)->ignore
     };
 
+    // Fill headCssFileToPagesDict
     page.headCssFilepaths
     ->Js.Array2.forEach(headCssFile => {
         switch (headCssFileToPagesDict->Js.Dict.get(headCssFile)) {
         | None => headCssFileToPagesDict->Js.Dict.set(headCssFile, [|page|])
         | Some(pages) =>
+          // We should try storing a tuple (array, set) and check set before pushing
           pages->Js.Array2.push(page)->ignore;
-          // We can try storing a tuple (array, set) and check set before pushing
           headCssFileToPagesDict->Js.Dict.set(
             headCssFile,
             pages->makeUniquePageArray,
           );
         }
       });
+
+    // We handle pageWrapper module as a dependency of the page's module.
+    // If pageWrapper module changes we check what page modules depend on it and rebuild them.
+    // Fill pageWrapperModulePaths
+    switch (page.pageWrapper) {
+    | None => ()
+    | Some(wrapper) =>
+      // Page wrapper can import other modules and have dependencies as well.
+      // This should be also handled.
+      pageWrapperModulePaths->Js.Array2.push(wrapper.modulePath)->ignore;
+      updateDependencyToPageModulesDict(
+        ~dependency=wrapper.modulePath,
+        ~pageModulePath=page.modulePath,
+      );
+    };
   });
 
   let pageModulePaths = modulePathToPagesDict->Js.Dict.keys;
@@ -92,52 +131,12 @@ let startWatcher =
       (pageModulePath, dependencies);
     });
 
-  // Dependency is a some import in page's main module (page.modulePath).
-  // Multiple pages can depend on the same dependency.
-  // The dict below maps dependency path to the array of page module paths.
-  let dependencyToPageModulesDict = Js.Dict.empty();
-
-  let updateDependencyToPageModulesDict = (~dependency, ~pageModulePath) => {
-    switch (dependencyToPageModulesDict->Js.Dict.get(dependency)) {
-    | None =>
-      dependencyToPageModulesDict->Js.Dict.set(
-        dependency,
-        [|pageModulePath|],
-      )
-    | Some(pageModulePaths) =>
-      // We can try storing a tuple (array, set) and check set before pushing
-      pageModulePaths->Js.Array2.push(pageModulePath)->ignore;
-
-      dependencyToPageModulesDict->Js.Dict.set(
-        dependency,
-        pageModulePaths->uniqueStringArray,
-      );
-    };
-  };
-
   pageModulesAndTheirDependencies->Js.Array2.forEach(
     ((pageModulePath, dependencies)) => {
     dependencies->Js.Array2.forEach(dependency =>
       updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
     )
   });
-
-  // We handle pageWrapper module as a dependency of the page's module.
-  // If pageWrapper module changes we check what page modules depend on it and rebuild them.
-  let pageWrapperModulePaths =
-    pages->Belt.Array.keepMap(page => {
-      switch (page.pageWrapper) {
-      | None => None
-      | Some(wrapper) =>
-        // Page wrapper can import other modules and have dependencies as well.
-        // This should be also handled.
-        updateDependencyToPageModulesDict(
-          ~dependency=wrapper.modulePath,
-          ~pageModulePath=page.modulePath,
-        );
-        Some(wrapper.modulePath);
-      }
-    });
 
   let headCssModulePaths = headCssFileToPagesDict->Js.Dict.keys;
 
