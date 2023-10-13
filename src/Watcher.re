@@ -66,15 +66,18 @@ let startWatcher =
     | None =>
       dependencyToPageModulesDict->Js.Dict.set(
         dependency,
-        [|pageModulePath|],
+        ([|pageModulePath|], Set.fromArray([|pageModulePath|])),
       )
-    | Some(pageModulePaths) =>
-      // We should try storing a tuple (array, set) and check set before pushing
-      pageModulePaths->Js.Array2.push(pageModulePath)->ignore;
-      dependencyToPageModulesDict->Js.Dict.set(
-        dependency,
-        pageModulePaths->uniqueStringArray,
-      );
+    | Some((pageModulePaths, pageModulePathsSet)) =>
+      switch (pageModulePathsSet->Set.has(pageModulePath)) {
+      | true => ()
+      | _false =>
+        pageModulePaths->Js.Array2.push(pageModulePath)->ignore;
+        dependencyToPageModulesDict->Js.Dict.set(
+          dependency,
+          (pageModulePaths, pageModulePathsSet->Set.add(pageModulePath)),
+        );
+      }
     };
   };
 
@@ -254,7 +257,7 @@ let startWatcher =
         pages;
       | None =>
         switch (dependencyToPageModulesDict->Js.Dict.get(filepath)) {
-        | Some(pageModules) =>
+        | Some((pageModules, _pageModulesSet)) =>
           logger.debug(() => {
             Js.log2("[Watcher] Dependency changed: ", filepath);
             Js.log2(
