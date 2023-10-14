@@ -238,15 +238,16 @@ let startWatcher =
                   ~modulePath=pageModulePath,
                 )
                 ->Promise.map(newPageDependencies => {
-                    Js.log2(
-                      "[Watcher] New dependencies of the module: ",
-                      pageModulePath,
-                    );
-
-                    Js.log2(
-                      "[Watcher] New dependencies are:\n",
-                      newPageDependencies,
-                    );
+                    logger.debug(() => {
+                      Js.log2(
+                        "[Watcher] New dependencies of the module: ",
+                        pageModulePath,
+                      );
+                      Js.log2(
+                        "[Watcher] New dependencies are:\n",
+                        newPageDependencies,
+                      );
+                    });
 
                     newPageDependencies->Js.Array2.forEach(dependency =>
                       updateDependencyToPageModulesDict(
@@ -271,6 +272,12 @@ let startWatcher =
                 dependencyToPageModulesDict,
               )
             });
+
+            logger.info(() =>
+              Js.log(
+                "[Watcher] Pages are rebuilded, files to watch are updated",
+              )
+            );
 
             rebuildQueueRef := [||];
           });
