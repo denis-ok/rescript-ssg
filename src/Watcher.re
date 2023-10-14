@@ -311,7 +311,7 @@ let startWatcher =
 
           let pages =
             pageModules
-            ->Js.Array2.map(modulePath => {
+            ->Belt.Array.keepMap(modulePath => {
                 switch (modulePathToPagesDict->Js.Dict.get(modulePath)) {
                 | Some(pages) => Some(pages)
                 | None =>
@@ -324,8 +324,8 @@ let startWatcher =
                   None;
                 }
               })
-            ->Belt.Array.keepMap(v => v)
             ->Belt.Array.concatMany;
+
           pages;
         | None =>
           switch (headCssFileToPagesDict->Js.Dict.get(filepath)) {
@@ -336,14 +336,14 @@ let startWatcher =
             pages;
           | None =>
             // Nothing depends on a changed file. We should remove it from watcher.
+            watcher->Chokidar.unwatch([|filepath|]);
+
             logger.debug(() =>
               Js.log2(
                 "[Watcher] [Warning] No pages depend on the file: ",
                 filepath,
               )
             );
-
-            watcher->Chokidar.unwatch([|filepath|]);
 
             [||];
           }
