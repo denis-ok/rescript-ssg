@@ -53,6 +53,8 @@ let startWatcher =
       pages: array(array(PageBuilder.page)),
     )
     : unit => {
+  let watcher = Chokidar.chokidar->Chokidar.watchFiles([||]);
+
   let pages = Array.flat1(pages);
 
   let durationLabel = "[Watcher] Watching for file changes... Startup duration";
@@ -136,28 +138,23 @@ let startWatcher =
 
   let pageModulePaths = modulePathToPagesDict->Js.Dict.keys;
 
-  let pageModulesAndTheirDependencies =
+  let filledDependencyToPageModulesDict =
     pageModulePaths->Js.Array2.map(pageModulePath => {
       Esbuild.getModuleDependencies(
         ~projectRootDir,
         ~modulePath=pageModulePath,
       )
-      ->Promise.map(pageDependencies => (pageModulePath, pageDependencies))
-    });
-
-  let watcher = Chokidar.chokidar->Chokidar.watchFiles([||]);
-
-  let _: Js.Promise.t(unit) =
-    pageModulesAndTheirDependencies
-    ->Promise.all
-    ->Promise.map(pageModulesAndTheirDependencies => {
-        pageModulesAndTheirDependencies->Js.Array2.forEach(
-          ((pageModulePath, pageDependencies)) => {
+      ->Promise.map(pageDependencies => {
           pageDependencies->Js.Array2.forEach(dependency =>
             updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
           )
-        });
+        })
+    });
 
+  let _: Js.Promise.t(unit) =
+    filledDependencyToPageModulesDict
+    ->Promise.all
+    ->Promise.map((_: array(unit)) => {
         let allDependencies = {
           let dependencies = [||];
 
@@ -184,23 +181,19 @@ let startWatcher =
           dependencies;
         };
 
+        watcher->Chokidar.add(allDependencies);
+
+        logger.info(() => {
+          Js.log("[Watcher] Initial dependencies collected");
+          Js.Console.timeEnd(durationLabel);
+        });
+
         logger.debug(() =>
           Js.log2(
             "[Watcher] Initial watcher dependencies:\n",
             allDependencies,
           )
         );
-
-        watcher->Chokidar.add(allDependencies);
-
-        watcher->Chokidar.onAdd(() =>
-          logger.info(() => {
-            Js.log("Files added!");
-            Js.Console.timeEnd(durationLabel);
-          })
-        );
-
-        ();
       });
 
   let rebuildQueueRef: ref(array(PageBuilder.page)) = ref([||]);
