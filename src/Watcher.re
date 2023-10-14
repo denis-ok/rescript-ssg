@@ -153,6 +153,8 @@ let startWatcher =
 
   let _: Js.Promise.t(unit) =
     filledDependencyToPageModulesDict
+    // We probably can have a race condition here.
+    // It's better to refactor to use Promise.seqRun.
     ->Promise.all
     ->Promise.map((_: array(unit)) => {
         let allDependencies = {
@@ -285,10 +287,8 @@ let startWatcher =
     };
   };
 
-  let rebuildPagesIgnored = () => rebuildPages()->ignore;
-
   let rebuildPagesDebounced =
-    Debounce.debounce(~delayMs=700, rebuildPagesIgnored);
+    Debounce.debounce(~delayMs=500, () => rebuildPages()->ignore);
 
   let onChangeOrUnlink = filepath => {
     let pagesToRebuild =
