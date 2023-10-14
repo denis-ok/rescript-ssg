@@ -19,7 +19,7 @@ let showPages = (pages: array(PageBuilder.page)) => {
   });
 };
 
-let getModuleDependencies = (~pageModulePath) =>
+let _getModuleDependencies = (~pageModulePath) =>
   DependencyTree.makeList({
     filename: pageModulePath,
     // TODO Fix me. Is it really needed? Should it be func argument?
@@ -44,6 +44,7 @@ let getModuleDependencies = (~pageModulePath) =>
 let startWatcher =
     (
       ~pageAppArtifact: PageBuilder.pageAppArtifact,
+      ~projectRootDir: string,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
@@ -61,6 +62,7 @@ let startWatcher =
   // Multiple pages can depend on the same dependency.
   // The dict below maps dependency path to the array of page module paths.
   let dependencyToPageModulesDict = Js.Dict.empty();
+
   let updateDependencyToPageModulesDict = (~dependency, ~pageModulePath) => {
     switch (dependencyToPageModulesDict->Js.Dict.get(dependency)) {
     | None =>
@@ -136,69 +138,84 @@ let startWatcher =
 
   let pageModulesAndTheirDependencies =
     pageModulePaths->Js.Array2.map(pageModulePath => {
-      // This should be changed to esbuild function.
-      let dependencies = getModuleDependencies(~pageModulePath);
-      (pageModulePath, dependencies);
+      Esbuild.getModuleDependencies(
+        ~projectRootDir,
+        ~modulePath=pageModulePath,
+      )
+      ->Promise.map(pageDependencies => (pageModulePath, pageDependencies))
     });
 
-  pageModulesAndTheirDependencies->Js.Array2.forEach(
-    ((pageModulePath, dependencies)) => {
-    dependencies->Js.Array2.forEach(dependency =>
-      updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
-    )
-  });
+  let watcher = Chokidar.chokidar->Chokidar.watchFiles([||]);
 
-  let allDependencies = {
-    let dependencies = [||];
+  let _: Js.Promise.t(unit) =
+    pageModulesAndTheirDependencies
+    ->Promise.all
+    ->Promise.map(pageModulesAndTheirDependencies => {
+        pageModulesAndTheirDependencies->Js.Array2.forEach(
+          ((pageModulePath, pageDependencies)) => {
+          pageDependencies->Js.Array2.forEach(dependency =>
+            updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
+          )
+        });
 
-    headCssFileToPagesDict
-    ->Js.Dict.keys
-    ->Js.Array2.forEach(headCssPath =>
-        dependencies->Js.Array2.push(headCssPath)->ignore
-      );
+        let allDependencies = {
+          let dependencies = [||];
 
-    dependencyToPageModulesDict
-    ->Js.Dict.keys
-    ->Js.Array2.forEach(dependencyPath =>
-        dependencies->Js.Array2.push(dependencyPath)->ignore
-      );
+          headCssFileToPagesDict
+          ->Js.Dict.keys
+          ->Js.Array2.forEach(headCssPath =>
+              dependencies->Js.Array2.push(headCssPath)->ignore
+            );
 
-    pageModulePaths->Js.Array2.forEach(pageModulePath =>
-      dependencies->Js.Array2.push(pageModulePath)->ignore
-    );
+          dependencyToPageModulesDict
+          ->Js.Dict.keys
+          ->Js.Array2.forEach(dependencyPath =>
+              dependencies->Js.Array2.push(dependencyPath)->ignore
+            );
 
-    pageWrapperModulePaths->Js.Array2.forEach(pageWrapperModulePath =>
-      dependencies->Js.Array2.push(pageWrapperModulePath)->ignore
-    );
+          pageModulePaths->Js.Array2.forEach(pageModulePath =>
+            dependencies->Js.Array2.push(pageModulePath)->ignore
+          );
 
-    dependencies;
-  };
+          pageWrapperModulePaths->Js.Array2.forEach(pageWrapperModulePath =>
+            dependencies->Js.Array2.push(pageWrapperModulePath)->ignore
+          );
 
-  logger.debug(() =>
-    Js.log2("[Watcher] Initial watcher dependencies:\n", allDependencies)
-  );
+          dependencies;
+        };
 
-  let watcher = Chokidar.chokidar->Chokidar.watchFiles(allDependencies);
+        logger.debug(() =>
+          Js.log2(
+            "[Watcher] Initial watcher dependencies:\n",
+            allDependencies,
+          )
+        );
 
-  watcher->Chokidar.onReady(() =>
-    logger.info(() => Js.Console.timeEnd(durationLabel))
-  );
+        watcher->Chokidar.add(allDependencies);
+
+        watcher->Chokidar.onAdd(() =>
+          logger.info(() => {
+            Js.log("Files added!");
+            Js.Console.timeEnd(durationLabel);
+          })
+        );
+
+        ();
+      });
 
   let rebuildQueueRef: ref(array(PageBuilder.page)) = ref([||]);
 
-  let rebuildPages = () => {
+  let rebuildPages = (): Js.Promise.t(unit) => {
     switch (rebuildQueueRef^) {
-    | [||] => ()
+    | [||] => Promise.resolve()
     | pagesToRebuild =>
       logger.info(() => Js.log("[Watcher] Pages rebuild triggered..."));
-
       logger.debug(() =>
         Js.log2(
           "[Watcher] Passing pages to worker to rebuild:\n",
           pagesToRebuild->showPages,
         )
       );
-
       BuildPageWorkerHelpers.buildPagesWithWorkers(
         ~pageAppArtifact,
         ~buildWorkersCount,
@@ -211,48 +228,67 @@ let startWatcher =
         ~exitOnPageBuildError=false,
         ~generatedFilesSuffix="",
       )
-      ->Promise.map(_ => {
+      ->Promise.flatMap(_ => {
           logger.debug(() =>
             Js.log(
               "[Watcher] Pages rebuild success, updating dependencies to watch...",
             )
           );
 
-          pagesToRebuild->Js.Array2.forEach(page => {
-            let pageModulePath = page.modulePath;
-            let newDependencies = getModuleDependencies(~pageModulePath);
+          let newDependencies =
+            pagesToRebuild
+            ->Js.Array2.map(page => {
+                let pageModulePath = page.modulePath;
 
-            logger.debug(() => {
-              Js.log2(
-                "[Watcher] New dependencies of the module: ",
-                pageModulePath,
-              );
-              logger.debug(() =>
-                Js.log2("[Watcher] New dependencies are:\n", newDependencies)
-              );
-            });
+                Esbuild.getModuleDependencies(
+                  ~projectRootDir,
+                  ~modulePath=pageModulePath,
+                )
+                ->Promise.map(newPageDependencies => {
+                    Js.log2(
+                      "[Watcher] New dependencies of the module: ",
+                      pageModulePath,
+                    );
 
-            newDependencies->Js.Array2.forEach(dependency =>
-              updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
-            );
+                    Js.log2(
+                      "[Watcher] New dependencies are:\n",
+                      newPageDependencies,
+                    );
+
+                    newPageDependencies->Js.Array2.forEach(dependency =>
+                      updateDependencyToPageModulesDict(
+                        ~dependency,
+                        ~pageModulePath,
+                      )
+                    );
+
+                    newPageDependencies;
+                  });
+              })
+            ->Promise.all;
+
+          newDependencies->Promise.map(newDependencies => {
+            let newDependencies = newDependencies->Array.flat1;
 
             watcher->Chokidar.add(newDependencies);
 
-            logger.debug(() =>
+            logger.debug(() => {
               Js.log2(
                 "[Watcher] dependencyToPageModulesDict:\n",
                 dependencyToPageModulesDict,
               )
-            );
-          });
-        })
-      ->ignore;
+            });
 
-      rebuildQueueRef := [||];
+            rebuildQueueRef := [||];
+          });
+        });
     };
   };
 
-  let rebuildPagesDebounced = Debounce.debounce(~delayMs=700, rebuildPages);
+  let rebuildPagesIgnored = () => rebuildPages()->ignore;
+
+  let rebuildPagesDebounced =
+    Debounce.debounce(~delayMs=700, rebuildPagesIgnored);
 
   let onChangeOrUnlink = filepath => {
     let pagesToRebuild =
@@ -272,6 +308,7 @@ let startWatcher =
               pageModules,
             );
           });
+
           let pages =
             pageModules
             ->Js.Array2.map(modulePath => {
@@ -305,7 +342,9 @@ let startWatcher =
                 filepath,
               )
             );
+
             watcher->Chokidar.unwatch([|filepath|]);
+
             [||];
           }
         }

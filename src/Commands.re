@@ -228,6 +228,7 @@ let start =
 
   let startFileWatcher = (): unit =>
     Watcher.startWatcher(
+      ~projectRootDir,
       ~pageAppArtifact,
       ~outputDir,
       ~melangeOutputDir,
