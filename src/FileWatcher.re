@@ -19,14 +19,6 @@ let showPages = (pages: array(PageBuilder.page)) => {
   });
 };
 
-let _getModuleDependencies = (~pageModulePath) =>
-  DependencyTree.makeList({
-    filename: pageModulePath,
-    // TODO Fix me. Is it really needed? Should it be func argument?
-    directory: ".",
-    filter: path => path->Js.String2.indexOf("node_modules") == (-1),
-  });
-
 // To make a watcher work properly we need to:
 // 1. Watch for the changes in a root module (page module).
 // 2. Watch for the changes in all dependencies of a root module (except node modules).

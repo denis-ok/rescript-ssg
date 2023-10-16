@@ -227,7 +227,7 @@ let start =
     );
 
   let startFileWatcher = (): unit =>
-    Watcher.startWatcher(
+    FileWatcher.startWatcher(
       ~projectRootDir,
       ~pageAppArtifact,
       ~outputDir,
