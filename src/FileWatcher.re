@@ -321,7 +321,7 @@ let startWatcher =
                   None;
                 }
               })
-            ->Belt.Array.concatMany;
+            ->Array.flat1;
 
           pages;
         | None =>
