@@ -28,3 +28,6 @@ let onUnlink = (chokidar, callback) => chokidar->onEvent("unlink", callback);
 
 let onReady = (chokidar, callback) =>
   chokidar->onEventWithUnitCallback("ready", callback);
+
+let onAdd = (chokidar, callback) =>
+  chokidar->onEventWithUnitCallback("add", callback);

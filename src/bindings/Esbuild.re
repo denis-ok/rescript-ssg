@@ -34,7 +34,7 @@ module Plugin = {
 [@module "esbuild"] external esbuild: esbuild = "default";
 
 [@bs.send]
-external build: (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
+external build': (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
 
 [@send]
 external context: (esbuild, Js.t('a)) => Promise.t(context) = "context";
@@ -190,7 +190,7 @@ let build =
     );
 
   esbuild
-  ->build(config)
+  ->build'(config)
   ->Promise.map(_buildResult => {
       // let json =
       //   Js.Json.stringifyAny(_buildResult.metafile)
@@ -279,3 +279,70 @@ let watchAndServe =
 };
 
 let subscribeToRebuildEventScript = "new EventSource('/esbuild').addEventListener('change', () => location.reload());";
+
+type import = {
+  path: string,
+  kind: string,
+  original: string,
+};
+
+type input = {
+  bytes: int,
+  imports: array(import),
+  format: string,
+};
+
+type metafile = {inputs: Js.Dict.t(input)};
+
+external unsafeJsonToMetafile: Js.Json.t => metafile = "%identity";
+
+let getModuleDependencies =
+    (~projectRootDir: string, ~modulePath: string)
+    : Js.Promise.t(array(string)) => {
+  let config = {
+    "entryPoints": [|modulePath|],
+    // Outdir technically isn't used because "write" is false, but esbuild has complaints without it
+    "outdir": "unused",
+    "write": false,
+    "format": "esm",
+    "bundle": true,
+    "minify": false,
+    "metafile": true,
+    "splitting": false,
+    "treeShaking": false,
+    "logLevel": LogLevel.toString(Silent),
+    "loader": {
+      Bundler.assetFileExtensionsWithoutCss
+      ->Js.Array2.map(ext => {("." ++ ext, "file")})
+      ->Js.Dict.fromArray;
+    },
+  };
+
+  esbuild
+  ->build'(config)
+  ->Promise.map(buildResult => {
+      // let json =
+      //   Js.Json.stringifyAny(buildResult.metafile)
+      //   ->Belt.Option.getWithDefault("");
+      // Fs.writeFileSync(~path="meta.json", ~data=json);
+      let metafile = buildResult.metafile->unsafeJsonToMetafile;
+      let dependencies =
+        metafile.inputs
+        ->Js.Dict.entries
+        ->Belt.Array.keepMap(((dependencyPath, _)) => {
+            // Filter out dependencies from node_modules
+            switch (dependencyPath->Js.String2.indexOf("node_modules")) {
+            | (-1) => Some(Path.join2(projectRootDir, dependencyPath))
+            | _ => None
+            }
+          });
+      dependencies;
+    })
+  ->Promise.catch(error => {
+      Js.Console.error2(
+        "[Esbuild] Get module dependencies failed! Promise.catch:",
+        error->Util.inspect,
+      );
+      Process.exit(1);
+    });
+};
