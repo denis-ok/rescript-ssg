@@ -139,7 +139,7 @@ let startWatcher =
       ->Promise.map(pageDependencies => (pageModulePath, pageDependencies))
     });
 
-  let _: Js.Promise.t(unit) =
+  let allInitialDependencies: Js.Promise.t(array(string)) =
     pageModulesAndTheirDependencies
     ->Promise.all
     ->Promise.map(pageModulesAndTheirDependencies => {
@@ -151,7 +151,7 @@ let startWatcher =
           )
         });
 
-        let allDependencies = {
+        let allInitialDependencies = {
           let dependencies = [||];
 
           headCssFileToPagesDict
@@ -177,19 +177,11 @@ let startWatcher =
           dependencies;
         };
 
-        watcher->Chokidar.add(allDependencies);
-
-        logger.info(() => {
-          Js.log("[Watcher] Initial dependencies collected");
-          Js.Console.timeEnd(durationLabel);
-        });
-
         logger.debug(() =>
-          Js.log2(
-            "[Watcher] Initial watcher dependencies:\n",
-            allDependencies,
-          )
+          Js.log2("[Watcher] Initial dependencies:\n", allInitialDependencies)
         );
+
+        allInitialDependencies;
       });
 
   let rebuildQueueRef: ref(array(PageBuilder.page)) = ref([||]);
@@ -362,15 +354,28 @@ let startWatcher =
     rebuildPagesDebounced();
   };
 
-  // With rescript/bucklescript, "change" event is triggered when JS file updated after compilation.
-  // But with Melange, "unlink" event is triggered.
-  watcher->Chokidar.onChange(filepath => {
-    logger.debug(() => Js.log2("[Watcher] Chokidar.onChange: ", filepath));
-    onChangeOrUnlink(filepath);
-  });
+  let _: Js.Promise.t(unit) =
+    allInitialDependencies->Promise.map(allInitialDependencies => {
+      watcher->Chokidar.add(allInitialDependencies);
 
-  watcher->Chokidar.onUnlink(filepath => {
-    logger.debug(() => Js.log2("[Watcher] Chokidar.onUnlink: ", filepath));
-    onChangeOrUnlink(filepath);
-  });
+      // With rescript/bucklescript, "change" event is triggered when JS file updated after compilation.
+      // But with Melange, "unlink" event is triggered.
+      watcher->Chokidar.onChange(filepath => {
+        logger.debug(() =>
+          Js.log2("[Watcher] Chokidar.onChange: ", filepath)
+        );
+        onChangeOrUnlink(filepath);
+      });
+
+      watcher->Chokidar.onUnlink(filepath => {
+        logger.debug(() =>
+          Js.log2("[Watcher] Chokidar.onUnlink: ", filepath)
+        );
+        onChangeOrUnlink(filepath);
+      });
+
+      Js.Console.timeEnd(durationLabel);
+    });
+
+  ();
 };
