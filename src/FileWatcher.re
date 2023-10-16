@@ -45,7 +45,7 @@ let startWatcher =
       pages: array(array(PageBuilder.page)),
     )
     : unit => {
-  let watcher = Chokidar.chokidar->Chokidar.watchFiles([||]);
+  let watcherRef: ref(option(Chokidar.watcher)) = ref(None);
 
   let pages = Array.flat1(pages);
 
@@ -186,98 +186,105 @@ let startWatcher =
 
   let rebuildQueueRef: ref(array(PageBuilder.page)) = ref([||]);
 
-  let rebuildPages = (): Js.Promise.t(unit) => {
-    switch (rebuildQueueRef^) {
-    | [||] => Promise.resolve()
-    | pagesToRebuild =>
-      logger.info(() => Js.log("[Watcher] Pages rebuild triggered..."));
-      logger.debug(() =>
-        Js.log2(
-          "[Watcher] Passing pages to worker to rebuild:\n",
-          pagesToRebuild->showPages,
+  let rebuildPages = (): unit => {
+    let promise: Js.Promise.t(unit) =
+      switch (rebuildQueueRef^) {
+      | [||] => Promise.resolve()
+      | pagesToRebuild =>
+        logger.info(() => Js.log("[Watcher] Pages rebuild triggered..."));
+        logger.debug(() =>
+          Js.log2(
+            "[Watcher] Passing pages to worker to rebuild:\n",
+            pagesToRebuild->showPages,
+          )
+        );
+        BuildPageWorkerHelpers.buildPagesWithWorkers(
+          ~pageAppArtifact,
+          ~buildWorkersCount,
+          // TODO Here we probably should group pages to rebuild by globalValues (one globalValues per worker)
+          ~pages=[|pagesToRebuild|],
+          ~outputDir,
+          ~melangeOutputDir,
+          ~logger,
+          ~globalEnvValues,
+          ~exitOnPageBuildError=false,
+          ~generatedFilesSuffix="",
         )
-      );
-      BuildPageWorkerHelpers.buildPagesWithWorkers(
-        ~pageAppArtifact,
-        ~buildWorkersCount,
-        // TODO Here we probably should group pages to rebuild by globalValues (one globalValues per worker)
-        ~pages=[|pagesToRebuild|],
-        ~outputDir,
-        ~melangeOutputDir,
-        ~logger,
-        ~globalEnvValues,
-        ~exitOnPageBuildError=false,
-        ~generatedFilesSuffix="",
-      )
-      ->Promise.flatMap(_ => {
-          logger.debug(() =>
-            Js.log(
-              "[Watcher] Pages rebuild success, updating dependencies to watch...",
-            )
-          );
-
-          let updatedPageModulesAndTheirDependencies =
-            pagesToRebuild->Js.Array2.map(page => {
-              let pageModulePath = page.modulePath;
-
-              Esbuild.getModuleDependencies(
-                ~projectRootDir,
-                ~modulePath=pageModulePath,
+        ->Promise.flatMap(_ => {
+            logger.debug(() =>
+              Js.log(
+                "[Watcher] Pages rebuild success, updating dependencies to watch...",
               )
-              ->Promise.map(pageDependencies =>
-                  (pageModulePath, pageDependencies)
-                );
-            });
+            );
 
-          let newDependencies =
-            updatedPageModulesAndTheirDependencies
-            ->Promise.all
-            ->Promise.map(pageModulesAndTheirDependencies => {
-                pageModulesAndTheirDependencies->Js.Array2.map(
-                  ((pageModulePath, pageDependencies)) => {
-                  logger.debug(() => {
-                    Js.log(
-                      {j|[Watcher] Dependencies of updated page module: $(pageModulePath) are: $(pageDependencies)|j},
-                    )
-                  });
+            let updatedPageModulesAndTheirDependencies =
+              pagesToRebuild->Js.Array2.map(page => {
+                let pageModulePath = page.modulePath;
 
-                  pageDependencies->Js.Array2.forEach(dependency =>
-                    updateDependencyToPageModulesDict(
-                      ~dependency,
-                      ~pageModulePath,
-                    )
+                Esbuild.getModuleDependencies(
+                  ~projectRootDir,
+                  ~modulePath=pageModulePath,
+                )
+                ->Promise.map(pageDependencies =>
+                    (pageModulePath, pageDependencies)
                   );
-
-                  pageDependencies;
-                })
               });
 
-          newDependencies->Promise.map(newDependencies => {
-            let newDependencies = newDependencies->Array.flat1;
+            let newDependencies =
+              updatedPageModulesAndTheirDependencies
+              ->Promise.all
+              ->Promise.map(pageModulesAndTheirDependencies => {
+                  pageModulesAndTheirDependencies->Js.Array2.map(
+                    ((pageModulePath, pageDependencies)) => {
+                    logger.debug(() => {
+                      Js.log(
+                        {j|[Watcher] Dependencies of updated page module: $(pageModulePath) are: $(pageDependencies)|j},
+                      )
+                    });
 
-            watcher->Chokidar.add(newDependencies);
+                    pageDependencies->Js.Array2.forEach(dependency =>
+                      updateDependencyToPageModulesDict(
+                        ~dependency,
+                        ~pageModulePath,
+                      )
+                    );
 
-            logger.debug(() => {
-              Js.log2(
-                "[Watcher] Pages are rebuilded, dependencyToPageModulesDict:\n",
-                dependencyToPageModulesDict,
-              )
+                    pageDependencies;
+                  })
+                });
+
+            newDependencies->Promise.map(newDependencies => {
+              let newDependencies = newDependencies->Array.flat1;
+
+              switch (watcherRef^) {
+              | Some(watcher) => watcher->Chokidar.add(newDependencies)
+              | None =>
+                Js.Console.error(
+                  "[Watcher] [Error] Chokidar is not initialized",
+                )
+              };
+
+              logger.debug(() => {
+                Js.log2(
+                  "[Watcher] Pages are rebuilded, dependencyToPageModulesDict:\n",
+                  dependencyToPageModulesDict,
+                )
+              });
+
+              logger.info(() => {
+                Js.log(
+                  "[Watcher] Pages are rebuilded, files to watch are updated",
+                )
+              });
+
+              rebuildQueueRef := [||];
             });
-
-            logger.info(() => {
-              Js.log(
-                "[Watcher] Pages are rebuilded, files to watch are updated",
-              )
-            });
-
-            rebuildQueueRef := [||];
           });
-        });
-    };
+      };
+    promise->ignore;
   };
 
-  let rebuildPagesDebounced =
-    Debounce.debounce(~delayMs=500, () => rebuildPages()->ignore);
+  let rebuildPagesDebounced = Debounce.debounce(~delayMs=500, rebuildPages);
 
   let onChangeOrUnlink = filepath => {
     let pagesToRebuild =
@@ -324,8 +331,15 @@ let startWatcher =
             );
             pages;
           | None =>
-            // Nothing depends on a changed file. We should remove it from watcher.
-            watcher->Chokidar.unwatch([|filepath|]);
+            switch (watcherRef^) {
+            | Some(watcher) =>
+              // Nothing depends on a changed file. We should remove it from watcher.
+              watcher->Chokidar.unwatch([|filepath|])
+            | None =>
+              Js.Console.error(
+                "[Watcher] [Error] Chokidar is not initialized",
+              )
+            };
 
             logger.debug(() =>
               Js.log2(
@@ -356,25 +370,30 @@ let startWatcher =
 
   let _: Js.Promise.t(unit) =
     allInitialDependencies->Promise.map(allInitialDependencies => {
-      watcher->Chokidar.add(allInitialDependencies);
+      let watcher =
+        Chokidar.chokidar->Chokidar.watchFiles(allInitialDependencies);
 
-      // With rescript/bucklescript, "change" event is triggered when JS file updated after compilation.
-      // But with Melange, "unlink" event is triggered.
-      watcher->Chokidar.onChange(filepath => {
-        logger.debug(() =>
-          Js.log2("[Watcher] Chokidar.onChange: ", filepath)
-        );
-        onChangeOrUnlink(filepath);
+      watcher->Chokidar.onReady(() => {
+        watcherRef := Some(watcher);
+
+        logger.info(() => Js.Console.timeEnd(durationLabel));
+
+        watcher->Chokidar.onChange(filepath => {
+          logger.debug(() =>
+            Js.log2("[Watcher] Chokidar.onChange: ", filepath)
+          );
+          onChangeOrUnlink(filepath);
+        });
+
+        watcher->Chokidar.onUnlink(filepath => {
+          // With rescript/bucklescript, "change" event is triggered when JS file updated after compilation.
+          // But with Melange, "unlink" event is triggered.
+          logger.debug(() =>
+            Js.log2("[Watcher] Chokidar.onUnlink: ", filepath)
+          );
+          onChangeOrUnlink(filepath);
+        });
       });
-
-      watcher->Chokidar.onUnlink(filepath => {
-        logger.debug(() =>
-          Js.log2("[Watcher] Chokidar.onUnlink: ", filepath)
-        );
-        onChangeOrUnlink(filepath);
-      });
-
-      Js.Console.timeEnd(durationLabel);
     });
 
   ();
