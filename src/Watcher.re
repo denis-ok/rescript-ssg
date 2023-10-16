@@ -138,25 +138,27 @@ let startWatcher =
 
   let pageModulePaths = modulePathToPagesDict->Js.Dict.keys;
 
-  let filledDependencyToPageModulesDict =
+  let pageModulesAndTheirDependencies =
     pageModulePaths->Js.Array2.map(pageModulePath => {
       Esbuild.getModuleDependencies(
         ~projectRootDir,
         ~modulePath=pageModulePath,
       )
-      ->Promise.map(pageDependencies => {
-          pageDependencies->Js.Array2.forEach(dependency =>
-            updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
-          )
-        })
+      ->Promise.map(pageDependencies => (pageModulePath, pageDependencies))
     });
 
   let _: Js.Promise.t(unit) =
-    filledDependencyToPageModulesDict
-    // We probably can have a race condition here.
-    // It's better to refactor to use Promise.seqRun.
+    pageModulesAndTheirDependencies
     ->Promise.all
-    ->Promise.map((_: array(unit)) => {
+    ->Promise.map(pageModulesAndTheirDependencies => {
+        // Fill dependencyToPageModulesDict
+        pageModulesAndTheirDependencies->Js.Array2.forEach(
+          ((pageModulePath, pageDependencies)) => {
+          pageDependencies->Js.Array2.forEach(dependency =>
+            updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
+          )
+        });
+
         let allDependencies = {
           let dependencies = [||];
 
@@ -230,38 +232,41 @@ let startWatcher =
             )
           );
 
+          let updatedPageModulesAndTheirDependencies =
+            pagesToRebuild->Js.Array2.map(page => {
+              let pageModulePath = page.modulePath;
+
+              Esbuild.getModuleDependencies(
+                ~projectRootDir,
+                ~modulePath=pageModulePath,
+              )
+              ->Promise.map(pageDependencies =>
+                  (pageModulePath, pageDependencies)
+                );
+            });
+
           let newDependencies =
-            pagesToRebuild
-            ->Js.Array2.map(page => {
-                let pageModulePath = page.modulePath;
-
-                Esbuild.getModuleDependencies(
-                  ~projectRootDir,
-                  ~modulePath=pageModulePath,
-                )
-                ->Promise.map(newPageDependencies => {
-                    logger.debug(() => {
-                      Js.log2(
-                        "[Watcher] New dependencies of the module: ",
-                        pageModulePath,
-                      );
-                      Js.log2(
-                        "[Watcher] New dependencies are:\n",
-                        newPageDependencies,
-                      );
-                    });
-
-                    newPageDependencies->Js.Array2.forEach(dependency =>
-                      updateDependencyToPageModulesDict(
-                        ~dependency,
-                        ~pageModulePath,
-                      )
-                    );
-
-                    newPageDependencies;
+            updatedPageModulesAndTheirDependencies
+            ->Promise.all
+            ->Promise.map(pageModulesAndTheirDependencies => {
+                pageModulesAndTheirDependencies->Js.Array2.map(
+                  ((pageModulePath, pageDependencies)) => {
+                  logger.debug(() => {
+                    Js.log(
+                      {j|[Watcher] Dependencies of updated page module: $(pageModulePath) are: $(pageDependencies)|j},
+                    )
                   });
-              })
-            ->Promise.all;
+
+                  pageDependencies->Js.Array2.forEach(dependency =>
+                    updateDependencyToPageModulesDict(
+                      ~dependency,
+                      ~pageModulePath,
+                    )
+                  );
+
+                  pageDependencies;
+                })
+              });
 
           newDependencies->Promise.map(newDependencies => {
             let newDependencies = newDependencies->Array.flat1;
@@ -270,16 +275,16 @@ let startWatcher =
 
             logger.debug(() => {
               Js.log2(
-                "[Watcher] dependencyToPageModulesDict:\n",
+                "[Watcher] Pages are rebuilded, dependencyToPageModulesDict:\n",
                 dependencyToPageModulesDict,
               )
             });
 
-            logger.info(() =>
+            logger.info(() => {
               Js.log(
                 "[Watcher] Pages are rebuilded, files to watch are updated",
               )
-            );
+            });
 
             rebuildQueueRef := [||];
           });
