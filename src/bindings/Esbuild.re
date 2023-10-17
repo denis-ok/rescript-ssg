@@ -33,7 +33,7 @@ module Plugin = {
 
 [@module "esbuild"] external esbuild: esbuild = "default";
 
-[@bs.send]
+[@mel.send]
 external build': (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
 
 [@send]
