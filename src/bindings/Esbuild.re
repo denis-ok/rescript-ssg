@@ -100,6 +100,7 @@ let makeConfig =
       ~renderedPages: array(RenderedPage.t),
       ~logOverride: Js.Dict.t(LogLevel.t),
       ~logLevel: LogLevel.t,
+      ~logLimit: int,
     ) =>
   // https://esbuild.github.io/api/
   {
@@ -120,6 +121,7 @@ let makeConfig =
     "metafile": true,
     "splitting": true,
     "treeShaking": true,
+    "logLimit": logLimit,
     "logLevel": logLevel->LogLevel.toString,
     "logOverride": {
       let logOverride: Js.Dict.t(string) =
@@ -187,6 +189,7 @@ let build =
       ~renderedPages,
       ~logLevel,
       ~logOverride,
+      ~logLimit=10,
     );
 
   esbuild
@@ -218,6 +221,7 @@ let watchAndServe =
       ~port: int,
       ~logLevel: LogLevel.t=Warning,
       ~logOverride: Js.Dict.t(LogLevel.t)=Js.Dict.empty(),
+      ~logLimit=10,
       (),
     )
     : Promise.t(serveResult) => {
@@ -230,6 +234,7 @@ let watchAndServe =
       ~renderedPages,
       ~logLevel,
       ~logOverride,
+      ~logLimit,
     );
   Js.log("[Esbuild] Starting esbuild...");
   let watchDurationLabel = "[Esbuild] Watch mode started! Duration";
