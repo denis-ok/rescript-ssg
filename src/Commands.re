@@ -210,6 +210,7 @@ let start =
       ~esbuildProxyServerPort: int=8011,
       ~esbuildProxyRules: array(ProxyServer.ProxyRule.t)=[||],
       ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
+      ~esbuildLogLimit: option(int)=?,
       ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
     ) => {
@@ -260,6 +261,7 @@ let start =
               ~port=esbuildMainServerPort,
               ~logLevel=?esbuildLogLevel,
               ~logOverride=?esbuildLogOverride,
+              ~logLimit=?esbuildLogLimit,
               (),
             )
             ->Promise.map(serveResult => {
