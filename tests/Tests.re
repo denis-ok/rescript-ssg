@@ -82,6 +82,7 @@ module BuildPageHtmlAndReactApp = {
 
     let renderedPage =
       PageBuilder.buildPageHtmlAndReactApp(
+        ~pageAppArtifact=Reason,
         ~outputDir,
         ~melangeOutputDir=None,
         ~logger,
@@ -99,7 +100,7 @@ module BuildPageHtmlAndReactApp = {
 
         let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
 
-        let pagePath: string = page.path->PageBuilderT.PagePath.toString;
+        let pagePath: string = page.path->PagePath.toString;
 
         let reactAppModuleName =
           PageBuilder.pagePathToPageAppModuleName(
@@ -213,7 +214,7 @@ switch (ReactDOM.querySelector("#root")) {
 
     let expectedAppContent = {js|
 type pageData;
-[@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.js"] external pageData: pageData = "data";
+[@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.mjs"] external pageData: pageData = "data";
 
 switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(<TestPageWithData data={pageData->Obj.magic} />, root)
@@ -272,10 +273,10 @@ switch (ReactDOM.querySelector("#root")) {
 
     let expectedAppContent = {js|
 type pageWrapperData;
-[@mel.module "./__pageWrappersData/TestWrapperWithData_Data_688ca4c30fca5edb6793.js"] external pageWrapperData: pageWrapperData = "data";
+[@mel.module "./__pageWrappersData/TestWrapperWithData_Data_688ca4c30fca5edb6793.mjs"] external pageWrapperData: pageWrapperData = "data";
 
 type pageData;
-[@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.js"] external pageData: pageData = "data";
+[@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.mjs"] external pageData: pageData = "data";
 
 switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(<TestWrapperWithData data={pageWrapperData->Obj.magic} ><TestPageWithData data={pageData->Obj.magic} /></TestWrapperWithData>, root)

@@ -23,13 +23,14 @@ type workerPage = {
   component,
   modulePath: string,
   headCssFilepaths: array(string),
-  path: PageBuilderT.PagePath.t,
+  path: PagePath.t,
   globalValues: option(array((string, Js.Json.t))),
   headScripts: array(string),
   bodyScripts: array(string),
 };
 
 type workerData = {
+  pageAppArtifact: PageBuilder.pageAppArtifact,
   outputDir: string,
   melangeOutputDir: option(string),
   logLevel: Log.level,
@@ -39,7 +40,7 @@ type workerData = {
 };
 
 let showPage = (page: workerPage) => {
-  PageBuilderT.PagePath.toString(page.path);
+  PagePath.toString(page.path);
 };
 
 let showPages = (pages: array(workerPage)) => {

@@ -33,8 +33,8 @@ module Plugin = {
 
 [@module "esbuild"] external esbuild: esbuild = "default";
 
-[@mel.send]
-external build: (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
+[@bs.send]
+external build': (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
 
 [@send]
 external context: (esbuild, Js.t('a)) => Promise.t(context) = "context";
@@ -72,6 +72,25 @@ module HtmlPlugin = {
   external make: (. options) => Plugin.t = "htmlPlugin";
 };
 
+module LogLevel = {
+  // https://esbuild.github.io/api/#log-level
+  type t =
+    | Silent
+    | Error
+    | Warning
+    | Info
+    | Debug;
+
+  let toString = (t: t) =>
+    switch (t) {
+    | Silent => "silent"
+    | Error => "error"
+    | Warning => "warning"
+    | Info => "info"
+    | Debug => "debug"
+    };
+};
+
 let makeConfig =
     (
       ~mode: Bundler.mode,
@@ -79,6 +98,8 @@ let makeConfig =
       ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
+      ~logOverride: Js.Dict.t(LogLevel.t),
+      ~logLevel: LogLevel.t,
     ) =>
   // https://esbuild.github.io/api/
   {
@@ -99,7 +120,17 @@ let makeConfig =
     "metafile": true,
     "splitting": true,
     "treeShaking": true,
-    "logLevel": "warning",
+    "logLevel": logLevel->LogLevel.toString,
+    "logOverride": {
+      let logOverride: Js.Dict.t(string) =
+        logOverride
+        ->Js.Dict.entries
+        ->Js.Array2.map(((error, logLevel)) =>
+            (error, logLevel->LogLevel.toString)
+          )
+        ->Js.Dict.fromArray;
+      logOverride;
+    },
     "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
     "loader": {
       Bundler.assetFileExtensionsWithoutCss
@@ -109,7 +140,7 @@ let makeConfig =
     "plugins": {
       let htmlPluginFiles =
         renderedPages->Js.Array2.map(renderedPage => {
-          let pagePath = renderedPage.path->PageBuilderT.PagePath.toString;
+          let pagePath = renderedPage.path->PagePath.toString;
 
           // entryPoint must be relative path to the root of user's project
           let entryPathRelativeToProjectRoot =
@@ -139,6 +170,9 @@ let build =
       ~projectRootDir: string,
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
+      ~logLevel: LogLevel.t=Warning,
+      ~logOverride: Js.Dict.t(LogLevel.t)=Js.Dict.empty(),
+      (),
     ) => {
   Js.log("[Esbuild] Bundling...");
   let durationLabel = "[Esbuild] Success! Duration";
@@ -151,10 +185,12 @@ let build =
       ~projectRootDir,
       ~globalEnvValues,
       ~renderedPages,
+      ~logLevel,
+      ~logOverride,
     );
 
   esbuild
-  ->build(config)
+  ->build'(config)
   ->Promise.map(_buildResult => {
       // let json =
       //   Js.Json.stringifyAny(_buildResult.metafile)
@@ -180,6 +216,9 @@ let watchAndServe =
       ~globalEnvValues: array((string, string)),
       ~renderedPages: array(RenderedPage.t),
       ~port: int,
+      ~logLevel: LogLevel.t=Warning,
+      ~logOverride: Js.Dict.t(LogLevel.t)=Js.Dict.empty(),
+      (),
     )
     : Promise.t(serveResult) => {
   let config =
@@ -189,6 +228,8 @@ let watchAndServe =
       ~projectRootDir,
       ~globalEnvValues,
       ~renderedPages,
+      ~logLevel,
+      ~logOverride,
     );
   Js.log("[Esbuild] Starting esbuild...");
   let watchDurationLabel = "[Esbuild] Watch mode started! Duration";
@@ -238,3 +279,70 @@ let watchAndServe =
 };
 
 let subscribeToRebuildEventScript = "new EventSource('/esbuild').addEventListener('change', () => location.reload());";
+
+type import = {
+  path: string,
+  kind: string,
+  original: string,
+};
+
+type input = {
+  bytes: int,
+  imports: array(import),
+  format: string,
+};
+
+type metafile = {inputs: Js.Dict.t(input)};
+
+external unsafeJsonToMetafile: Js.Json.t => metafile = "%identity";
+
+let getModuleDependencies =
+    (~projectRootDir: string, ~modulePath: string)
+    : Js.Promise.t(array(string)) => {
+  let config = {
+    "entryPoints": [|modulePath|],
+    // Outdir technically isn't used because "write" is false, but esbuild has complaints without it
+    "outdir": "unused",
+    "write": false,
+    "format": "esm",
+    "bundle": true,
+    "minify": false,
+    "metafile": true,
+    "splitting": false,
+    "treeShaking": false,
+    "logLevel": LogLevel.toString(Silent),
+    "loader": {
+      Bundler.assetFileExtensionsWithoutCss
+      ->Js.Array2.map(ext => {("." ++ ext, "file")})
+      ->Js.Dict.fromArray;
+    },
+  };
+
+  esbuild
+  ->build'(config)
+  ->Promise.map(buildResult => {
+      // let json =
+      //   Js.Json.stringifyAny(buildResult.metafile)
+      //   ->Belt.Option.getWithDefault("");
+      // Fs.writeFileSync(~path="meta.json", ~data=json);
+      let metafile = buildResult.metafile->unsafeJsonToMetafile;
+      let dependencies =
+        metafile.inputs
+        ->Js.Dict.entries
+        ->Belt.Array.keepMap(((dependencyPath, _)) => {
+            // Filter out dependencies from node_modules
+            switch (dependencyPath->Js.String2.indexOf("node_modules")) {
+            | (-1) => Some(Path.join2(projectRootDir, dependencyPath))
+            | _ => None
+            }
+          });
+      dependencies;
+    })
+  ->Promise.catch(error => {
+      Js.Console.error2(
+        "[Esbuild] Get module dependencies failed! Promise.catch:",
+        error->Util.inspect,
+      );
+      Process.exit(1);
+    });
+};

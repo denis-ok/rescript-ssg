@@ -5,7 +5,7 @@ let checkDuplicatedPagePaths = (pages: array(array(PageBuilder.page))) => {
 
   pages->Js.Array2.forEach(pages' => {
     pages'->Js.Array2.forEach(page => {
-      let pagePath = PageBuilderT.PagePath.toString(page.path);
+      let pagePath = PagePath.toString(page.path);
       switch (pagesDict->Js.Dict.get(pagePath)) {
       | None => pagesDict->Js.Dict.set(pagePath, page)
       | Some(_) =>
@@ -63,6 +63,7 @@ type generatedFilesSuffix =
 
 let initializeAndBuildPages =
     (
+      ~pageAppArtifact: PageBuilder.pageAppArtifact,
       ~logLevel,
       ~buildWorkersCount,
       ~pages: array(array(PageBuilder.page)),
@@ -98,6 +99,7 @@ let initializeAndBuildPages =
 
   let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
+      ~pageAppArtifact,
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
@@ -118,6 +120,7 @@ let initializeAndBuildPages =
 
 let build =
     (
+      ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
       ~outputDir: string,
       ~projectRootDir: string,
       ~melangeOutputDir: option(string)=?,
@@ -131,10 +134,13 @@ let build =
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
+      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
+      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
     ) => {
   let (logger, _pages, renderedPages) =
     initializeAndBuildPages(
+      ~pageAppArtifact,
       ~logLevel,
       ~buildWorkersCount,
       ~pages,
@@ -147,7 +153,11 @@ let build =
 
   renderedPages
   ->Promise.map(renderedPages => {
-      let () = compileRescript(~compileCommand, ~logger);
+      let () =
+        switch (pageAppArtifact) {
+        | Reason => compileRescript(~compileCommand, ~logger)
+        | Js => ()
+        };
 
       switch (Bundler.bundler) {
       | Esbuild =>
@@ -157,6 +167,9 @@ let build =
             ~projectRootDir,
             ~globalEnvValues,
             ~renderedPages,
+            ~logLevel=?esbuildLogLevel,
+            ~logOverride=?esbuildLogOverride,
+            (),
           )
           ->ignore;
         ();
@@ -179,6 +192,7 @@ let build =
 
 let start =
     (
+      ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
       ~outputDir: string,
       ~projectRootDir: string,
       ~melangeOutputDir: option(string)=?,
@@ -192,12 +206,16 @@ let start =
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
-      ~esbuildMainServerPort: int=8000,
-      ~esbuildProxyServerPort: int=8001,
+      ~esbuildMainServerPort: int=8010,
+      ~esbuildProxyServerPort: int=8011,
+      ~esbuildProxyRules: array(ProxyServer.ProxyRule.t)=[||],
+      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
+      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
     ) => {
   let (logger, pages, renderedPages) =
     initializeAndBuildPages(
+      ~pageAppArtifact,
       ~logLevel,
       ~buildWorkersCount,
       ~pages,
@@ -208,8 +226,10 @@ let start =
       ~bundlerMode=Watch,
     );
 
-  let startFileWatcher = () =>
-    Watcher.startWatcher(
+  let startFileWatcher = (): unit =>
+    FileWatcher.startWatcher(
+      ~projectRootDir,
+      ~pageAppArtifact,
       ~outputDir,
       ~melangeOutputDir,
       ~logger,
@@ -217,16 +237,19 @@ let start =
       pages,
     );
 
-  // rescript-ssg just emitted reason artifacts and JS compilation is happening...
-  // Starting dev server after a little delay.
-  // Ideally, we want to start dev server and file watcher after JS compilation is done
-  // to avoid redundant rebuilds while JS is still compiling.
-  let delayBeforeDevServerStart = 3000;
+  let delayBeforeDevServerStart =
+    switch (pageAppArtifact) {
+    | Js => 100
+    | Reason =>
+      // A compilation most likely is still in progress after reason artifacts emitted,
+      // starting dev server + file watcher after a little delay.
+      2000
+    };
 
-  Js.Global.setTimeout(
-    () => {
-      renderedPages
-      ->Promise.map(renderedPages =>
+  renderedPages
+  ->Promise.map(renderedPages => {
+      Js.Global.setTimeout(
+        () => {
           switch (Bundler.bundler) {
           | Esbuild =>
             Esbuild.watchAndServe(
@@ -235,6 +258,9 @@ let start =
               ~globalEnvValues,
               ~renderedPages,
               ~port=esbuildMainServerPort,
+              ~logLevel=?esbuildLogLevel,
+              ~logOverride=?esbuildLogOverride,
+              (),
             )
             ->Promise.map(serveResult => {
                 let () =
@@ -242,6 +268,13 @@ let start =
                     ~port=esbuildProxyServerPort,
                     ~targetHost=serveResult.host,
                     ~targetPort=serveResult.port,
+                    ~proxyRules=esbuildProxyRules,
+                    ~pagePaths=
+                      renderedPages->Js.Array2.map(page =>
+                        PagePath.toString(page.path)
+                        ->Utils.maybeAddSlashPrefix
+                        ->Utils.maybeAddSlashSuffix
+                      ),
                   );
                 let () = startFileWatcher();
                 ();
@@ -262,10 +295,10 @@ let start =
               );
             ();
           }
-        )
+        },
+        delayBeforeDevServerStart,
+      )
       ->ignore
-    },
-    delayBeforeDevServerStart,
-  )
+    })
   ->ignore;
 };
