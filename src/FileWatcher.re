@@ -285,7 +285,7 @@ let startWatcher =
   };
 
   let rebuildPagesDebounced =
-    Debounce.debounce(~delayMs=500, () => rebuildPages()->ignore);
+    Debounce.debounce(~delayMs=1500, () => rebuildPages()->ignore);
 
   let onChangeOrUnlink = filepath => {
     let pagesToRebuild =
