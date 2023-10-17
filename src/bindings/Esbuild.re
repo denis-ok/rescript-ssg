@@ -297,7 +297,7 @@ type metafile = {inputs: Js.Dict.t(input)};
 external unsafeJsonToMetafile: Js.Json.t => metafile = "%identity";
 
 let getModuleDependencies =
-    (~projectRootDir: string, ~modulePath: string)
+    (~exitOnError, ~projectRootDir: string, ~modulePath: string)
     : Js.Promise.t(array(string)) => {
   let config = {
     "entryPoints": [|modulePath|],
@@ -338,11 +338,19 @@ let getModuleDependencies =
           });
       dependencies;
     })
-  ->Promise.catch(error => {
-      Js.Console.error2(
-        "[Esbuild] Get module dependencies failed! Promise.catch:",
-        error->Util.inspect,
-      );
-      Process.exit(1);
-    });
+  ->Promise.catch(error =>
+      if (exitOnError) {
+        Js.Console.error2(
+          "[Esbuild] Get module dependencies failed! Stopping process. Promise.catch:",
+          error->Util.inspect,
+        );
+        Process.exit(1);
+      } else {
+        Js.Console.error2(
+          "[Esbuild] Get module dependencies failed! Returning empty array. Promise.catch:",
+          error->Util.inspect,
+        );
+        Promise.resolve([||]);
+      }
+    );
 };

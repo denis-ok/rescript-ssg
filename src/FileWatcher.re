@@ -133,6 +133,8 @@ let startWatcher =
   let pageModulesAndTheirDependencies =
     pageModulePaths->Js.Array2.map(pageModulePath => {
       Esbuild.getModuleDependencies(
+        // Initial watcher start and getModuleDependencies must perform successfully.
+        ~exitOnError=true,
         ~projectRootDir,
         ~modulePath=pageModulePath,
       )
@@ -229,6 +231,10 @@ let startWatcher =
               let pageModulePath = page.modulePath;
 
               Esbuild.getModuleDependencies(
+                // While compiler is working, this operation may fail.
+                // It will return an empty array in this case, so we can ignore the error.
+                // Maybe we should add some logic to make one more attempt to get dependencies.
+                ~exitOnError=false,
                 ~projectRootDir,
                 ~modulePath=pageModulePath,
               )
