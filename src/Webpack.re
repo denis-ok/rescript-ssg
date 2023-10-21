@@ -315,7 +315,7 @@ let makeConfig =
         "name": "webpack-runtime",
       },
       "minimize": shouldMinimize,
-      "webpackMinimizer": {
+      "minimizer": {
         switch (shouldMinimize, webpackMinimizer) {
         | (true, EsbuildPlugin) =>
           Some([|makeESBuildPlugin({"target": "es2015"})|])
