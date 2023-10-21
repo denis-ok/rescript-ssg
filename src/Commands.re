@@ -127,7 +127,7 @@ let build =
       ~projectRootDir: string,
       ~outputDir: string,
       ~melangeOutputDir: option(string)=?,
-      ~compileCommand: string,
+      ~compileCommand: option(string)=?,
       ~logLevel: Log.level,
       ~buildWorkersCount: option(int)=?,
       ~webpackMode: Webpack.Mode.t,
@@ -154,9 +154,15 @@ let build =
   renderedPages
   ->Promise.map(renderedPages => {
       let () =
-        switch (pageAppArtifactsType) {
-        | Reason => compileRescript(~compileCommand, ~logger)
-        | Js => ()
+        switch (pageAppArtifactsType, compileCommand) {
+        | (Reason, None) =>
+          Js.Console.error(
+            "[Commands.build] Error: missing compileCommand param for Reason artifacts",
+          );
+          Process.exit(1);
+        | (Reason, Some(compileCommand)) =>
+          compileRescript(~compileCommand, ~logger)
+        | (Js, _) => ()
         };
 
       switch (Bundler.bundler) {
