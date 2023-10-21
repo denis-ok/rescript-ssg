@@ -120,15 +120,15 @@ let initializeAndBuildPages =
 
 let build =
     (
+      ~pages: array(array(PageBuilder.page)),
+      ~globalEnvValues: array((string, string))=[||],
       ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
-      ~outputDir: string,
+      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~projectRootDir: string,
+      ~outputDir: string,
       ~melangeOutputDir: option(string)=?,
       ~compileCommand: string,
       ~logLevel: Log.level,
-      ~pages: array(array(PageBuilder.page)),
-      ~globalEnvValues: array((string, string))=[||],
-      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
       ~webpackMode: Webpack.Mode.t,
       ~webpackMinimizer: Webpack.Minimizer.t=Terser,
@@ -192,26 +192,26 @@ let build =
 
 let start =
     (
+      ~pages: array(array(PageBuilder.page)),
+      ~globalEnvValues: array((string, string))=[||],
       ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
-      ~outputDir: string,
+      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~projectRootDir: string,
+      ~outputDir: string,
       ~melangeOutputDir: option(string)=?,
       ~logLevel: Log.level,
-      ~pages: array(array(PageBuilder.page)),
       ~buildWorkersCount: option(int)=?,
-      ~globalEnvValues: array((string, string))=[||],
-      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~webpackMode: Webpack.Mode.t,
       ~webpackMinimizer: Webpack.Minimizer.t=Terser,
-      ~webpackDevServerOptions: Webpack.DevServerOptions.t,
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
+      ~webpackDevServerOptions: Webpack.DevServerOptions.t,
+      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
+      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
+      ~esbuildLogLimit: option(int)=?,
       ~esbuildMainServerPort: int=8010,
       ~esbuildProxyServerPort: int=8011,
       ~esbuildProxyRules: array(ProxyServer.ProxyRule.t)=[||],
-      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
-      ~esbuildLogLimit: option(int)=?,
-      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
     ) => {
   let (logger, pages, renderedPages) =
