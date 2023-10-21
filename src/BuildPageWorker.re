@@ -135,7 +135,7 @@ let workerOutput: workerOutput =
           };
 
           PageBuilder.buildPageHtmlAndReactApp(
-            ~pageAppArtifact=workerData.pageAppArtifact,
+            ~pageAppArtifactsType=workerData.pageAppArtifactsType,
             ~outputDir=workerData.outputDir,
             ~melangeOutputDir=workerData.melangeOutputDir,
             ~logger,

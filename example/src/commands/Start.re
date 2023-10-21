@@ -2,7 +2,7 @@ let currentDir = Utils.getDirname();
 
 let () =
   Commands.start(
-    ~pageAppArtifact=Js,
+    ~pageAppArtifactsType=Js,
     ~pages=Pages.pages,
     ~webpackDevServerOptions={listenTo: Port(9007), proxy: None},
     ~webpackMode=Development,

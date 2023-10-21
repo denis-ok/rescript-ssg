@@ -63,7 +63,7 @@ type generatedFilesSuffix =
 
 let initializeAndBuildPages =
     (
-      ~pageAppArtifact: PageBuilder.pageAppArtifact,
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~logLevel,
       ~buildWorkersCount,
       ~pages: array(array(PageBuilder.page)),
@@ -99,7 +99,7 @@ let initializeAndBuildPages =
 
   let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
-      ~pageAppArtifact,
+      ~pageAppArtifactsType,
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
@@ -122,7 +122,7 @@ let build =
     (
       ~pages: array(array(PageBuilder.page)),
       ~globalEnvValues: array((string, string))=[||],
-      ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType=Reason,
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~projectRootDir: string,
       ~outputDir: string,
@@ -140,7 +140,7 @@ let build =
     ) => {
   let (logger, _pages, renderedPages) =
     initializeAndBuildPages(
-      ~pageAppArtifact,
+      ~pageAppArtifactsType,
       ~logLevel,
       ~buildWorkersCount,
       ~pages,
@@ -154,7 +154,7 @@ let build =
   renderedPages
   ->Promise.map(renderedPages => {
       let () =
-        switch (pageAppArtifact) {
+        switch (pageAppArtifactsType) {
         | Reason => compileRescript(~compileCommand, ~logger)
         | Js => ()
         };
@@ -194,7 +194,7 @@ let start =
     (
       ~pages: array(array(PageBuilder.page)),
       ~globalEnvValues: array((string, string))=[||],
-      ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType=Reason,
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~projectRootDir: string,
       ~outputDir: string,
@@ -216,7 +216,7 @@ let start =
     ) => {
   let (logger, pages, renderedPages) =
     initializeAndBuildPages(
-      ~pageAppArtifact,
+      ~pageAppArtifactsType,
       ~logLevel,
       ~buildWorkersCount,
       ~pages,
@@ -230,7 +230,7 @@ let start =
   let startFileWatcher = (): unit =>
     FileWatcher.startWatcher(
       ~projectRootDir,
-      ~pageAppArtifact,
+      ~pageAppArtifactsType,
       ~outputDir,
       ~melangeOutputDir,
       ~logger,
@@ -239,7 +239,7 @@ let start =
     );
 
   let delayBeforeDevServerStart =
-    switch (pageAppArtifact) {
+    switch (pageAppArtifactsType) {
     | Js => 100
     | Reason =>
       // A compilation most likely is still in progress after reason artifacts emitted,

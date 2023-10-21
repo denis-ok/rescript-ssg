@@ -82,7 +82,7 @@ module BuildPageHtmlAndReactApp = {
 
     let renderedPage =
       PageBuilder.buildPageHtmlAndReactApp(
-        ~pageAppArtifact=Reason,
+        ~pageAppArtifactsType=Reason,
         ~outputDir,
         ~melangeOutputDir=None,
         ~logger,

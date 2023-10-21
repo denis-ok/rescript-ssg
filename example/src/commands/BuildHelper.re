@@ -1,6 +1,6 @@
 let build = (~webpackMinimizer) =>
   Commands.build(
-    ~pageAppArtifact=Js,
+    ~pageAppArtifactsType=Js,
     ~pages=Pages.pages,
     ~globalEnvValues=Pages.globalEnvValues,
     ~webpackMode=Production,

@@ -47,7 +47,7 @@ let runBuildPageWorker =
 
 let buildPagesWithWorker =
     (
-      ~pageAppArtifact: PageBuilder.pageAppArtifact,
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
@@ -59,7 +59,7 @@ let buildPagesWithWorker =
     pages->Js.Array2.map(page => mapPageToPageForRebuild(~page));
 
   let workerData: BuildPageWorkerT.workerData = {
-    pageAppArtifact,
+    pageAppArtifactsType,
     outputDir,
     melangeOutputDir,
     pages: rebuildPages,
@@ -77,7 +77,7 @@ let defaultWorkersCount = 16;
 
 let buildPagesWithWorkers =
     (
-      ~pageAppArtifact: PageBuilder.pageAppArtifact,
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~pages: array(array(PageBuilder.page)),
       ~outputDir: string,
       ~melangeOutputDir: option(string),
@@ -117,7 +117,7 @@ let buildPagesWithWorkers =
     pagesManualChunks
     ->Js.Array2.map((pagesChunk, ()) =>
         buildPagesWithWorker(
-          ~pageAppArtifact,
+          ~pageAppArtifactsType,
           ~outputDir,
           ~melangeOutputDir,
           ~logger,

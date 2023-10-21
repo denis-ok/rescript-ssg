@@ -1,4 +1,4 @@
-type pageAppArtifact =
+type pageAppArtifactsType =
   | Reason
   | Js;
 
@@ -626,7 +626,7 @@ if (root !== null) {
 
 let buildPageHtmlAndReactApp =
     (
-      ~pageAppArtifact: pageAppArtifact,
+      ~pageAppArtifactsType: pageAppArtifactsType,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
@@ -671,7 +671,7 @@ let buildPageHtmlAndReactApp =
   let modulesWithHydration__Mutable = [||];
 
   let (resultHtml, resultReactApp, pageDataProp, pageWrapperDataProp) =
-    switch (pageAppArtifact) {
+    switch (pageAppArtifactsType) {
     | Reason =>
       let {
         ReasonArtifact.element,
@@ -790,7 +790,7 @@ let buildPageHtmlAndReactApp =
   let writeFilePromises =
     mkDirPromises->Promise.Result.flatMap(_createdDirs => {
       let pageAppModuleExtension =
-        switch (pageAppArtifact) {
+        switch (pageAppArtifactsType) {
         | Reason => ".re"
         | Js => ".mjs"
         };
@@ -842,7 +842,7 @@ let buildPageHtmlAndReactApp =
 
   writeFilePromises->Promise.Result.map(_createdFiles => {
     let compiledReactAppFilename =
-      switch (pageAppArtifact) {
+      switch (pageAppArtifactsType) {
       | Reason => ".bs.js"
       | Js => ".mjs"
       };
@@ -853,7 +853,7 @@ let buildPageHtmlAndReactApp =
     let renderedPage: RenderedPage.t = {
       path: page.path,
       entryPath: {
-        switch (pageAppArtifact) {
+        switch (pageAppArtifactsType) {
         | Js => Path.join2(pageOutputDir, compiledReactAppFilename)
         | Reason =>
           Path.join2(
