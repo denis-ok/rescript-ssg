@@ -57,7 +57,7 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   };
 };
 
-type generatedFilesSuffix =
+type pageAppArtifactsSuffix =
   | NoSuffix
   | UnixTimestamp;
 
@@ -70,7 +70,7 @@ let initializeAndBuildPages =
       ~outputDir,
       ~melangeOutputDir,
       ~globalEnvValues,
-      ~generatedFilesSuffix,
+      ~pageAppArtifactsSuffix,
       ~bundlerMode: Bundler.mode,
     ) => {
   let () = checkDuplicatedPagePaths(pages);
@@ -107,8 +107,8 @@ let initializeAndBuildPages =
       ~logger,
       ~globalEnvValues,
       ~exitOnPageBuildError=true,
-      ~generatedFilesSuffix=
-        switch (generatedFilesSuffix) {
+      ~pageAppArtifactsSuffix=
+        switch (pageAppArtifactsSuffix) {
         | NoSuffix => ""
         | UnixTimestamp =>
           "_" ++ Js.Date.make()->Js.Date.valueOf->Belt.Float.toString
@@ -123,7 +123,7 @@ let build =
       ~pages: array(array(PageBuilder.page)),
       ~globalEnvValues: array((string, string))=[||],
       ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType=Reason,
-      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
+      ~pageAppArtifactsSuffix: pageAppArtifactsSuffix=UnixTimestamp,
       ~projectRootDir: string,
       ~outputDir: string,
       ~melangeOutputDir: option(string)=?,
@@ -147,7 +147,7 @@ let build =
       ~outputDir,
       ~melangeOutputDir,
       ~globalEnvValues,
-      ~generatedFilesSuffix,
+      ~pageAppArtifactsSuffix,
       ~bundlerMode=Build,
     );
 
@@ -195,7 +195,7 @@ let start =
       ~pages: array(array(PageBuilder.page)),
       ~globalEnvValues: array((string, string))=[||],
       ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType=Reason,
-      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
+      ~pageAppArtifactsSuffix: pageAppArtifactsSuffix=UnixTimestamp,
       ~projectRootDir: string,
       ~outputDir: string,
       ~melangeOutputDir: option(string)=?,
@@ -223,7 +223,7 @@ let start =
       ~outputDir,
       ~melangeOutputDir,
       ~globalEnvValues,
-      ~generatedFilesSuffix,
+      ~pageAppArtifactsSuffix,
       ~bundlerMode=Watch,
     );
 

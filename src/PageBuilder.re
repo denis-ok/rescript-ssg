@@ -101,14 +101,14 @@ let getArtifactsOutputDir = (~outputDir) =>
   Path.join2(outputDir, "artifacts");
 
 let pagePathToPageAppModuleName =
-    (~generatedFilesSuffix, ~pagePath, ~moduleName) => {
+    (~pageAppArtifactsSuffix, ~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
     ->Js.String2.replaceByRe([%re {|/\//g|}], "")
     ->Js.String2.replaceByRe([%re {|/-/g|}], "")
     ->Js.String2.replaceByRe([%re {|/\./g|}], "");
 
-  modulePrefix ++ moduleName ++ "__PageApp" ++ generatedFilesSuffix;
+  modulePrefix ++ moduleName ++ "__PageApp" ++ pageAppArtifactsSuffix;
 };
 
 let groupScripts = scripts =>
@@ -630,7 +630,7 @@ let buildPageHtmlAndReactApp =
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
-      ~generatedFilesSuffix: string,
+      ~pageAppArtifactsSuffix: string,
       page: page,
     ) => {
   let artifactsOutputDir = getArtifactsOutputDir(~outputDir);
@@ -764,7 +764,7 @@ let buildPageHtmlAndReactApp =
 
   let pageAppModuleName =
     pagePathToPageAppModuleName(
-      ~generatedFilesSuffix,
+      ~pageAppArtifactsSuffix,
       ~pagePath,
       ~moduleName,
     );

@@ -13,6 +13,6 @@ let build = (~webpackMinimizer) =>
     ~webpackBundleAnalyzerMode=
       Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
     ~buildWorkersCount=1,
-    ~generatedFilesSuffix=UnixTimestamp,
+    ~pageAppArtifactsSuffix=UnixTimestamp,
     (),
   );

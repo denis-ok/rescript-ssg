@@ -36,7 +36,7 @@ type workerData = {
   logLevel: Log.level,
   pages: array(workerPage),
   globalEnvValues: array((string, string)),
-  generatedFilesSuffix: string,
+  pageAppArtifactsSuffix: string,
 };
 
 let showPage = (page: workerPage) => {

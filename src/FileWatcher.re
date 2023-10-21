@@ -217,7 +217,7 @@ let startWatcher =
         ~logger,
         ~globalEnvValues,
         ~exitOnPageBuildError=false,
-        ~generatedFilesSuffix="",
+        ~pageAppArtifactsSuffix="",
       )
       ->Promise.flatMap(_ => {
           logger.debug(() =>

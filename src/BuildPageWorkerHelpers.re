@@ -52,7 +52,7 @@ let buildPagesWithWorker =
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
-      ~generatedFilesSuffix: string,
+      ~pageAppArtifactsSuffix: string,
       pages: array(PageBuilder.page),
     ) => {
   let rebuildPages =
@@ -65,7 +65,7 @@ let buildPagesWithWorker =
     pages: rebuildPages,
     logLevel: logger.logLevel,
     globalEnvValues,
-    generatedFilesSuffix,
+    pageAppArtifactsSuffix,
   };
 
   runBuildPageWorker(~workerData, ~onExit=exitCode => {
@@ -85,7 +85,7 @@ let buildPagesWithWorkers =
       ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int),
       ~exitOnPageBuildError: bool,
-      ~generatedFilesSuffix: string,
+      ~pageAppArtifactsSuffix: string,
     )
     : Js.Promise.t(array(RenderedPage.t)) => {
   let buildWorkersCount =
@@ -122,7 +122,7 @@ let buildPagesWithWorkers =
           ~melangeOutputDir,
           ~logger,
           ~globalEnvValues,
-          ~generatedFilesSuffix,
+          ~pageAppArtifactsSuffix,
           pagesChunk,
         )
       )
