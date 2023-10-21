@@ -1,15 +1,15 @@
-let build = (~minimizer) =>
+let build = (~webpackMinimizer) =>
   Commands.build(
     ~pageAppArtifact=Js,
     ~pages=Pages.pages,
     ~globalEnvValues=Pages.globalEnvValues,
-    ~mode=Production,
+    ~webpackMode=Production,
     ~outputDir=Pages.outputDir,
     ~projectRootDir=Pages.projectRootDir,
     ~logLevel=Info,
     ~compileCommand=
       Path.join2(Pages.projectRootDir, "node_modules/.bin/rescript"),
-    ~minimizer,
+    ~webpackMinimizer,
     ~webpackBundleAnalyzerMode=
       Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
     ~buildWorkersCount=1,

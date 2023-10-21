@@ -1,1 +1,1 @@
-let () = BuildHelper.build(~minimizer=TerserPluginWithEsbuild);
+let () = BuildHelper.build(~webpackMinimizer=TerserPluginWithEsbuild);

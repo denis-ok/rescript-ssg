@@ -223,9 +223,9 @@ module DevServerOptions = {
 let makeConfig =
     (
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~devServerOptions: option(DevServerOptions.t),
-      ~mode: Mode.t,
-      ~minimizer: Minimizer.t,
+      ~webpackDevServerOptions: option(DevServerOptions.t),
+      ~webpackMode: Mode.t,
+      ~webpackMinimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir: string,
       ~globalEnvValues: array((string, string)),
@@ -238,12 +238,12 @@ let makeConfig =
       )
     ->Js.Dict.fromArray;
 
-  let shouldMinimize = mode == Production;
+  let shouldMinimize = webpackMode == Production;
 
   let config = {
     "entry": entries,
 
-    "mode": Mode.toString(mode),
+    "mode": Mode.toString(webpackMode),
 
     "output": {
       "path": Bundler.getOutputDir(~outputDir),
@@ -316,7 +316,7 @@ let makeConfig =
       },
       "minimize": shouldMinimize,
       "minimizer": {
-        switch (shouldMinimize, minimizer) {
+        switch (shouldMinimize, webpackMinimizer) {
         | (true, EsbuildPlugin) =>
           Some([|makeESBuildPlugin({"target": "es2015"})|])
         | (true, TerserPluginWithEsbuild) =>
@@ -364,7 +364,7 @@ let makeConfig =
       "aggregateTimeout": 1000,
     },
     "devServer": {
-      switch (devServerOptions) {
+      switch (webpackDevServerOptions) {
       | None => None
       | Some({listenTo, proxy}) =>
         Some({
@@ -503,10 +503,10 @@ let makeConfig =
 
 let makeCompiler =
     (
-      ~devServerOptions: option(DevServerOptions.t),
+      ~webpackDevServerOptions: option(DevServerOptions.t),
       ~logger: Log.logger,
-      ~mode: Mode.t,
-      ~minimizer: Minimizer.t,
+      ~webpackMode: Mode.t,
+      ~webpackMinimizer: Minimizer.t,
       ~globalEnvValues: array((string, string)),
       ~outputDir,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
@@ -514,10 +514,10 @@ let makeCompiler =
     ) => {
   let config =
     makeConfig(
-      ~devServerOptions,
-      ~mode,
+      ~webpackDevServerOptions,
+      ~webpackMode,
       ~logger,
-      ~minimizer,
+      ~webpackMinimizer,
       ~outputDir,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
@@ -530,8 +530,8 @@ let makeCompiler =
 
 let build =
     (
-      ~mode: Mode.t,
-      ~minimizer: Minimizer.t,
+      ~webpackMode: Mode.t,
+      ~webpackMinimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir,
       ~globalEnvValues: array((string, string)),
@@ -545,11 +545,11 @@ let build =
 
   let (compiler, _config) =
     makeCompiler(
-      ~devServerOptions=None,
-      ~mode,
+      ~webpackDevServerOptions=None,
+      ~webpackMode,
       ~logger,
       ~outputDir,
-      ~minimizer,
+      ~webpackMinimizer,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~renderedPages,
@@ -601,9 +601,9 @@ let build =
 
 let startDevServer =
     (
-      ~devServerOptions: DevServerOptions.t,
-      ~mode: Mode.t,
-      ~minimizer: Minimizer.t,
+      ~webpackDevServerOptions: DevServerOptions.t,
+      ~webpackMode: Mode.t,
+      ~webpackMinimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir,
       ~globalEnvValues: array((string, string)),
@@ -617,19 +617,19 @@ let startDevServer =
 
   let (compiler, config) =
     makeCompiler(
-      ~devServerOptions=Some(devServerOptions),
-      ~mode,
+      ~webpackDevServerOptions=Some(webpackDevServerOptions),
+      ~webpackMode,
       ~logger,
       ~outputDir,
-      ~minimizer,
+      ~webpackMinimizer,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
       ~renderedPages,
     );
 
-  let devServerOptions = config##devServer;
+  let webpackDevServerOptions = config##devServer;
 
-  switch (devServerOptions) {
+  switch (webpackDevServerOptions) {
   | None =>
     logger.info(() =>
       Js.Console.error(
@@ -637,8 +637,8 @@ let startDevServer =
       )
     );
     Process.exit(1);
-  | Some(devServerOptions) =>
-    let devServer = WebpackDevServer.make(devServerOptions, compiler);
+  | Some(webpackDevServerOptions) =>
+    let devServer = WebpackDevServer.make(webpackDevServerOptions, compiler);
     devServer->WebpackDevServer.startWithCallback(() => {
       logger.info(() => {
         Js.log("[Webpack] WebpackDevServer started");

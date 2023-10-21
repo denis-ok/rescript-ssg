@@ -120,20 +120,20 @@ let initializeAndBuildPages =
 
 let build =
     (
+      ~pages: array(array(PageBuilder.page)),
+      ~globalEnvValues: array((string, string))=[||],
       ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
-      ~outputDir: string,
+      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~projectRootDir: string,
+      ~outputDir: string,
       ~melangeOutputDir: option(string)=?,
       ~compileCommand: string,
       ~logLevel: Log.level,
-      ~mode: Webpack.Mode.t,
-      ~pages: array(array(PageBuilder.page)),
+      ~buildWorkersCount: option(int)=?,
+      ~webpackMode: Webpack.Mode.t,
+      ~webpackMinimizer: Webpack.Minimizer.t=Terser,
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
-      ~minimizer: Webpack.Minimizer.t=Terser,
-      ~globalEnvValues: array((string, string))=[||],
-      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
-      ~buildWorkersCount: option(int)=?,
       ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
       ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
@@ -176,11 +176,11 @@ let build =
       | Webpack =>
         let () =
           Webpack.build(
-            ~mode,
+            ~webpackMode,
             ~outputDir,
             ~logger,
             ~webpackBundleAnalyzerMode,
-            ~minimizer,
+            ~webpackMinimizer,
             ~globalEnvValues,
             ~renderedPages,
           );
@@ -192,26 +192,26 @@ let build =
 
 let start =
     (
-      ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
-      ~outputDir: string,
-      ~projectRootDir: string,
-      ~melangeOutputDir: option(string)=?,
-      ~mode: Webpack.Mode.t,
-      ~logLevel: Log.level,
       ~pages: array(array(PageBuilder.page)),
-      ~devServerOptions: Webpack.DevServerOptions.t,
-      ~webpackBundleAnalyzerMode:
-         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
-      ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
+      ~pageAppArtifact: PageBuilder.pageAppArtifact=Reason,
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
+      ~projectRootDir: string,
+      ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
+      ~logLevel: Log.level,
       ~buildWorkersCount: option(int)=?,
+      ~webpackMode: Webpack.Mode.t,
+      ~webpackMinimizer: Webpack.Minimizer.t=Terser,
+      ~webpackBundleAnalyzerMode:
+         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
+      ~webpackDevServerOptions: Webpack.DevServerOptions.t,
+      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
+      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
+      ~esbuildLogLimit: option(int)=?,
       ~esbuildMainServerPort: int=8010,
       ~esbuildProxyServerPort: int=8011,
       ~esbuildProxyRules: array(ProxyServer.ProxyRule.t)=[||],
-      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
-      ~esbuildLogLimit: option(int)=?,
-      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
     ) => {
   let (logger, pages, renderedPages) =
@@ -285,12 +285,12 @@ let start =
           | Webpack =>
             let () =
               Webpack.startDevServer(
-                ~devServerOptions,
+                ~webpackDevServerOptions,
                 ~webpackBundleAnalyzerMode,
-                ~mode,
+                ~webpackMode,
                 ~logger,
                 ~outputDir,
-                ~minimizer,
+                ~webpackMinimizer,
                 ~globalEnvValues,
                 ~renderedPages,
                 ~onStart=startFileWatcher,
