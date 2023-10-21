@@ -126,11 +126,11 @@ let build =
       ~melangeOutputDir: option(string)=?,
       ~compileCommand: string,
       ~logLevel: Log.level,
-      ~mode: Webpack.Mode.t,
+      ~webpackMode: Webpack.Mode.t,
       ~pages: array(array(PageBuilder.page)),
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
-      ~minimizer: Webpack.Minimizer.t=Terser,
+      ~webpackMinimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
@@ -176,11 +176,11 @@ let build =
       | Webpack =>
         let () =
           Webpack.build(
-            ~mode,
+            ~webpackMode,
             ~outputDir,
             ~logger,
             ~webpackBundleAnalyzerMode,
-            ~minimizer,
+            ~webpackMinimizer,
             ~globalEnvValues,
             ~renderedPages,
           );
@@ -196,13 +196,13 @@ let start =
       ~outputDir: string,
       ~projectRootDir: string,
       ~melangeOutputDir: option(string)=?,
-      ~mode: Webpack.Mode.t,
+      ~webpackMode: Webpack.Mode.t,
       ~logLevel: Log.level,
       ~pages: array(array(PageBuilder.page)),
-      ~devServerOptions: Webpack.DevServerOptions.t,
+      ~webpackDevServerOptions: Webpack.DevServerOptions.t,
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
-      ~minimizer: Webpack.Minimizer.t=Terser,
+      ~webpackMinimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
       ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
       ~buildWorkersCount: option(int)=?,
@@ -285,12 +285,12 @@ let start =
           | Webpack =>
             let () =
               Webpack.startDevServer(
-                ~devServerOptions,
+                ~webpackDevServerOptions,
                 ~webpackBundleAnalyzerMode,
-                ~mode,
+                ~webpackMode,
                 ~logger,
                 ~outputDir,
-                ~minimizer,
+                ~webpackMinimizer,
                 ~globalEnvValues,
                 ~renderedPages,
                 ~onStart=startFileWatcher,
