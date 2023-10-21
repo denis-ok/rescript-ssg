@@ -130,7 +130,7 @@ let build =
       ~compileCommand: option(string)=?,
       ~logLevel: Log.level,
       ~buildWorkersCount: option(int)=?,
-      ~webpackMode: Webpack.Mode.t,
+      ~webpackMode: Webpack.Mode.t=Production,
       ~webpackMinimizer: Webpack.Minimizer.t=Terser,
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
@@ -207,11 +207,15 @@ let start =
       ~melangeOutputDir: option(string)=?,
       ~logLevel: Log.level,
       ~buildWorkersCount: option(int)=?,
-      ~webpackMode: Webpack.Mode.t,
+      ~webpackMode: Webpack.Mode.t=Development,
       ~webpackMinimizer: Webpack.Minimizer.t=Terser,
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
-      ~webpackDevServerOptions: Webpack.DevServerOptions.t,
+      ~webpackDevServerOptions: Webpack.DevServerOptions.t={
+                                                             listenTo:
+                                                               Port(9000),
+                                                             proxy: None,
+                                                           },
       ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
       ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       ~esbuildLogLimit: option(int)=?,
