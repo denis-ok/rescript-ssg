@@ -147,7 +147,6 @@ module Minimizer = {
   type t =
     | Terser
     | EsbuildPlugin
-    | TerserPluginWithSwc
     | TerserPluginWithEsbuild;
 };
 
@@ -316,17 +315,18 @@ let makeConfig =
       },
       "minimize": shouldMinimize,
       "minimizer": {
+        // It's possible to use esbuild plugin as is as a minimizer.
+        // https://github.com/privatenumber/esbuild-loader/blob/e74b94a806c906fbb8fdf877bcc4bc54df8bf213/README.md?plain=1#L183
+        // It's also possible to use esbuild plugin together with terser plugin.
+        // https://webpack.js.org/plugins/terser-webpack-plugin/#terseroptions
+        // It's not clear what is better/right approach, need to investigate.
         switch (shouldMinimize, webpackMinimizer) {
         | (true, EsbuildPlugin) =>
           Some([|makeESBuildPlugin({"target": "es2015"})|])
         | (true, TerserPluginWithEsbuild) =>
           Some([|TerserPlugin.make({"minify": TerserPlugin.esbuildMinify})|])
-        | (true, TerserPluginWithSwc) =>
-          Some([|TerserPlugin.make({"minify": TerserPlugin.swcMinify})|])
         | (false, _)
-        | (_, Terser) =>
-          // Terser is used by default under the hood
-          None
+        | (_, Terser) => None
         };
       },
       "splitChunks": {
