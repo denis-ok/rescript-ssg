@@ -1,20 +1,20 @@
 [@bs.send]
 external replaceAll: (string, string, string) => string = "replaceAll";
 
-// 'v16.15.0' => 16150
-let nodeVersionToInt = (s: string) => {
-  let refinedNodeVersion = s->replaceAll("v", "")->replaceAll(".", "");
-  Belt.Int.fromString(refinedNodeVersion)->Belt.Option.getWithDefault(0);
-};
-
 let bsArtifactRegex = [%re {|/file:.*\.bs\.js$/i|}];
 
 let isBsArtifact = fileUrl => {
-  Js.String2.match(fileUrl, bsArtifactRegex) != None;
+  switch (Js.String2.match(fileUrl, bsArtifactRegex)) {
+  | Some(_) => true
+  | None => false
+  };
 };
 
 let isAsset = fileUrl => {
-  Js.String2.match(fileUrl, Bundler.assetRegex) != None;
+  switch (Js.String2.match(fileUrl, Bundler.assetRegex)) {
+  | Some(_) => true
+  | None => false
+  };
 };
 
 // Getting a hash of the file contents the same way as it implemented in esbuild.
