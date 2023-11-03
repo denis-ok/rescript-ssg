@@ -47,25 +47,25 @@ let runBuildPageWorker =
 
 let buildPagesWithWorker =
     (
-      ~pageAppArtifact: PageBuilder.pageAppArtifact,
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
       ~globalEnvValues: array((string, string)),
-      ~generatedFilesSuffix: string,
+      ~pageAppArtifactsSuffix: string,
       pages: array(PageBuilder.page),
     ) => {
   let rebuildPages =
     pages->Js.Array2.map(page => mapPageToPageForRebuild(~page));
 
   let workerData: BuildPageWorkerT.workerData = {
-    pageAppArtifact,
+    pageAppArtifactsType,
     outputDir,
     melangeOutputDir,
     pages: rebuildPages,
     logLevel: logger.logLevel,
     globalEnvValues,
-    generatedFilesSuffix,
+    pageAppArtifactsSuffix,
   };
 
   runBuildPageWorker(~workerData, ~onExit=exitCode => {
@@ -77,7 +77,7 @@ let defaultWorkersCount = 16;
 
 let buildPagesWithWorkers =
     (
-      ~pageAppArtifact: PageBuilder.pageAppArtifact,
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~pages: array(array(PageBuilder.page)),
       ~outputDir: string,
       ~melangeOutputDir: option(string),
@@ -85,7 +85,7 @@ let buildPagesWithWorkers =
       ~globalEnvValues: array((string, string)),
       ~buildWorkersCount: option(int),
       ~exitOnPageBuildError: bool,
-      ~generatedFilesSuffix: string,
+      ~pageAppArtifactsSuffix: string,
     )
     : Js.Promise.t(array(RenderedPage.t)) => {
   let buildWorkersCount =
@@ -117,12 +117,12 @@ let buildPagesWithWorkers =
     pagesManualChunks
     ->Js.Array2.map((pagesChunk, ()) =>
         buildPagesWithWorker(
-          ~pageAppArtifact,
+          ~pageAppArtifactsType,
           ~outputDir,
           ~melangeOutputDir,
           ~logger,
           ~globalEnvValues,
-          ~generatedFilesSuffix,
+          ~pageAppArtifactsSuffix,
           pagesChunk,
         )
       )
