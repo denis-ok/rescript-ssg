@@ -3,7 +3,6 @@
 // In the case of Melange, JS files are emitted to a different directory with a different nesting structure
 // which can lead to issues. So better to use project root dir as the base.
 
-[@val]
 external projectRootDir': option(string) = "process.env.PROJECT_ROOT_DIR";
 
 let projectRootDir =
