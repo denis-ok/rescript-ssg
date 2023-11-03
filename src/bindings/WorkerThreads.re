@@ -2,14 +2,15 @@ type parentPort;
 
 type worker;
 
-[@bs.module "worker_threads"] external workerData: 'a = "workerData";
+[@bs.module "node:worker_threads"] external workerData: 'a = "workerData";
 
-[@bs.module "worker_threads"] external parentPort: parentPort = "parentPort";
+[@bs.module "node:worker_threads"]
+external parentPort: parentPort = "parentPort";
 
 module Worker = {
   type workerDataArg('a) = {workerData: 'a};
 
-  [@bs.new] [@bs.module "worker_threads"]
+  [@bs.new] [@bs.module "node:worker_threads"]
   external make: (string, workerDataArg('a)) => worker = "Worker";
 
   [@bs.send] external on: (worker, string, 'a) => unit = "on";

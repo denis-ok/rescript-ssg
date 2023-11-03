@@ -1,1 +1,1 @@
-let () = BuildHelper.build(~minimizer=EsbuildPlugin);
+let () = BuildHelper.build(~webpackMinimizer=EsbuildPlugin);

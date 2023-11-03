@@ -2,10 +2,10 @@ let currentDir = Utils.getDirname();
 
 let () =
   Commands.start(
-    ~pageAppArtifact=Js,
+    ~pageAppArtifactsType=Js,
     ~pages=Pages.pages,
-    ~devServerOptions={listenTo: Port(9007), proxy: None},
-    ~mode=Development,
+    ~webpackDevServerOptions={listenTo: Port(9007), proxy: None},
+    ~webpackMode=Development,
     ~outputDir=Pages.outputDir,
     ~projectRootDir=Path.join2(currentDir, "../../../"),
     ~logLevel=Info,
