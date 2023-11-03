@@ -6,4 +6,4 @@
  (libraries reason-react)
  (preprocess
   (pps melange.ppx reason-react-ppx))
- (melange.runtime_deps js/bin.mjs js/node-loader.mjs))
+ (melange.runtime_deps js/bin.mjs))
