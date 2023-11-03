@@ -31,4 +31,11 @@
     (action
      (with-stdout-to
       package.json
+      (run echo "{\"type\": \"module\"}")))))
+  (subdir
+   rescript-ssg.ssg
+   (rule
+    (action
+     (with-stdout-to
+      package.json
       (run echo "{\"type\": \"module\"}")))))))
