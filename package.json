@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@craftamap/esbuild-plugin-html": "https://github.com/denis-ok/esbuild-plugin-html#79f512f447eb98efa6b6786875f617a095eaaf09",
+    "@xmldom/xmldom": "^0.8.10",
     "base32-encode": "^2.0.0",
     "chokidar": "^3.5.3",
     "css-loader": "^6.8.1",
