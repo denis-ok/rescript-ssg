@@ -33,8 +33,6 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-pin-depends: [
-  ["reason-react.dev"      "git+https://github.com/reasonml/reason-react.git#2e99c8ee87cefe241b698c191c74226da54cf9db"]
-  ["reason-react-ppx.dev"  "git+https://github.com/reasonml/reason-react.git#2e99c8ee87cefe241b698c191c74226da54cf9db"]
-  ["styled-ppx.dev"        "git+https://github.com/davesnx/styled-ppx.git#acf6edee39edf7ee07da9bccd77d4fb4110a1331"]
-]
+# pin-depends: [
+#   ["styled-ppx.dev"        "git+https://github.com/davesnx/styled-ppx.git#acf6edee39edf7ee07da9bccd77d4fb4110a1331"]
+# ]
