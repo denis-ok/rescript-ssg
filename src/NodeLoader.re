@@ -110,3 +110,31 @@ let processAsset = (url: string) => {
       }
     );
 };
+
+let load =
+    (
+      url,
+      _context,
+      nextLoad:
+        (. string, option({. format: string})) =>
+        Js.Promise.t({
+          .
+          format: string,
+          shortCircuit: bool,
+          source: string,
+        }),
+    ) =>
+  if (isBsArtifact(url)) {
+    // We need to fix the error that appeared after bs-css added:
+    // /Users/denis/projects/builder/node_modules/bs-css-emotion/src/Css.bs.js:3
+    // import * as Curry from "rescript/lib/es6/curry.js";
+    // ^^^^^^
+    // SyntaxError: Cannot use import statement outside a module
+    // We force NodeJS to load bs-artifacts as es6 modules
+    let format = "module";
+    nextLoad(. url, Some({"format": format}));
+  } else if (isAsset(url)) {
+    processAsset(url);
+  } else {
+    nextLoad(. url, None);
+  };
