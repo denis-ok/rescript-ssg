@@ -1,4 +1,4 @@
-type pageAppArtifact =
+type pageAppArtifactsType =
   | Reason
   | Js;
 
@@ -101,14 +101,14 @@ let getArtifactsOutputDir = (~outputDir) =>
   Path.join2(outputDir, "artifacts");
 
 let pagePathToPageAppModuleName =
-    (~generatedFilesSuffix, ~pagePath, ~moduleName) => {
+    (~pageAppArtifactsSuffix, ~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
     ->Js.String2.replaceByRe([%re {|/\//g|}], "")
     ->Js.String2.replaceByRe([%re {|/-/g|}], "")
     ->Js.String2.replaceByRe([%re {|/\./g|}], "");
 
-  modulePrefix ++ moduleName ++ "__PageApp" ++ generatedFilesSuffix;
+  modulePrefix ++ moduleName ++ "__PageApp" ++ pageAppArtifactsSuffix;
 };
 
 let groupScripts = scripts =>
@@ -626,11 +626,11 @@ if (root !== null) {
 
 let buildPageHtmlAndReactApp =
     (
-      ~pageAppArtifact: pageAppArtifact,
+      ~pageAppArtifactsType: pageAppArtifactsType,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
       ~logger: Log.logger,
-      ~generatedFilesSuffix: string,
+      ~pageAppArtifactsSuffix: string,
       page: page,
     ) => {
   let artifactsOutputDir = getArtifactsOutputDir(~outputDir);
@@ -671,7 +671,7 @@ let buildPageHtmlAndReactApp =
   let modulesWithHydration__Mutable = [||];
 
   let (resultHtml, resultReactApp, pageDataProp, pageWrapperDataProp) =
-    switch (pageAppArtifact) {
+    switch (pageAppArtifactsType) {
     | Reason =>
       let {
         ReasonArtifact.element,
@@ -764,7 +764,7 @@ let buildPageHtmlAndReactApp =
 
   let pageAppModuleName =
     pagePathToPageAppModuleName(
-      ~generatedFilesSuffix,
+      ~pageAppArtifactsSuffix,
       ~pagePath,
       ~moduleName,
     );
@@ -790,7 +790,7 @@ let buildPageHtmlAndReactApp =
   let writeFilePromises =
     mkDirPromises->Promise.Result.flatMap(_createdDirs => {
       let pageAppModuleExtension =
-        switch (pageAppArtifact) {
+        switch (pageAppArtifactsType) {
         | Reason => ".re"
         | Js => ".mjs"
         };
@@ -842,7 +842,7 @@ let buildPageHtmlAndReactApp =
 
   writeFilePromises->Promise.Result.map(_createdFiles => {
     let compiledReactAppFilename =
-      switch (pageAppArtifact) {
+      switch (pageAppArtifactsType) {
       | Reason => ".bs.js"
       | Js => ".mjs"
       };
@@ -853,7 +853,7 @@ let buildPageHtmlAndReactApp =
     let renderedPage: RenderedPage.t = {
       path: page.path,
       entryPath: {
-        switch (pageAppArtifact) {
+        switch (pageAppArtifactsType) {
         | Js => Path.join2(pageOutputDir, compiledReactAppFilename)
         | Reason =>
           Path.join2(

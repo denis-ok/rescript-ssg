@@ -39,7 +39,7 @@ module MakeReactAppModuleName = {
   let test = (~pagePath, ~expect) => {
     let reactAppModuleName =
       PageBuilder.pagePathToPageAppModuleName(
-        ~generatedFilesSuffix="",
+        ~pageAppArtifactsSuffix="",
         ~pagePath,
         ~moduleName,
       );
@@ -82,11 +82,11 @@ module BuildPageHtmlAndReactApp = {
 
     let renderedPage =
       PageBuilder.buildPageHtmlAndReactApp(
-        ~pageAppArtifact=Reason,
+        ~pageAppArtifactsType=Reason,
         ~outputDir,
         ~melangeOutputDir=None,
         ~logger,
-        ~generatedFilesSuffix="",
+        ~pageAppArtifactsSuffix="",
         page,
       );
 
@@ -104,7 +104,7 @@ module BuildPageHtmlAndReactApp = {
 
         let reactAppModuleName =
           PageBuilder.pagePathToPageAppModuleName(
-            ~generatedFilesSuffix="",
+            ~pageAppArtifactsSuffix="",
             ~pagePath,
             ~moduleName,
           );

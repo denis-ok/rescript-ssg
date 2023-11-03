@@ -1,19 +1,19 @@
-[@mel.module "fs"]
+[@mel.module "node:fs"]
 external readFileSync': (~path: string, ~encoding: string) => string =
   "readFileSync";
 
-[@mel.module "fs"]
+[@mel.module "node:fs"]
 external readFileSyncAsBuffer: string => Buffer.t = "readFileSync";
 
-[@mel.module "fs"]
+[@mel.module "node:fs"]
 external writeFileSync: (~path: string, ~data: string) => unit =
   "writeFileSync";
 
-[@mel.module "fs"] external existsSync: string => bool = "existsSync";
+[@mel.module "node:fs"] external existsSync: string => bool = "existsSync";
 
 type mkDirOptions = {recursive: bool};
 
-[@mel.module "fs"]
+[@mel.module "node:fs"]
 external mkDirSync: (string, mkDirOptions) => unit = "mkdirSync";
 
 type rmSyncOptions = {
@@ -21,7 +21,8 @@ type rmSyncOptions = {
   recursive: bool,
 };
 
-[@mel.module "fs"] external rmSync: (string, rmSyncOptions) => unit = "rmSync";
+[@mel.module "node:fs"]
+external rmSync: (string, rmSyncOptions) => unit = "rmSync";
 
 let readFileSyncAsUtf8 = path => readFileSync'(~path, ~encoding="utf8");
 
