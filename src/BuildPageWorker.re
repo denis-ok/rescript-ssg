@@ -20,7 +20,7 @@ let logger = Log.makeLogger(workerData.logLevel);
 logger.info(() => Js.log({j|[Worker] Building $(pagesCount) pages...|j}));
 
 type workerOutput =
-  Promise.t(array(Belt.Result.t(RenderedPage.t, PageBuilderT.PagePath.t)));
+  Promise.t(array(Belt.Result.t(RenderedPage.t, PagePath.t)));
 
 let workerOutput: workerOutput =
   pages
@@ -28,7 +28,7 @@ let workerOutput: workerOutput =
       let moduleName: string =
         Utils.getModuleNameFromModulePath(page.modulePath);
 
-      let pagePath: string = page.path->PageBuilderT.PagePath.toString;
+      let pagePath: string = page.path->PagePath.toString;
 
       let pageInfo: string = {j|[Page module: $(moduleName), page path: $(pagePath)]|j};
 
@@ -135,10 +135,11 @@ let workerOutput: workerOutput =
           };
 
           PageBuilder.buildPageHtmlAndReactApp(
+            ~pageAppArtifactsType=workerData.pageAppArtifactsType,
             ~outputDir=workerData.outputDir,
             ~melangeOutputDir=workerData.melangeOutputDir,
             ~logger,
-            ~generatedFilesSuffix=workerData.generatedFilesSuffix,
+            ~pageAppArtifactsSuffix=workerData.pageAppArtifactsSuffix,
             newPage,
           );
         })

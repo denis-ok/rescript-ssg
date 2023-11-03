@@ -4,9 +4,10 @@ let currentDir = Utils.getDirname();
 
 let () =
   Commands.start(
+    ~pageAppArtifactsType=Js,
     ~pages=Pages.pages,
-    ~devServerOptions={listenTo: Port(9007), proxy: None},
-    ~mode=Development,
+    ~webpackDevServerOptions={listenTo: Port(9007), proxy: None},
+    ~webpackMode=Development,
     ~outputDir=Pages.outputDir,
     ~projectRootDir=Pages.projectRootDir,
     ~melangeOutputDir=Pages.melangeOutputDir,

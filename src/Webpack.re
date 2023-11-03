@@ -149,7 +149,6 @@ module Minimizer = {
   type t =
     | Terser
     | EsbuildPlugin
-    | TerserPluginWithSwc
     | TerserPluginWithEsbuild;
 };
 
@@ -222,14 +221,12 @@ module DevServerOptions = {
   };
 };
 
-let dynamicPageSegmentPrefix = "dynamic__";
-
 let makeConfig =
     (
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
-      ~devServerOptions: option(DevServerOptions.t),
-      ~mode: Mode.t,
-      ~minimizer: Minimizer.t,
+      ~webpackDevServerOptions: option(DevServerOptions.t),
+      ~webpackMode: Mode.t,
+      ~webpackMinimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir: string,
       ~globalEnvValues: array((string, string)),
@@ -238,16 +235,16 @@ let makeConfig =
   let entries =
     renderedPages
     ->Js.Array2.map(({path, entryPath, _}) =>
-        (PageBuilderT.PagePath.toWebpackEntryName(path), entryPath)
+        (PagePath.toWebpackEntryName(path), entryPath)
       )
     ->Js.Dict.fromArray;
 
-  let shouldMinimize = mode == Production;
+  let shouldMinimize = webpackMode == Production;
 
   let config = {
     "entry": entries,
 
-    "mode": Mode.toString(mode),
+    "mode": Mode.toString(webpackMode),
 
     "output": {
       "path": Bundler.getOutputDir(~outputDir),
@@ -277,9 +274,8 @@ let makeConfig =
         renderedPages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
           HtmlWebpackPlugin.make({
             "template": htmlTemplatePath,
-            "filename":
-              Path.join2(PageBuilderT.PagePath.toString(path), "index.html"),
-            "chunks": [|PageBuilderT.PagePath.toWebpackEntryName(path)|],
+            "filename": Path.join2(PagePath.toString(path), "index.html"),
+            "chunks": [|PagePath.toWebpackEntryName(path)|],
             "inject": true,
             "minify": {
               "collapseWhitespace": shouldMinimize,
@@ -321,17 +317,18 @@ let makeConfig =
       },
       "minimize": shouldMinimize,
       "minimizer": {
-        switch (shouldMinimize, minimizer) {
+        // It's possible to use esbuild plugin as is as a minimizer.
+        // https://github.com/privatenumber/esbuild-loader/blob/e74b94a806c906fbb8fdf877bcc4bc54df8bf213/README.md?plain=1#L183
+        // It's also possible to use esbuild plugin together with terser plugin.
+        // https://webpack.js.org/plugins/terser-webpack-plugin/#terseroptions
+        // It's not clear what is better/right approach, need to investigate.
+        switch (shouldMinimize, webpackMinimizer) {
         | (true, EsbuildPlugin) =>
           Some([|makeESBuildPlugin({"target": "es2015"})|])
         | (true, TerserPluginWithEsbuild) =>
           Some([|TerserPlugin.make({"minify": TerserPlugin.esbuildMinify})|])
-        | (true, TerserPluginWithSwc) =>
-          Some([|TerserPlugin.make({"minify": TerserPlugin.swcMinify})|])
         | (false, _)
-        | (_, Terser) =>
-          // Terser is used by default under the hood
-          None
+        | (_, Terser) => None
         };
       },
       "splitChunks": {
@@ -369,7 +366,7 @@ let makeConfig =
       "aggregateTimeout": 1000,
     },
     "devServer": {
-      switch (devServerOptions) {
+      switch (webpackDevServerOptions) {
       | None => None
       | Some({listenTo, proxy}) =>
         Some({
@@ -400,9 +397,7 @@ let makeConfig =
                     let hasDynamicPart =
                       segments
                       ->Js.Array2.find(segment =>
-                          segment->Js.String2.startsWith(
-                            dynamicPageSegmentPrefix,
-                          )
+                          segment == PagePath.dynamicSegment
                         )
                       ->Belt.Option.isSome;
 
@@ -411,11 +406,8 @@ let makeConfig =
                     | _true =>
                       let pathWithAsterisks =
                         segments
-                        ->Js.Array2.map(part =>
-                            part->Js.String2.startsWith(
-                              dynamicPageSegmentPrefix,
-                            )
-                              ? ".*" : part
+                        ->Js.Array2.map(segment =>
+                            segment == PagePath.dynamicSegment ? ".*" : segment
                           )
                         ->Js.Array2.joinWith("/");
 
@@ -426,7 +418,7 @@ let makeConfig =
                       let to_ =
                         Path.join3(
                           "/",
-                          PageBuilderT.PagePath.toString(page.path),
+                          PagePath.toString(page.path),
                           "index.html",
                         );
 
@@ -513,10 +505,10 @@ let makeConfig =
 
 let makeCompiler =
     (
-      ~devServerOptions: option(DevServerOptions.t),
+      ~webpackDevServerOptions: option(DevServerOptions.t),
       ~logger: Log.logger,
-      ~mode: Mode.t,
-      ~minimizer: Minimizer.t,
+      ~webpackMode: Mode.t,
+      ~webpackMinimizer: Minimizer.t,
       ~globalEnvValues: array((string, string)),
       ~outputDir,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
@@ -524,10 +516,10 @@ let makeCompiler =
     ) => {
   let config =
     makeConfig(
-      ~devServerOptions,
-      ~mode,
+      ~webpackDevServerOptions,
+      ~webpackMode,
       ~logger,
-      ~minimizer,
+      ~webpackMinimizer,
       ~outputDir,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
@@ -540,8 +532,8 @@ let makeCompiler =
 
 let build =
     (
-      ~mode: Mode.t,
-      ~minimizer: Minimizer.t,
+      ~webpackMode: Mode.t,
+      ~webpackMinimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir,
       ~globalEnvValues: array((string, string)),
@@ -555,11 +547,11 @@ let build =
 
   let (compiler, _config) =
     makeCompiler(
-      ~devServerOptions=None,
-      ~mode,
+      ~webpackDevServerOptions=None,
+      ~webpackMode,
       ~logger,
       ~outputDir,
-      ~minimizer,
+      ~webpackMinimizer,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~renderedPages,
@@ -611,9 +603,9 @@ let build =
 
 let startDevServer =
     (
-      ~devServerOptions: DevServerOptions.t,
-      ~mode: Mode.t,
-      ~minimizer: Minimizer.t,
+      ~webpackDevServerOptions: DevServerOptions.t,
+      ~webpackMode: Mode.t,
+      ~webpackMinimizer: Minimizer.t,
       ~logger: Log.logger,
       ~outputDir,
       ~globalEnvValues: array((string, string)),
@@ -627,19 +619,19 @@ let startDevServer =
 
   let (compiler, config) =
     makeCompiler(
-      ~devServerOptions=Some(devServerOptions),
-      ~mode,
+      ~webpackDevServerOptions=Some(webpackDevServerOptions),
+      ~webpackMode,
       ~logger,
       ~outputDir,
-      ~minimizer,
+      ~webpackMinimizer,
       ~globalEnvValues,
       ~webpackBundleAnalyzerMode,
       ~renderedPages,
     );
 
-  let devServerOptions = config##devServer;
+  let webpackDevServerOptions = config##devServer;
 
-  switch (devServerOptions) {
+  switch (webpackDevServerOptions) {
   | None =>
     logger.info(() =>
       Js.Console.error(
@@ -647,8 +639,8 @@ let startDevServer =
       )
     );
     Process.exit(1);
-  | Some(devServerOptions) =>
-    let devServer = WebpackDevServer.make(devServerOptions, compiler);
+  | Some(webpackDevServerOptions) =>
+    let devServer = WebpackDevServer.make(webpackDevServerOptions, compiler);
     devServer->WebpackDevServer.startWithCallback(() => {
       logger.info(() => {
         Js.log("[Webpack] WebpackDevServer started");

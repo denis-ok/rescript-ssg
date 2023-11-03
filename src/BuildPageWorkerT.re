@@ -23,23 +23,24 @@ type workerPage = {
   component,
   modulePath: string,
   headCssFilepaths: array(string),
-  path: PageBuilderT.PagePath.t,
+  path: PagePath.t,
   globalValues: option(array((string, Js.Json.t))),
   headScripts: array(string),
   bodyScripts: array(string),
 };
 
 type workerData = {
+  pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
   outputDir: string,
   melangeOutputDir: option(string),
   logLevel: Log.level,
   pages: array(workerPage),
   globalEnvValues: array((string, string)),
-  generatedFilesSuffix: string,
+  pageAppArtifactsSuffix: string,
 };
 
 let showPage = (page: workerPage) => {
-  PageBuilderT.PagePath.toString(page.path);
+  PagePath.toString(page.path);
 };
 
 let showPages = (pages: array(workerPage)) => {

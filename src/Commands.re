@@ -5,7 +5,7 @@ let checkDuplicatedPagePaths = (pages: array(array(PageBuilder.page))) => {
 
   pages->Js.Array2.forEach(pages' => {
     pages'->Js.Array2.forEach(page => {
-      let pagePath = PageBuilderT.PagePath.toString(page.path);
+      let pagePath = PagePath.toString(page.path);
       switch (pagesDict->Js.Dict.get(pagePath)) {
       | None => pagesDict->Js.Dict.set(pagePath, page)
       | Some(_) =>
@@ -57,19 +57,20 @@ let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
   };
 };
 
-type generatedFilesSuffix =
+type pageAppArtifactsSuffix =
   | NoSuffix
   | UnixTimestamp;
 
 let initializeAndBuildPages =
     (
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~logLevel,
       ~buildWorkersCount,
       ~pages: array(array(PageBuilder.page)),
       ~outputDir,
       ~melangeOutputDir,
       ~globalEnvValues,
-      ~generatedFilesSuffix,
+      ~pageAppArtifactsSuffix,
       ~bundlerMode: Bundler.mode,
     ) => {
   let () = checkDuplicatedPagePaths(pages);
@@ -98,6 +99,7 @@ let initializeAndBuildPages =
 
   let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
+      ~pageAppArtifactsType,
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
@@ -105,8 +107,8 @@ let initializeAndBuildPages =
       ~logger,
       ~globalEnvValues,
       ~exitOnPageBuildError=true,
-      ~generatedFilesSuffix=
-        switch (generatedFilesSuffix) {
+      ~pageAppArtifactsSuffix=
+        switch (pageAppArtifactsSuffix) {
         | NoSuffix => ""
         | UnixTimestamp =>
           "_" ++ Js.Date.make()->Js.Date.valueOf->Belt.Float.toString
@@ -118,36 +120,50 @@ let initializeAndBuildPages =
 
 let build =
     (
-      ~outputDir: string,
-      ~projectRootDir: string,
-      ~melangeOutputDir: option(string)=?,
-      ~compileCommand: string,
-      ~logLevel: Log.level,
-      ~mode: Webpack.Mode.t,
       ~pages: array(array(PageBuilder.page)),
+      ~globalEnvValues: array((string, string))=[||],
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType=Reason,
+      ~pageAppArtifactsSuffix: pageAppArtifactsSuffix=UnixTimestamp,
+      ~projectRootDir: string,
+      ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
+      ~compileCommand: option(string)=?,
+      ~logLevel: Log.level,
+      ~buildWorkersCount: option(int)=?,
+      ~webpackMode: Webpack.Mode.t=Production,
+      ~webpackMinimizer: Webpack.Minimizer.t=Terser,
       ~webpackBundleAnalyzerMode:
          option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
-      ~minimizer: Webpack.Minimizer.t=Terser,
-      ~globalEnvValues: array((string, string))=[||],
-      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
-      ~buildWorkersCount: option(int)=?,
+      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
+      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
     ) => {
   let (logger, _pages, renderedPages) =
     initializeAndBuildPages(
+      ~pageAppArtifactsType,
       ~logLevel,
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
       ~melangeOutputDir,
       ~globalEnvValues,
-      ~generatedFilesSuffix,
+      ~pageAppArtifactsSuffix,
       ~bundlerMode=Build,
     );
 
   renderedPages
   ->Promise.map(renderedPages => {
-      let () = compileRescript(~compileCommand, ~logger);
+      let () =
+        switch (pageAppArtifactsType, compileCommand) {
+        | (Reason, None) =>
+          Js.Console.error(
+            "[Commands.build] Error: missing compileCommand param for Reason artifacts",
+          );
+          Process.exit(1);
+        | (Reason, Some(compileCommand)) =>
+          compileRescript(~compileCommand, ~logger)
+        | (Js, _) => ()
+        };
 
       switch (Bundler.bundler) {
       | Esbuild =>
@@ -157,17 +173,20 @@ let build =
             ~projectRootDir,
             ~globalEnvValues,
             ~renderedPages,
+            ~logLevel=?esbuildLogLevel,
+            ~logOverride=?esbuildLogOverride,
+            (),
           )
           ->ignore;
         ();
       | Webpack =>
         let () =
           Webpack.build(
-            ~mode,
+            ~webpackMode,
             ~outputDir,
             ~logger,
             ~webpackBundleAnalyzerMode,
-            ~minimizer,
+            ~webpackMinimizer,
             ~globalEnvValues,
             ~renderedPages,
           );
@@ -179,37 +198,49 @@ let build =
 
 let start =
     (
-      ~outputDir: string,
-      ~projectRootDir: string,
-      ~melangeOutputDir: option(string)=?,
-      ~mode: Webpack.Mode.t,
-      ~logLevel: Log.level,
       ~pages: array(array(PageBuilder.page)),
-      ~devServerOptions: Webpack.DevServerOptions.t,
-      ~webpackBundleAnalyzerMode:
-         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t),
-      ~minimizer: Webpack.Minimizer.t=Terser,
       ~globalEnvValues: array((string, string))=[||],
-      ~generatedFilesSuffix: generatedFilesSuffix=UnixTimestamp,
+      ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType=Reason,
+      ~pageAppArtifactsSuffix: pageAppArtifactsSuffix=UnixTimestamp,
+      ~projectRootDir: string,
+      ~outputDir: string,
+      ~melangeOutputDir: option(string)=?,
+      ~logLevel: Log.level,
       ~buildWorkersCount: option(int)=?,
-      ~esbuildMainServerPort: int=8000,
-      ~esbuildProxyServerPort: int=8001,
+      ~webpackMode: Webpack.Mode.t=Development,
+      ~webpackMinimizer: Webpack.Minimizer.t=Terser,
+      ~webpackBundleAnalyzerMode:
+         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
+      ~webpackDevServerOptions: Webpack.DevServerOptions.t={
+                                                             listenTo:
+                                                               Port(9000),
+                                                             proxy: None,
+                                                           },
+      ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
+      ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
+      ~esbuildLogLimit: option(int)=?,
+      ~esbuildMainServerPort: int=8010,
+      ~esbuildProxyServerPort: int=8011,
+      ~esbuildProxyRules: array(ProxyServer.ProxyRule.t)=[||],
       (),
     ) => {
   let (logger, pages, renderedPages) =
     initializeAndBuildPages(
+      ~pageAppArtifactsType,
       ~logLevel,
       ~buildWorkersCount,
       ~pages,
       ~outputDir,
       ~melangeOutputDir,
       ~globalEnvValues,
-      ~generatedFilesSuffix,
+      ~pageAppArtifactsSuffix,
       ~bundlerMode=Watch,
     );
 
-  let startFileWatcher = () =>
-    Watcher.startWatcher(
+  let startFileWatcher = (): unit =>
+    FileWatcher.startWatcher(
+      ~projectRootDir,
+      ~pageAppArtifactsType,
       ~outputDir,
       ~melangeOutputDir,
       ~logger,
@@ -217,16 +248,19 @@ let start =
       pages,
     );
 
-  // rescript-ssg just emitted reason artifacts and JS compilation is happening...
-  // Starting dev server after a little delay.
-  // Ideally, we want to start dev server and file watcher after JS compilation is done
-  // to avoid redundant rebuilds while JS is still compiling.
-  let delayBeforeDevServerStart = 3000;
+  let delayBeforeDevServerStart =
+    switch (pageAppArtifactsType) {
+    | Js => 100
+    | Reason =>
+      // A compilation most likely is still in progress after reason artifacts emitted,
+      // starting dev server + file watcher after a little delay.
+      2000
+    };
 
-  Js.Global.setTimeout(
-    () => {
-      renderedPages
-      ->Promise.map(renderedPages =>
+  renderedPages
+  ->Promise.map(renderedPages => {
+      Js.Global.setTimeout(
+        () => {
           switch (Bundler.bundler) {
           | Esbuild =>
             Esbuild.watchAndServe(
@@ -235,6 +269,10 @@ let start =
               ~globalEnvValues,
               ~renderedPages,
               ~port=esbuildMainServerPort,
+              ~logLevel=?esbuildLogLevel,
+              ~logOverride=?esbuildLogOverride,
+              ~logLimit=?esbuildLogLimit,
+              (),
             )
             ->Promise.map(serveResult => {
                 let () =
@@ -242,6 +280,13 @@ let start =
                     ~port=esbuildProxyServerPort,
                     ~targetHost=serveResult.host,
                     ~targetPort=serveResult.port,
+                    ~proxyRules=esbuildProxyRules,
+                    ~pagePaths=
+                      renderedPages->Js.Array2.map(page =>
+                        PagePath.toString(page.path)
+                        ->Utils.maybeAddSlashPrefix
+                        ->Utils.maybeAddSlashSuffix
+                      ),
                   );
                 let () = startFileWatcher();
                 ();
@@ -250,22 +295,22 @@ let start =
           | Webpack =>
             let () =
               Webpack.startDevServer(
-                ~devServerOptions,
+                ~webpackDevServerOptions,
                 ~webpackBundleAnalyzerMode,
-                ~mode,
+                ~webpackMode,
                 ~logger,
                 ~outputDir,
-                ~minimizer,
+                ~webpackMinimizer,
                 ~globalEnvValues,
                 ~renderedPages,
                 ~onStart=startFileWatcher,
               );
             ();
           }
-        )
+        },
+        delayBeforeDevServerStart,
+      )
       ->ignore
-    },
-    delayBeforeDevServerStart,
-  )
+    })
   ->ignore;
 };

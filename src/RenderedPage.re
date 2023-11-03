@@ -1,5 +1,5 @@
 type t = {
-  path: PageBuilderT.PagePath.t,
+  path: PagePath.t,
   entryPath: string,
   outputDir: string,
   htmlTemplatePath: string,
