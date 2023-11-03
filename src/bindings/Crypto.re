@@ -3,7 +3,7 @@ module Hash = {
 
   type hash;
 
-  [@bs.module "node:crypto"] external crypto: crypto = "default";
+  [@mel.module "node:crypto"] external crypto: crypto = "default";
 
   [@mel.send "createHash"]
   external createHash': (crypto, string) => hash = "createHash";

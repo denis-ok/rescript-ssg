@@ -74,20 +74,20 @@ external nodeRequest:
 
 module Url = {
   type t;
-  [@bs.new] [@bs.scope "global"]
+  [@mel.new] [@mel.scope "global"]
   external makeExn: (string, ~base: option(string)) => t = "URL";
-  [@bs.get] external hash: t => string = "hash";
-  [@bs.get] external host: t => string = "host";
-  [@bs.get] external hostname: t => string = "hostname";
-  [@bs.get] external href: t => string = "href";
-  [@bs.get] external origin: t => string = "origin";
-  [@bs.get] external protocol: t => string = "protocol";
-  [@bs.get] external pathname: t => string = "pathname";
+  [@mel.get] external hash: t => string = "hash";
+  [@mel.get] external host: t => string = "host";
+  [@mel.get] external hostname: t => string = "hostname";
+  [@mel.get] external href: t => string = "href";
+  [@mel.get] external origin: t => string = "origin";
+  [@mel.get] external protocol: t => string = "protocol";
+  [@mel.get] external pathname: t => string = "pathname";
   // Yes, port parsed as string
   // https://nodejs.org/api/url.html#urlport
-  [@bs.get] external port: t => string = "port";
-  [@bs.get] external search: t => string = "search";
-  [@bs.get] external searchParams: t => Js.Dict.t(string) = "searchParams";
+  [@mel.get] external port: t => string = "port";
+  [@mel.get] external search: t => string = "search";
+  [@mel.get] external searchParams: t => Js.Dict.t(string) = "searchParams";
 
   let make = (path, ~base) =>
     switch (makeExn(path, ~base)) {
