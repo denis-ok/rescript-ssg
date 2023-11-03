@@ -1,20 +1,20 @@
 [@bs.send]
 external replaceAll: (string, string, string) => string = "replaceAll";
 
-// 'v16.15.0' => 16150
-let nodeVersionToInt = (s: string) => {
-  let refinedNodeVersion = s->replaceAll("v", "")->replaceAll(".", "");
-  Belt.Int.fromString(refinedNodeVersion)->Belt.Option.getWithDefault(0);
-};
-
 let bsArtifactRegex = [%re {|/file:.*\.bs\.js$/i|}];
 
 let isBsArtifact = fileUrl => {
-  Js.String2.match(fileUrl, bsArtifactRegex) != None;
+  switch (Js.String2.match(fileUrl, bsArtifactRegex)) {
+  | Some(_) => true
+  | None => false
+  };
 };
 
 let isAsset = fileUrl => {
-  Js.String2.match(fileUrl, Bundler.assetRegex) != None;
+  switch (Js.String2.match(fileUrl, Bundler.assetRegex)) {
+  | Some(_) => true
+  | None => false
+  };
 };
 
 // Getting a hash of the file contents the same way as it implemented in esbuild.
@@ -110,3 +110,31 @@ let processAsset = (url: string) => {
       }
     );
 };
+
+let load =
+    (
+      url,
+      _context,
+      nextLoad:
+        (. string, option({. format: string})) =>
+        Js.Promise.t({
+          .
+          format: string,
+          shortCircuit: bool,
+          source: string,
+        }),
+    ) =>
+  if (isBsArtifact(url)) {
+    // We need to fix the error that appeared after bs-css added:
+    // /Users/denis/projects/builder/node_modules/bs-css-emotion/src/Css.bs.js:3
+    // import * as Curry from "rescript/lib/es6/curry.js";
+    // ^^^^^^
+    // SyntaxError: Cannot use import statement outside a module
+    // We force NodeJS to load bs-artifacts as es6 modules
+    let format = "module";
+    nextLoad(. url, Some({"format": format}));
+  } else if (isAsset(url)) {
+    processAsset(url);
+  } else {
+    nextLoad(. url, None);
+  };
