@@ -116,12 +116,12 @@ let load =
       url,
       _context,
       nextLoad:
-        (. string, option({. format: string})) =>
+        (. string, option({. "format": string})) =>
         Js.Promise.t({
           .
-          format: string,
-          shortCircuit: bool,
-          source: string,
+          "format": string,
+          "shortCircuit": bool,
+          "source": string,
         }),
     ) =>
   if (isBsArtifact(url)) {
