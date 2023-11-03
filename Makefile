@@ -59,11 +59,9 @@ test-watch: ## Run the tests and watch for changes
 	$(DUNE) build -w @runtest
 
 COMPILED_RESCRIPT_SSG_DIR = _build/default/app/node_modules/rescript-ssg.ssg
-
 COMPILED_EXAMPLE_DIR = _build/default/app/example
-
+COMPILED_TESTS_DIR = _build/default/app/tests
 RESCRIPT_SSG_BIN = ENV_VAR=FOO $(COMPILED_RESCRIPT_SSG_DIR)/js/bin.mjs
-
 NODE_BINS_DIR = node_modules/.bin
 
 .PHONY: clean-example
@@ -89,4 +87,4 @@ clean-tests: ## Clean test artifacts
 
 .PHONY: tests
 tests: clean-tests ## Run tests
-	PROJECT_ROOT=$(MAKEFILE_DIR) $(NODE_BINS_DIR)/c8 node $(MELANGE_ARTIFACTS_DIR)/tests/Tests.bs.js
+	PROJECT_ROOT=$(MAKEFILE_DIR) $(NODE_BINS_DIR)/c8 node $(COMPILED_TESTS_DIR)/Tests.bs.js
