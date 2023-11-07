@@ -138,7 +138,7 @@ let renderHtmlTemplate =
       </PartialHydration.WithHydrationContext.Provider>
     };
 
-  let html = ReactDOM.Server.renderToString(pageElement);
+  let html = ReactDOMServer.renderToString(pageElement);
 
   let Emotion.Server.{html: renderedHtml, css, ids} =
     Emotion.Server.extractCritical(html);
