@@ -15,4 +15,5 @@ let build = (~webpackMinimizer) =>
     ~buildWorkersCount=1,
     ~pageAppArtifactsSuffix=UnixTimestamp,
     (),
-  );
+  )
+  ->ignore;

@@ -175,7 +175,8 @@ let build =
       ~logLevel: LogLevel.t=Warning,
       ~logOverride: Js.Dict.t(LogLevel.t)=Js.Dict.empty(),
       (),
-    ) => {
+    )
+    : Js.Promise.t(unit) => {
   Js.log("[Esbuild] Bundling...");
   let durationLabel = "[Esbuild] Success! Duration";
   Js.Console.timeStart(durationLabel);
