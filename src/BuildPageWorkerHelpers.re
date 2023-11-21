@@ -73,7 +73,7 @@ let buildPagesWithWorker =
   });
 };
 
-let defaultWorkersCount = 16;
+let defaultWorkersCount = 8;
 
 let buildPagesWithWorkers =
     (
@@ -109,27 +109,33 @@ let buildPagesWithWorkers =
   let durationLabel = "[Commands.buildPagesWithWorkers] Build finished. Duration";
   Js.Console.timeStart(durationLabel);
 
-  // let pages = pages->Array.splitIntoChunks(~chunkSize=buildWorkersCount);
-
-  let pagesManualChunks = pages;
+  let pagesChunkedForWorkers =
+    pages->Array.splitIntoChunks(~chunkSize=buildWorkersCount);
 
   let results =
-    pagesManualChunks
-    ->Js.Array2.map((pagesChunk, ()) =>
-        buildPagesWithWorker(
-          ~pageAppArtifactsType,
-          ~outputDir,
-          ~melangeOutputDir,
-          ~logger,
-          ~globalEnvValues,
-          ~pageAppArtifactsSuffix,
-          pagesChunk,
-        )
-      )
+    pagesChunkedForWorkers
+    ->Js.Array2.map((pagesChunk: array(array(PageBuilder.page))) => {
+        let buildChunksWithWorkers = () =>
+          pagesChunk
+          ->Js.Array2.map(chunk =>
+              buildPagesWithWorker(
+                ~pageAppArtifactsType,
+                ~outputDir,
+                ~melangeOutputDir,
+                ~logger,
+                ~globalEnvValues,
+                ~pageAppArtifactsSuffix,
+                chunk,
+              )
+            )
+          ->Promise.all;
+
+        buildChunksWithWorkers;
+      })
     ->Promise.seqRun
     ->Promise.map(results => {
         logger.info(() => Js.Console.timeEnd(durationLabel));
-        Array.flat1(results);
+        Array.flat2(results);
       });
 
   results->Promise.map(renderedPages =>
