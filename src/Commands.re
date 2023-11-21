@@ -137,7 +137,8 @@ let build =
       ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
       ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
-    ) => {
+    )
+    : Js.Promise.t(unit) => {
   let (logger, _pages, renderedPages) =
     initializeAndBuildPages(
       ~pageAppArtifactsType,
@@ -151,49 +152,42 @@ let build =
       ~bundlerMode=Build,
     );
 
-  renderedPages
-  ->Promise.map(renderedPages => {
-      let () =
-        switch (pageAppArtifactsType, compileCommand) {
-        | (Reason, None) =>
-          Js.Console.error(
-            "[Commands.build] Error: missing compileCommand param for Reason artifacts",
-          );
-          Process.exit(1);
-        | (Reason, Some(compileCommand)) =>
-          compileRescript(~compileCommand, ~logger)
-        | (Js, _) => ()
-        };
-
-      switch (Bundler.bundler) {
-      | Esbuild =>
-        let () =
-          Esbuild.build(
-            ~outputDir,
-            ~projectRootDir,
-            ~globalEnvValues,
-            ~renderedPages,
-            ~logLevel=?esbuildLogLevel,
-            ~logOverride=?esbuildLogOverride,
-            (),
-          )
-          ->ignore;
-        ();
-      | Webpack =>
-        let () =
-          Webpack.build(
-            ~webpackMode,
-            ~outputDir,
-            ~logger,
-            ~webpackBundleAnalyzerMode,
-            ~webpackMinimizer,
-            ~globalEnvValues,
-            ~renderedPages,
-          );
-        ();
+  renderedPages->Promise.flatMap(renderedPages => {
+    let () =
+      switch (pageAppArtifactsType, compileCommand) {
+      | (Reason, None) =>
+        Js.Console.error(
+          "[Commands.build] Error: missing compileCommand param for Reason artifacts",
+        );
+        Process.exit(1);
+      | (Reason, Some(compileCommand)) =>
+        compileRescript(~compileCommand, ~logger)
+      | (Js, _) => ()
       };
-    })
-  ->ignore;
+
+    switch (Bundler.bundler) {
+    | Esbuild =>
+      Esbuild.build(
+        ~outputDir,
+        ~projectRootDir,
+        ~globalEnvValues,
+        ~renderedPages,
+        ~logLevel=?esbuildLogLevel,
+        ~logOverride=?esbuildLogOverride,
+        (),
+      )
+    | Webpack =>
+      Webpack.build(
+        ~webpackMode,
+        ~outputDir,
+        ~logger,
+        ~webpackBundleAnalyzerMode,
+        ~webpackMinimizer,
+        ~globalEnvValues,
+        ~renderedPages,
+      )
+    };
+  });
 };
 
 let start =
