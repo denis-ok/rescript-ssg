@@ -1,6 +1,6 @@
-[@bs.send] external flat': (array(array('a)), int) => array('a) = "flat";
+[@bs.send] external flat1: (array(array('a)), [@bs.as 1] _) => array('a) = "flat";
 
-let flat1 = array => array->flat'(1);
+[@bs.send] external flat2: (array(array(array('a))), [@bs.as 2] _) => array('a) = "flat";
 
 let splitIntoChunks = (array: array('a), ~chunkSize): array(array('a)) => {
   let length = Js.Array2.length(array);
