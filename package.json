@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@craftamap/esbuild-plugin-html": "https://github.com/denis-ok/esbuild-plugin-html#79f512f447eb98efa6b6786875f617a095eaaf09",
+    "@xmldom/xmldom": "^0.8.10",
     "base32-encode": "^2.0.0",
     "chokidar": "^3.5.3",
     "css-loader": "^6.8.1",
@@ -39,16 +40,16 @@
   "peerDependencies": {
     "@emotion/css": "^11.10.0",
     "@emotion/server": "^11.10.0",
-    "@rescript/react": "^0.10.3",
     "bs-css-emotion": "^5.0.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-helmet": "^6.1.0"
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "react-helmet": "^6.1.0",
+    "reason-react": "^0.9.1"
   },
   "devDependencies": {
+    "bs-platform": "^9.0.2",
     "c8": "^8.0.1",
     "lite-flag-icon": "^1.0.8",
-    "rescript": "^9.1.4",
     "serve": "^14.2.1"
   }
 }
