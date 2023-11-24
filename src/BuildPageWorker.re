@@ -6,12 +6,12 @@ module DomParser = {
 
   [@module "@xmldom/xmldom"] external domParser: domParser = "DOMParser";
 
-  [@val] external globalThis: Js.Dict.t(domParser) = "globalThis";
+  external globalThis: Js.Dict.t(domParser) = "globalThis";
 
   let () = globalThis->Js.Dict.set("DOMParser", domParser);
 };
 
-[@bs.val] external import_: string => Js.Promise.t('a) = "import";
+external import_: string => Js.Promise.t('a) = "import";
 
 let showPage = (page: BuildPageWorkerT.workerPage) => {
   Log.makeMinimalPrintablePageObj(

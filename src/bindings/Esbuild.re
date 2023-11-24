@@ -33,7 +33,7 @@ module Plugin = {
 
 [@module "esbuild"] external esbuild: esbuild = "default";
 
-[@bs.send]
+[@mel.send]
 external build': (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
 
 [@send]
@@ -68,7 +68,7 @@ module HtmlPlugin = {
     scriptLoading: string,
   };
 
-  [@bs.module "@craftamap/esbuild-plugin-html"]
+  [@mel.module "@craftamap/esbuild-plugin-html"]
   external make: (. options) => Plugin.t = "htmlPlugin";
 };
 

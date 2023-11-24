@@ -1,4 +1,4 @@
-[@bs.send]
+[@mel.send]
 external replaceAll: (string, string, string) => string = "replaceAll";
 
 let bsArtifactRegex = [%re {|/file:.*\.bs\.js$/i|}];

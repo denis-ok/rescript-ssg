@@ -1,4 +1,4 @@
-[@val] external globalThis: Js.Dict.t(Js.Json.t) = "globalThis";
+external globalThis: Js.Dict.t(Js.Json.t) = "globalThis";
 
 let renderJsonOption = (json: option(Js.Json.t)) =>
   switch (json) {

@@ -1,8 +1,8 @@
-[@bs.send]
-external flat1: (array(array('a)), [@bs.as 1] _) => array('a) = "flat";
+[@mel.send]
+external flat1: (array(array('a)), [@mel.as 1] _) => array('a) = "flat";
 
-[@bs.send]
-external flat2: (array(array(array('a))), [@bs.as 2] _) => array('a) =
+[@mel.send]
+external flat2: (array(array(array('a))), [@mel.as 2] _) => array('a) =
   "flat";
 
 let splitIntoChunks = (array: array('a), ~chunkSize): array(array('a)) => {
