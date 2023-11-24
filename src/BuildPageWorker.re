@@ -35,6 +35,8 @@ logger.info(() => Js.log({j|[Worker] Building $(pagesCount) pages...|j}));
 type workerOutput =
   Promise.t(array(Belt.Result.t(RenderedPage.t, PagePath.t)));
 
+let startTime = Performance.now();
+
 let workerOutput: workerOutput =
   pages
   ->Js.Array2.map(page => {
@@ -45,9 +47,7 @@ let workerOutput: workerOutput =
 
       let pageInfo: string = {j|[Page module: $(moduleName), page path: $(pagePath)]|j};
 
-      let successText = {j|[Worker] $(pageInfo) Build success. Duration|j};
-
-      Js.Console.timeStart(successText);
+      let successText = {j|[Worker] $(pageInfo) Build success.|j};
 
       logger.info(() => {Js.log({j|[Worker] $(pageInfo) Building...|j})});
 
@@ -159,7 +159,7 @@ let workerOutput: workerOutput =
       ->Promise.map(result => {
           switch (result) {
           | Ok((renderedPage: RenderedPage.t)) =>
-            logger.info(() => Js.Console.timeEnd(successText));
+            Js.log(successText);
             Belt.Result.Ok(renderedPage);
           | Error((errors: array((string, Js.Promise.error)))) =>
             logger.info(() => {
@@ -187,6 +187,10 @@ let workerOutput: workerOutput =
     })
   ->Promise.all
   ->Promise.map(pages => {
+      Js.log2(
+        "[Worker] Job done! Duration:",
+        Performance.durationSinceStartTime(~startTime),
+      );
       parentPort->WorkerThreads.postMessage(pages);
       pages;
     });
