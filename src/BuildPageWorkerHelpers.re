@@ -129,8 +129,7 @@ let buildPagesWithWorkers =
     )
   );
 
-  let durationLabel = "[Commands.buildPagesWithWorkers] Build finished. Duration";
-  Js.Console.timeStart(durationLabel);
+  let startTime = Performance.now();
 
   let pagesChunkedForWorkers =
     pages->Array.splitIntoChunks(~chunkSize=buildWorkersCount);
@@ -156,9 +155,13 @@ let buildPagesWithWorkers =
         buildChunksWithWorkers;
       })
     ->Promise.seqRun
+    ->Promise.map(results => Array.flat2(results))
     ->Promise.map(results => {
-        logger.info(() => Js.Console.timeEnd(durationLabel));
-        Array.flat2(results);
+        Js.log2(
+          "[Commands.buildPagesWithWorkers] Build finished. Duration",
+          Performance.durationSinceStartTime(~startTime),
+        );
+        results;
       });
 
   results->Promise.map(renderedPages =>
