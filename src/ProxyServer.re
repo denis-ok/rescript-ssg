@@ -1,13 +1,13 @@
 module Server = {
   type t;
-  [@send] external listen: (t, int, unit => unit) => unit = "listen";
+  [@mel.send] external listen: (t, int, unit => unit) => unit = "listen";
 
-  [@send] external close: (t, unit => unit) => unit = "close";
+  [@mel.send] external close: (t, unit => unit) => unit = "close";
 
-  [@send]
+  [@mel.send]
   external closeAllConnections: (t, unit) => unit = "closeAllConnections";
 
-  [@set] external setKeepAliveTimeoutMs: (t, int) => unit = "keepAliveTimeout";
+  [@mel.set] external setKeepAliveTimeoutMs: (t, int) => unit = "keepAliveTimeout";
 };
 
 module ClientRequest = {
@@ -16,7 +16,7 @@ module ClientRequest = {
 
   type error;
 
-  [@send] external on: (t, string, error => unit) => unit = "on";
+  [@mel.send] external on: (t, string, error => unit) => unit = "on";
 };
 
 // https://nodejs.org/api/http.html#httprequestoptions-callback
@@ -32,32 +32,32 @@ type nodeRequestOptions = {
 
 module ServerResponse = {
   type t;
-  [@get] external statusCode: t => int = "statusCode";
+  [@mel.get] external statusCode: t => int = "statusCode";
 
-  [@send]
+  [@mel.send]
   external writeHead:
     (t, ~statusCode: int, ~headers: option(Js.Dict.t(string))) => t =
     "writeHead";
 
-  [@send] external end_: (t, string) => unit = "end";
+  [@mel.send] external end_: (t, string) => unit = "end";
 };
 
 module IncommingMessage = {
   type t;
-  [@get] external statusCode: t => int = "statusCode";
-  [@get] external url: t => string = "url";
-  [@get] external method: t => string = "method";
-  [@get] external headers: t => Js.Dict.t(string) = "headers";
+  [@mel.get] external statusCode: t => int = "statusCode";
+  [@mel.get] external url: t => string = "url";
+  [@mel.get] external method: t => string = "method";
+  [@mel.get] external headers: t => Js.Dict.t(string) = "headers";
 
   type pipeOptions = {
     [@mel.as "end"]
     end_: bool,
   };
 
-  [@send]
+  [@mel.send]
   external pipeToServerResponse: (t, ServerResponse.t, pipeOptions) => unit =
     "pipe";
-  [@send]
+  [@mel.send]
   external pipeToClientRequest: (t, ClientRequest.t, pipeOptions) => unit =
     "pipe";
 };
@@ -163,9 +163,9 @@ let sortPathsBySegmentCount = (a, b) => {
   // Sort paths to make sure that more specific rules are matched first.
   let countSegments = s =>
     s
-    ->Js.String2.split("/")
-    ->Js.Array2.filter(s => s != "")
-    ->Js.Array2.length;
+    ->Js.String.split(~sep="/", _)
+    ->Js.Array.filter(~f=s => s != "", _)
+    ->Js.Array.length;
 
   let segCount1 = countSegments(a);
   let segCount2 = countSegments(b);
@@ -185,8 +185,8 @@ let isPageWithDynamicPathSegmentRequested =
     path
     ->Utils.maybeAddSlashPrefix
     ->Utils.maybeAddSlashSuffix
-    ->Js.String2.split("/")
-    ->Js.Array2.filter(s => s != "")
+    ->Js.String.split(~sep="/", _)
+    ->Js.Array.filter(~f=s => s != "", _)
     ->Belt.List.fromArray;
 
   let reqPathSegments = reqPath->makeSegments;
@@ -215,17 +215,17 @@ let start =
     ) => {
   let pagePathsWithDynamicSegments =
     pagePaths
-    ->Js.Array2.filter(path =>
-        path->Js.String2.includes(PagePath.dynamicSegment)
-      )
-    ->Js.Array2.sortInPlaceWith(sortPathsBySegmentCount);
+    ->Js.Array.filter(~f=path =>
+        path->Js.String.includes(~search=PagePath.dynamicSegment, _)
+      , _)
+    ->Js.Array.sortInPlaceWith(~f=sortPathsBySegmentCount);
 
   let proxyRules =
     proxyRules
-    ->Js.Array2.map(rule => ValidProxyRule.fromProxyRule(rule))
-    ->Js.Array2.sortInPlaceWith((a, b) =>
-        sortPathsBySegmentCount(a.fromPath, b.fromPath)
-      );
+    ->Js.Array.map(~f=rule => ValidProxyRule.fromProxyRule(rule), _)
+    ->Js.Array.sortInPlaceWith(~f=(a: ValidProxyRule.t, b) =>
+        sortPathsBySegmentCount(a.fromPath, b.fromPath),
+      _);
 
   let server =
     nodeCreateServer((req, res) => {
@@ -256,7 +256,7 @@ let start =
           reqPath->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;
 
         let exactPagePathRelatedToRequestedPath = {
-          pagePaths->Js.Array2.find(pagePath => pagePath == reqPathNormalized);
+          pagePaths->Js.Array.find(~f=pagePath => pagePath == reqPathNormalized, _);
         };
 
         switch (exactPagePathRelatedToRequestedPath) {
@@ -269,9 +269,9 @@ let start =
           }
         | None =>
           let relatedPagePathWithDynamicSegment =
-            pagePathsWithDynamicSegments->Js.Array2.find(pagePath =>
+            pagePathsWithDynamicSegments->Js.Array.find(pagePath =>
               isPageWithDynamicPathSegmentRequested(reqPath, pagePath)
-            );
+            , _);
           switch (relatedPagePathWithDynamicSegment) {
           | Some(relatedPagePathWithDynamicSegment) =>
             Js.log2(
@@ -288,9 +288,9 @@ let start =
             };
           | None =>
             let matchedProxyRule =
-              proxyRules->Js.Array2.find(rule =>
-                reqPath->Js.String2.startsWith(rule.fromPath)
-              );
+              proxyRules->Js.Array.find(~f=rule =>
+                reqPath->Js.String.startsWith(~prefix=rule.ValidProxyRule.fromPath)
+              , _);
             switch (matchedProxyRule) {
             | None =>
               // Technically, this is some kind of error:
@@ -302,9 +302,10 @@ let start =
                 | None => (reqPath, false)
                 | Some({pathRewriteFrom, pathRewriteTo}) =>
                   let newPath =
-                    reqPath->Js.String2.replace(
-                      pathRewriteFrom,
-                      pathRewriteTo,
+                    reqPath->Js.String.replace(
+                      ~search=pathRewriteFrom,
+                      ~replacement=pathRewriteTo,
+                      _
                     );
                   (newPath, true);
                 };

@@ -3,8 +3,8 @@ let checkDuplicatedPagePaths = (pages: array(array(PageBuilder.page))) => {
 
   let pagesDict = Js.Dict.empty();
 
-  pages->Js.Array2.forEach(pages' => {
-    pages'->Js.Array2.forEach(page => {
+  pages->Js.Array.forEach(~f=pages' => {
+    pages'->Js.Array.forEach(~f=(page: PageBuilder.page) => {
       let pagePath = PagePath.toString(page.path);
       switch (pagesDict->Js.Dict.get(pagePath)) {
       | None => pagesDict->Js.Dict.set(pagePath, page)
@@ -15,8 +15,8 @@ let checkDuplicatedPagePaths = (pages: array(array(PageBuilder.page))) => {
         );
         Process.exit(1);
       };
-    })
-  });
+    }, _)
+  }, _);
 };
 
 let compileRescript = (~compileCommand: string, ~logger: Log.logger) => {
@@ -80,20 +80,20 @@ let initializeAndBuildPages =
   let pages =
     switch (Bundler.bundler, bundlerMode) {
     | (Esbuild, Watch) =>
-      pages->Js.Array2.map(pages =>
-        pages->Js.Array2.map(page =>
+      pages->Js.Array.map(~f=pages =>
+        pages->Js.Array.map(~f=(page: PageBuilder.page) =>
           {
             ...page,
             // Add a script to implement live reloading with esbuild
             // https://esbuild.github.io/api/#live-reload
             headScripts:
-              Js.Array2.concat(
-                [|Esbuild.subscribeToRebuildEventScript|],
-                page.headScripts,
+              Js.Array.concat(
+                ~other=page.headScripts,
+                [|Esbuild.subscribeToRebuildEventScript|]
               ),
           }
-        )
-      )
+        , _)
+      , _)
     | _ => pages
     };
 
@@ -276,11 +276,11 @@ let start =
                     ~targetPort=serveResult.port,
                     ~proxyRules=esbuildProxyRules,
                     ~pagePaths=
-                      renderedPages->Js.Array2.map(page =>
+                      renderedPages->Js.Array.map(~f=(page: RenderedPage.t) =>
                         PagePath.toString(page.path)
                         ->Utils.maybeAddSlashPrefix
                         ->Utils.maybeAddSlashSuffix
-                      ),
+                      , _),
                   );
                 let () = startFileWatcher();
                 ();

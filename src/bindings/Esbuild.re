@@ -31,17 +31,17 @@ module Plugin = {
   };
 };
 
-[@module "esbuild"] external esbuild: esbuild = "default";
+[@mel.module "esbuild"] external esbuild: esbuild = "default";
 
 [@mel.send]
 external build': (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
 
-[@send]
+[@mel.send]
 external context: (esbuild, Js.t('a)) => Promise.t(context) = "context";
 
-[@send] external watch: (context, unit) => Promise.t(unit) = "watch";
+[@mel.send] external watch: (context, unit) => Promise.t(unit) = "watch";
 
-[@send] external dispose: (context, unit) => Promise.t(unit) = "dispose";
+[@mel.send] external dispose: (context, unit) => Promise.t(unit) = "dispose";
 
 // https://esbuild.github.io/api/#serve-arguments
 type serveOptions = {
@@ -55,7 +55,7 @@ type serveResult = {
   port: int,
 };
 
-[@send]
+[@mel.send]
 external serve: (context, serveOptions) => Promise.t(serveResult) = "serve";
 
 module HtmlPlugin = {
@@ -104,7 +104,7 @@ let makeConfig =
     ) =>
   // https://esbuild.github.io/api/
   {
-    "entryPoints": renderedPages->Js.Array2.map(page => page.entryPath),
+    "entryPoints": renderedPages->Js.Array.map(~f=(page: RenderedPage.t) => page.entryPath, _),
     "entryNames": Bundler.assetsDirname ++ "/" ++ "js/[dir]/[name]-[hash]",
     "chunkNames": Bundler.assetsDirname ++ "/" ++ "js/_chunks/[name]-[hash]",
     "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
@@ -127,21 +127,21 @@ let makeConfig =
       let logOverride: Js.Dict.t(string) =
         logOverride
         ->Js.Dict.entries
-        ->Js.Array2.map(((error, logLevel)) =>
+        ->Js.Array.map(~f=((error, logLevel)) =>
             (error, logLevel->LogLevel.toString)
-          )
+          , _)
         ->Js.Dict.fromArray;
       logOverride;
     },
     "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
     "loader": {
       Bundler.assetFileExtensionsWithoutCss
-      ->Js.Array2.map(ext => {("." ++ ext, "file")})
+      ->Js.Array.map(~f=ext => {("." ++ ext, "file")}, _)
       ->Js.Dict.fromArray;
     },
     "plugins": {
       let htmlPluginFiles =
-        renderedPages->Js.Array2.map(renderedPage => {
+        renderedPages->Js.Array.map(~f=(renderedPage: RenderedPage.t) => {
           let pagePath = renderedPage.path->PagePath.toString;
 
           // entryPoint must be relative path to the root of user's project
@@ -155,7 +155,7 @@ let makeConfig =
             htmlTemplate: renderedPage.htmlTemplatePath,
             scriptLoading: "module",
           };
-        });
+        }, _);
 
       let htmlPlugin = HtmlPlugin.make(. {files: htmlPluginFiles});
 
@@ -320,7 +320,7 @@ let getModuleDependencies =
     "logLevel": LogLevel.toString(Silent),
     "loader": {
       Bundler.assetFileExtensionsWithoutCss
-      ->Js.Array2.map(ext => {("." ++ ext, "file")})
+      ->Js.Array.map(~f=ext => {("." ++ ext, "file")}, _)
       ->Js.Dict.fromArray;
     },
   };
@@ -338,7 +338,7 @@ let getModuleDependencies =
         ->Js.Dict.entries
         ->Belt.Array.keepMap(((dependencyPath, _)) => {
             // Filter out dependencies from node_modules
-            switch (dependencyPath->Js.String2.indexOf("node_modules")) {
+            switch (dependencyPath->Js.String.indexOf(~search="node_modules", _)) {
             | (-1) => Some(Path.join2(projectRootDir, dependencyPath))
             | _ => None
             }

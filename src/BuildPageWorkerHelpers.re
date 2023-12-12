@@ -56,7 +56,7 @@ let buildPagesWithWorker =
       pages: array(PageBuilder.page),
     ) => {
   let rebuildPages =
-    pages->Js.Array2.map(page => mapPageToPageForRebuild(~page));
+    pages->Js.Array.map(~f=page => mapPageToPageForRebuild(~page), _);
 
   let workerData: BuildPageWorkerT.workerData = {
     pageAppArtifactsType,
@@ -108,8 +108,8 @@ let buildPagesWithWorkers =
   // For example user has 2 locales and 8 cores and and to spawn 8 workers we must do an extra chunk splitting.
   let pages =
     pages
-    ->Js.Array2.map(pagesChunk => {
-        let pagesInChunk = pagesChunk->Js.Array2.length;
+    ->Js.Array.map(~f=pagesChunk => {
+        let pagesInChunk = pagesChunk->Js.Array.length;
         switch (pagesInChunk >= minPagesCountForSplitting) {
         | false => [|pagesChunk|]
         | true =>
@@ -118,7 +118,7 @@ let buildPagesWithWorkers =
             pagesInChunk / chunksCount + pagesInChunk mod chunksCount;
           pagesChunk->Array.splitIntoChunks(~chunkSize);
         };
-      })
+      }, _)
     ->Array.flat1;
 
   logger.info(() =>
@@ -136,10 +136,10 @@ let buildPagesWithWorkers =
 
   let results =
     pagesChunkedForWorkers
-    ->Js.Array2.map((pagesChunk: array(array(PageBuilder.page))) => {
+    ->Js.Array.map(~f=(pagesChunk: array(array(PageBuilder.page))) => {
         let buildChunksWithWorkers = () =>
           pagesChunk
-          ->Js.Array2.map(chunk =>
+          ->Js.Array.map(~f=chunk =>
               buildPagesWithWorker(
                 ~pageAppArtifactsType,
                 ~outputDir,
@@ -149,11 +149,11 @@ let buildPagesWithWorkers =
                 ~pageAppArtifactsSuffix,
                 chunk,
               )
-            )
+            , _)
           ->Promise.all;
 
         buildChunksWithWorkers;
-      })
+      }, _)
     ->Promise.seqRun
     ->Promise.map(results => Array.flat2(results))
     ->Promise.map(results => {

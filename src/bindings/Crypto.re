@@ -24,11 +24,11 @@ module Hash = {
     createMd5()
     ->updateBufferWithBuffer(data)
     ->digest("hex")
-    ->Js.String2.slice(~from=0, ~to_=digestLength);
+    ->Js.String.slice(~start=0, ~end_=digestLength, _);
 
   let stringToHash = (data: string) =>
     createMd5()
     ->updateBufferWithString(data)
     ->digest("hex")
-    ->Js.String2.slice(~from=0, ~to_=digestLength);
+    ->Js.String.slice(~start=0, ~end_=digestLength, _);
 };
