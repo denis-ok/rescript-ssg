@@ -8,7 +8,7 @@ let build = (~webpackMinimizer) =>
     ~webpackMode=Production,
     ~outputDir=Pages.outputDir,
     ~projectRootDir=Pages.projectRootDir,
-        ~melangeOutputDir=Pages.melangeOutputDir,
+    ~melangeOutputDir=Pages.melangeOutputDir,
     ~logLevel=Info,
     ~compileCommand=
       Path.join2(Pages.projectRootDir, "node_modules/.bin/rescript"),

@@ -145,7 +145,7 @@ let workerOutput: workerOutput =
         })
       ->Promise.map(result => {
           switch (result) {
-          | Ok((renderedPage: RenderedPage.t)) =>
+          | Ok(renderedPage: RenderedPage.t) =>
             Js.log(successText);
             Belt.Result.Ok(renderedPage);
           | Error(errors: array((string, Js.Promise.error))) =>
