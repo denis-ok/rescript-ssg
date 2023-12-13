@@ -175,10 +175,9 @@ let build =
       ~logLevel: LogLevel.t=Warning,
       ~logOverride: Js.Dict.t(LogLevel.t)=Js.Dict.empty(),
       (),
-    ) => {
+    )
+    : Js.Promise.t(unit) => {
   Js.log("[Esbuild] Bundling...");
-  let durationLabel = "[Esbuild] Success! Duration";
-  Js.Console.timeStart(durationLabel);
 
   let config =
     makeConfig(
@@ -192,6 +191,8 @@ let build =
       ~logLimit=10,
     );
 
+  let startTime = Performance.now();
+
   esbuild
   ->build'(config)
   ->Promise.map(_buildResult => {
@@ -199,8 +200,9 @@ let build =
       //   Js.Json.stringifyAny(_buildResult.metafile)
       //   ->Belt.Option.getWithDefault("");
       // Fs.writeFileSync(~path=Path.join2(outputDir, "meta.json"), ~data=json);
-      Js.Console.timeEnd(
-        durationLabel,
+      Js.log2(
+        "[Esbuild] Success! Duration:",
+        Performance.durationSinceStartTime(~startTime),
       )
     })
   ->Promise.catch(error => {

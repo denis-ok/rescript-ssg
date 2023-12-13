@@ -539,7 +539,8 @@ let build =
       ~globalEnvValues: array((string, string)),
       ~webpackBundleAnalyzerMode: option(WebpackBundleAnalyzerPlugin.Mode.t),
       ~renderedPages: array(RenderedPage.t),
-    ) => {
+    )
+    : Js.Promise.t(unit) => {
   let durationLabel = "[Webpack.build] duration";
   Js.Console.timeStart(durationLabel);
 
@@ -557,47 +558,55 @@ let build =
       ~renderedPages,
     );
 
-  compiler->Webpack.run((err, stats) => {
-    switch (Js.Nullable.toOption(err)) {
-    | Some(error) =>
-      logger.info(() => {
-        Js.Console.error2("[Webpack.build] Fatal error:", error);
-        Process.exit(1);
-      })
-    | None =>
-      logger.info(() => Js.log("[Webpack.build] Success!"));
-      switch (Js.Nullable.toOption(stats)) {
-      | None =>
+  Promise.make((~resolve, ~reject as _reject) => {
+    compiler->Webpack.run((err, stats) => {
+      switch (Js.Nullable.toOption(err)) {
+      | Some(error) =>
         logger.info(() => {
-          Js.Console.error("[Webpack.build] Error: stats object is None");
+          Js.Console.error2("[Webpack.build] Fatal error:", error);
           Process.exit(1);
         })
-      | Some(stats) =>
-        logger.info(() => Js.log(Webpack.Stats.toString(stats)));
+      | None =>
+        logger.info(() => Js.log("[Webpack.build] Success!"));
+        switch (Js.Nullable.toOption(stats)) {
+        | None =>
+          logger.info(() => {
+            Js.Console.error("[Webpack.build] Error: stats object is None");
+            Process.exit(1);
+          })
+        | Some(stats) =>
+          logger.info(() => Js.log(Webpack.Stats.toString(stats)));
 
-        switch (Webpack.Stats.hasErrors(stats)) {
-        | false => ()
-        | true =>
-          Js.Console.error("[Webpack.build] Error: stats object has errors");
-          Process.exit(1);
-        };
-        switch (Webpack.Stats.hasWarnings(stats)) {
-        | false => ()
-        | true =>
-          logger.info(() => Js.log("[Webpack.build] Stats.hasWarnings"))
-        };
+          switch (Webpack.Stats.hasErrors(stats)) {
+          | false => ()
+          | true =>
+            Js.Console.error(
+              "[Webpack.build] Error: stats object has errors",
+            );
+            Process.exit(1);
+          };
 
-        compiler->Webpack.close(closeError => {
-          switch (Js.Nullable.toOption(closeError)) {
-          | None => Js.Console.timeEnd(durationLabel)
-          | Some(error) =>
-            logger.info(() =>
-              Js.log2("[Webpack.build] Compiler close error:", error)
-            )
-          }
-        });
-      };
-    }
+          switch (Webpack.Stats.hasWarnings(stats)) {
+          | false => ()
+          | true =>
+            logger.info(() => Js.log("[Webpack.build] Stats.hasWarnings"))
+          };
+
+          compiler->Webpack.close(closeError => {
+            switch (Js.Nullable.toOption(closeError)) {
+            | None => Js.Console.timeEnd(durationLabel)
+            | Some(error) =>
+              logger.info(() =>
+                Js.log2("[Webpack.build] Compiler close error:", error)
+              )
+            };
+
+            let unit = ();
+            resolve(. unit);
+          });
+        };
+      }
+    })
   });
 };
 

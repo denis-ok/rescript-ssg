@@ -18,4 +18,6 @@ let build = (~webpackMinimizer) =>
     ~buildWorkersCount=1,
     ~pageAppArtifactsSuffix=UnixTimestamp,
     (),
-  );
+  )
+  ->Promise.map(_ => Js.log("[rescript-ssg] Build success!"))
+  ->ignore;

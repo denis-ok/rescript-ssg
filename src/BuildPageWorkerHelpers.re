@@ -73,7 +73,7 @@ let buildPagesWithWorker =
   });
 };
 
-let defaultWorkersCount = 16;
+let defaultWorkersCount = 8;
 
 let buildPagesWithWorkers =
     (
@@ -98,6 +98,29 @@ let buildPagesWithWorkers =
     | Some(buildWorkersCount) => buildWorkersCount
     };
 
+  let minPagesCountForSplitting = 500;
+
+  // We expect that user passed already chunked array of pages: array(array(pages))
+  // where each array(pages) is a chunk for one worker thread.
+  // The most common case is when user wants to build localized website and there are two chunks for two locales.
+  // But we can have a situation when one locale contains too many pages and it's a good idea to split
+  // user defined chunk into smaller chunks to spawn more workers and parallelize rendering.
+  // For example user has 2 locales and 8 cores and and to spawn 8 workers we must do an extra chunk splitting.
+  let pages =
+    pages
+    ->Js.Array2.map(pagesChunk => {
+        let pagesInChunk = pagesChunk->Js.Array2.length;
+        switch (pagesInChunk >= minPagesCountForSplitting) {
+        | false => [|pagesChunk|]
+        | true =>
+          let chunksCount = pagesInChunk / minPagesCountForSplitting + 1;
+          let chunkSize =
+            pagesInChunk / chunksCount + pagesInChunk mod chunksCount;
+          pagesChunk->Array.splitIntoChunks(~chunkSize);
+        };
+      })
+    ->Array.flat1;
+
   logger.info(() =>
     Js.log3(
       "[Commands.buildPagesWithWorkers] Building pages with ",
@@ -106,30 +129,39 @@ let buildPagesWithWorkers =
     )
   );
 
-  let durationLabel = "[Commands.buildPagesWithWorkers] Build finished. Duration";
-  Js.Console.timeStart(durationLabel);
+  let startTime = Performance.now();
 
-  // let pages = pages->Array.splitIntoChunks(~chunkSize=buildWorkersCount);
-
-  let pagesManualChunks = pages;
+  let pagesChunkedForWorkers =
+    pages->Array.splitIntoChunks(~chunkSize=buildWorkersCount);
 
   let results =
-    pagesManualChunks
-    ->Js.Array2.map((pagesChunk, ()) =>
-        buildPagesWithWorker(
-          ~pageAppArtifactsType,
-          ~outputDir,
-          ~melangeOutputDir,
-          ~logger,
-          ~globalEnvValues,
-          ~pageAppArtifactsSuffix,
-          pagesChunk,
-        )
-      )
+    pagesChunkedForWorkers
+    ->Js.Array2.map((pagesChunk: array(array(PageBuilder.page))) => {
+        let buildChunksWithWorkers = () =>
+          pagesChunk
+          ->Js.Array2.map(chunk =>
+              buildPagesWithWorker(
+                ~pageAppArtifactsType,
+                ~outputDir,
+                ~melangeOutputDir,
+                ~logger,
+                ~globalEnvValues,
+                ~pageAppArtifactsSuffix,
+                chunk,
+              )
+            )
+          ->Promise.all;
+
+        buildChunksWithWorkers;
+      })
     ->Promise.seqRun
+    ->Promise.map(results => Array.flat2(results))
     ->Promise.map(results => {
-        logger.info(() => Js.Console.timeEnd(durationLabel));
-        Array.flat1(results);
+        Js.log2(
+          "[Commands.buildPagesWithWorkers] Build finished. Duration",
+          Performance.durationSinceStartTime(~startTime),
+        );
+        results;
       });
 
   results->Promise.map(renderedPages =>
