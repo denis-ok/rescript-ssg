@@ -11,9 +11,9 @@ let run = () => {
   switch (
     ChildProcess.spawnSync(
       "node",
-      Js.Array2.concat(
+      Js.Array.concat(
+        ~other=Js.Array.slice(~start=2, Process.getArgs()),
         nodeOptions,
-        Process.getArgs()->Js.Array2.sliceFrom(2),
       ),
       {"shell": true, "encoding": "utf8", "stdio": "inherit"},
     )
