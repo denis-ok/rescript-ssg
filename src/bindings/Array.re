@@ -13,7 +13,7 @@ let splitIntoChunks = (array: array('a), ~chunkSize): array(array('a)) => {
     tempArray->Js.Array.reduce(
       ~f=((rest, acc), _tempChunk) => {
         let chunk = rest->Js.Array.slice(~start=0, ~end_=chunkSize, _);
-        let rest = rest->Js.Array.slice(~end_=chunkSize, _);
+        let rest = rest->Js.Array.slice(~start=chunkSize, _);
         let newAcc = Js.Array.concat(acc, [|chunk|]);
         (rest, newAcc);
       },
