@@ -1,4 +1,4 @@
-[@bs.module "node:perf_hooks"] [@bs.scope "performance"]
+[@mel.module "node:perf_hooks"] [@bs.scope "performance"]
 external now: unit => float = "now";
 
 let durationSinceStartTime = (~startTime) =>

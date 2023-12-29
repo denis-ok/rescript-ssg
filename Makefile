@@ -1,110 +1,90 @@
 MAKEFILE_DIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
-NODE_BINS = node_modules/.bin
+project_name = rescript-ssg
 
-EXAMPLE_DIR = example
+DUNE = opam exec -- dune
 
-RESCRIPT_SSG_BIN = ENV_VAR=FOO ./src/js/bin.mjs
+.DEFAULT_GOAL := help
 
-COMMANDS_DIR = $(EXAMPLE_DIR)/src/commands
+.PHONY: help
+help: ## Print this help message
+	@echo "List of available make commands";
+	@echo "";
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}';
+	@echo "";
 
-.PHONY: clean-rescript
-clean-rescript:
-	$(NODE_BINS)/rescript clean -with-deps
+.PHONY: create-switch
+create-switch: ## Create opam switch
+	opam switch create . 5.1.0 -y --deps-only
 
-.PHONY: build-rescript
-build-rescript:
-	$(NODE_BINS)/rescript
+.PHONY: init
+init: create-switch install ## Configure everything to develop this repository in local
 
-.PHONY: start-rescript
-start-rescript:
-	mkdir $(EXAMPLE_DIR)/build; \
-	$(NODE_BINS)/rescript build -w
+.PHONY: install
+install: ## Install development dependencies
+	npm ci
+	opam update
+	opam install -y . --deps-only --with-test
 
-.PHONY: build-example
-build-example:
-	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/Build.bs.js
+.PHONY: build
+build: ## Build the project
+	$(DUNE) build
 
-.PHONY: start-example
-start-example:
-	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/Start.bs.js
-
-.PHONY: serve-example
-serve-example:
-	$(NODE_BINS)/serve -l 3005 $(EXAMPLE_DIR)/build/public
-
-.PHONY: clean-example
-clean-example:
-	rm -rf $(EXAMPLE_DIR)/build
-	mkdir $(EXAMPLE_DIR)/build
+.PHONY: build_verbose
+build_verbose: ## Build the project in verbose mode
+	$(DUNE) build --verbose
 
 .PHONY: clean
-clean:
-	make clean-test
-	make clean-rescript
-	make clean-example
-
-.PHONY: build-webpack
-build-webpack: clean
-	make build-rescript
-	make build-example
-
-.PHONY: build-esbuild build
-build-esbuild build: clean
-	make build-rescript
-	RESCRIPT_SSG_BUNDLER=esbuild make build-example
-
-.PHONY: build-ci
-build-ci: clean
-	make build-rescript
-	make test
-	make clean-test
-	make build-esbuild
-	make clean-example
-	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerser.bs.js
-	make clean-example
-	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithEsbuildPlugin.bs.js
-	make clean-example
-	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(COMMANDS_DIR)/BuildWithTerserPluginWithEsbuild.bs.js
-
-.PHONY: build-serve
-build-serve:
-	make build-esbuild
-	make serve-example
-
-.PHONY: build-serve-webpack
-build-serve-webpack:
-	make build-webpack
-	make serve-example
-
-.PHONY: start
-start: clean build-rescript
-	make -j 2 start-rescript start-example
-
-.PHONY: init-dev
-init-dev:
-	rm -rf _opam
-	opam switch create . 4.06.1 --deps-only
-
-.PHONY: format-reason
-format-reason:
-	@$(NODE_BINS)/bsrefmt --in-place -w 80 \
-	$(shell find ./src ./example -type f \( -name *.re -o -name *.rei \))
-
-.PHONY: format-rescript
-format-rescript:
-	@$(NODE_BINS)/rescript format -all
+clean: ## Clean build artifacts and other generated files
+	$(DUNE) clean
 
 .PHONY: format
-format:
-	make format-reason
-	make format-rescript
+format: ## Format the codebase with ocamlformat
+	$(DUNE) build @fmt --auto-promote
 
-.PHONY: clean-test
-clean-test:
+.PHONY: format-check
+format-check: ## Checks if format is correct
+	$(DUNE) build @fmt
+
+.PHONY: watch
+watch: ## Watch for the filesystem and rebuild on every change
+	$(DUNE) build --watch
+
+.PHONY: test
+test: ## Run the tests
+	$(DUNE) build @runtest --no-buffer
+
+.PHONY: test-watch
+test-watch: ## Run the tests and watch for changes
+	$(DUNE) build -w @runtest
+
+COMPILED_RESCRIPT_SSG_DIR = _build/default/app/node_modules/rescript-ssg.ssg
+COMPILED_EXAMPLE_DIR = _build/default/app/example
+COMPILED_TESTS_DIR = _build/default/app/tests
+RESCRIPT_SSG_BIN = ENV_VAR=FOO $(COMPILED_RESCRIPT_SSG_DIR)/js/bin.mjs
+NODE_BINS_DIR = node_modules/.bin
+
+.PHONY: clean-example
+clean-example: ## Clean example site artifacts
+	rm -rf example/build
+
+.PHONY: build-example
+build-example: clean-example build ## Build the whole project and build example site
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMPILED_EXAMPLE_DIR)/src/commands/Build.bs.js
+
+.PHONY: start-example
+start-example: ## Start example site in watch mode
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMPILED_EXAMPLE_DIR)/src/commands/Start.bs.js
+
+.PHONY: serve-example
+serve-example: ## Serve example site (use after build)
+	$(NODE_BINS_DIR)/serve -l 3005 example/build/public
+
+.PHONY: clean-tests
+clean-tests: ## Clean test artifacts
 	rm -rf tests/output
 	rm -rf coverage
 
-.PHONY: test
-test: clean-test
-	$(NODE_BINS)/c8 node ./tests/Tests.bs.js
+.PHONY: tests
+tests: clean-tests ## Run tests
+	PROJECT_ROOT=$(MAKEFILE_DIR) $(NODE_BINS_DIR)/c8 node $(COMPILED_TESTS_DIR)/Tests.bs.js

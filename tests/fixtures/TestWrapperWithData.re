@@ -45,4 +45,4 @@ let make = (~data: option(data), ~children) =>
     children
   </div>;
 
-let modulePath = Utils.getFilepath();
+let modulePath = Ssg.Utils.getFilepath();

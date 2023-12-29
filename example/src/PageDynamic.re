@@ -1,9 +1,9 @@
-let modulePath = Utils.getFilepath();
+let modulePath = Ssg.Utils.getFilepath();
 
 [@react.component]
 let make = () => {
   let url =
-    RescriptReactRouter.useUrl(
+    ReasonReactRouter.useUrl(
       ~serverUrl={
         path: ["page-without-data", "server-id"],
         hash: "",

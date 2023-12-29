@@ -1,4 +1,4 @@
-[@bs.val] external import_: string => Promise.t('a) = "import";
+external import_: string => Promise.t('a) = "import";
 
 let showPage = (page: BuildPageWorkerT.workerPage) => {
   Log.makeMinimalPrintablePageObj(
@@ -145,10 +145,10 @@ let workerOutput: workerOutput =
         })
       ->Promise.map(result => {
           switch (result) {
-          | Ok((renderedPage: RenderedPage.t)) =>
+          | Ok(renderedPage: RenderedPage.t) =>
             Js.log(successText);
             Belt.Result.Ok(renderedPage);
-          | Error((errors: array((string, Js.Promise.error)))) =>
+          | Error(errors: array((string, Js.Promise.error))) =>
             logger.info(() => {
               Js.Console.error2(
                 {j|[Worker] $(pageInfo) Build page errors:|j},

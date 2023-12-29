@@ -1,8 +1,6 @@
-let dirname = Utils.getDirname();
+open Ssg;
 
-[@val] external process: Js.t('a) = "process";
-
-[@bs.module] external util: Js.t('a) = "util";
+[@mel.module] external util: Js.t('a) = "util";
 
 let inspect = (value): string =>
   util##inspect(value, {"compact": false, "depth": 20, "colors": true});
@@ -69,13 +67,23 @@ module BuildPageHtmlAndReactApp = {
 
   let logger = Log.makeLogger(Info);
 
-  let outputDir = Path.join2(dirname, "output");
+  external projectRoot: option(string) = "process.env.PROJECT_ROOT";
+
+  let projectRoot =
+    switch (projectRoot) {
+    | Some(dir) => dir
+    | _ =>
+      Js.Console.error("PROJECT_ROOT env var is missing");
+      Process.exit(1);
+    };
+
+  let outputDir = Path.join2(projectRoot, "tests/output");
 
   let artifactsOutputDir = PageBuilder.getArtifactsOutputDir(~outputDir);
 
   let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true});
 
-  let compileCommand = Path.join2(dirname, "../node_modules/.bin/rescript");
+  let compileCommand = "make build";
 
   let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup();
@@ -214,7 +222,7 @@ switch (ReactDOM.querySelector("#root")) {
 
     let expectedAppContent = {js|
 type pageData;
-[@bs.module "./TestPageWithData_Data_688ca4c30fca5edb6793.mjs"] external pageData: pageData = "data";
+[@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.mjs"] external pageData: pageData = "data";
 
 switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(<TestPageWithData data={pageData->Obj.magic} />, root)
@@ -273,10 +281,10 @@ switch (ReactDOM.querySelector("#root")) {
 
     let expectedAppContent = {js|
 type pageWrapperData;
-[@bs.module "./__pageWrappersData/TestWrapperWithData_Data_688ca4c30fca5edb6793.mjs"] external pageWrapperData: pageWrapperData = "data";
+[@mel.module "./__pageWrappersData/TestWrapperWithData_Data_688ca4c30fca5edb6793.mjs"] external pageWrapperData: pageWrapperData = "data";
 
 type pageData;
-[@bs.module "./TestPageWithData_Data_688ca4c30fca5edb6793.mjs"] external pageData: pageData = "data";
+[@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.mjs"] external pageData: pageData = "data";
 
 switch (ReactDOM.querySelector("#root")) {
 | Some(root) => ReactDOM.hydrate(<TestWrapperWithData data={pageWrapperData->Obj.magic} ><TestPageWithData data={pageData->Obj.magic} /></TestWrapperWithData>, root)

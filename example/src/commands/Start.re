@@ -1,3 +1,5 @@
+open Ssg;
+
 let currentDir = Utils.getDirname();
 
 let () =
@@ -7,7 +9,8 @@ let () =
     ~webpackDevServerOptions={listenTo: Port(9007), proxy: None},
     ~webpackMode=Development,
     ~outputDir=Pages.outputDir,
-    ~projectRootDir=Path.join2(currentDir, "../../../"),
+    ~projectRootDir=Pages.projectRootDir,
+    ~melangeOutputDir=Pages.melangeOutputDir,
     ~logLevel=Info,
     ~globalEnvValues=Pages.globalEnvValues,
     ~webpackBundleAnalyzerMode=None,

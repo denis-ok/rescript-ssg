@@ -251,7 +251,7 @@ switch (ReactDOM.querySelector("#root")) {
     let valueName = PageData.toValueName(pageDataType);
     {j|
 type $(valueName);
-[@bs.module "$(relativePathToDataDir)/$(jsDataFilename)"] external $(valueName): $(valueName) = "data";|j};
+[@mel.module "$(relativePathToDataDir)/$(jsDataFilename)"] external $(valueName): $(valueName) = "data";|j};
   };
 
   let makeDataPropString = (pageDataType: PageData.t) => {

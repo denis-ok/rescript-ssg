@@ -1,4 +1,4 @@
-let modulePath = Utils.getFilepath();
+let modulePath = Ssg.Utils.getFilepath();
 
 type variant =
   | A

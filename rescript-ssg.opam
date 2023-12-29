@@ -1,0 +1,40 @@
+opam-version: "2.0"
+name: "rescript-ssg"
+synopsis: "Rescript React static site generator"
+maintainer: "Denis Strelkov <strelkov.d.d@gmail.com>"
+authors: "Denis Strelkov <strelkov.d.d@gmail.com>"
+homepage: "https://github.com/denis-ok/rescript-ssg/"
+doc: "https://github.com/denis-ok/rescript-ssg/"
+bug-reports: "https://github.com/denis-ok/rescript-ssg/issues"
+dev-repo: "git+https://github.com/denis-ok/rescript-ssg.git"
+depends: [
+  "dune" {>= "3.8"}
+  "ocaml"
+  "melange" {>= "2.0.0"}
+  "reason" {>= "3.10.0"}
+  "reason-react"
+  "reason-react-ppx"
+  "styled-ppx" {with-test} # only used for the example
+  "ocaml-lsp-server" {with-test} # todo: use with-dev-setup once opam 2.2 is out
+  "ocamlformat" {= "0.26.0" & with-test} # todo: use with-dev-setup once opam 2.2 is out
+  "odoc" {with-doc}
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]
+pin-depends: [
+  ["reason-react.dev"      "git+https://github.com/reasonml/reason-react.git#2e99c8ee87cefe241b698c191c74226da54cf9db"]
+  ["reason-react-ppx.dev"  "git+https://github.com/reasonml/reason-react.git#2e99c8ee87cefe241b698c191c74226da54cf9db"]
+  ["styled-ppx.dev"        "git+https://github.com/davesnx/styled-ppx.git#acf6edee39edf7ee07da9bccd77d4fb4110a1331"]
+]
