@@ -68,7 +68,7 @@ let wrapJsTextWithScriptTag = (jsText: string) => {j|<script>$(jsText)</script>|
 let globalValuesToScriptTag =
     (globalValues: array((string, Js.Json.t))): string => {
   globalValues
-  ->Js.Array2.map(((key, value)) => {
+  ->Js.Array.map(~f=((key, value)) => {
       let keyS: string =
         switch (Js.Json.stringifyAny(key)) {
         | Some(key) => key
@@ -92,8 +92,8 @@ let globalValuesToScriptTag =
           Process.exit(1);
         };
       {j|globalThis[$(keyS)] = $(valueS)|j};
-    })
-  ->Js.Array2.joinWith("\n")
+    }, _)
+  ->Js.Array.join(~sep="\n", _)
   ->wrapJsTextWithScriptTag;
 };
 
@@ -104,9 +104,9 @@ let pagePathToPageAppModuleName =
     (~pageAppArtifactsSuffix, ~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
-    ->Js.String2.replaceByRe([%re {|/\//g|}], "")
-    ->Js.String2.replaceByRe([%re {|/-/g|}], "")
-    ->Js.String2.replaceByRe([%re {|/\./g|}], "");
+    ->Js.String.replaceByRe(~regexp=[%re {|/\//g|}], ~replacement="", _)
+    ->Js.String.replaceByRe(~regexp=[%re {|/-/g|}], ~replacement="", _)
+    ->Js.String.replaceByRe(~regexp=[%re {|/\./g|}], ~replacement="", _);
 
   modulePrefix ++ moduleName ++ "__PageApp" ++ pageAppArtifactsSuffix;
 };
@@ -114,7 +114,7 @@ let pagePathToPageAppModuleName =
 let groupScripts = scripts =>
   switch (scripts) {
   | [||] => ""
-  | scripts => "<script>" ++ scripts->Js.Array2.joinWith("\n") ++ "</script>"
+  | scripts => "<script>" ++ scripts->Js.Array.join(~sep="\n", _) ++ "</script>"
   };
 
 let renderHtmlTemplate =
@@ -143,7 +143,7 @@ let renderHtmlTemplate =
   let Emotion.Server.{html: renderedHtml, css, ids} =
     Emotion.Server.extractCritical(html);
 
-  let emotionIds = ids->Js.Array2.joinWith(" ");
+  let emotionIds = ids->Js.Array.join(~sep=" ", _);
 
   // https://github.com/emotion-js/emotion/blob/92be52d894c7d81d013285e9dfe90820e6b178f8/packages/css/src/index.js#L15
   let emotionCacheKey = "css";
@@ -156,8 +156,8 @@ let renderHtmlTemplate =
     | cssFiles =>
       Some(
         cssFiles
-        ->Js.Array2.map(filepath => Fs.readFileSyncAsUtf8(filepath))
-        ->Js.Array2.joinWith("\n"),
+        ->Js.Array.map(~f=filepath => Fs.readFileSyncAsUtf8(filepath), _)
+        ->Js.Array.join(~sep="\n", _),
       )
     };
 
@@ -287,7 +287,7 @@ type $(valueName);
           | Some(melangePageOutputDir) => melangePageOutputDir
           };
         let relativePath = Path.relative(~from, ~to_=pageWrappersDataDir);
-        if (relativePath->Js.String2.startsWith(pageWrappersDataDirname)) {
+        if (relativePath->Js.String.startsWith(~prefix=pageWrappersDataDirname, _)) {
           "./" ++ relativePath;
         } else {
           relativePath;
@@ -816,7 +816,7 @@ let buildPageHtmlAndReactApp =
 
       let jsFilesPromises =
         [|pageWrapperDataProp, pageDataProp|]
-        ->Js.Array2.map(data =>
+        ->Js.Array.map(~f=data =>
             switch (data) {
             | None => Promise.resolve(Belt.Result.Ok())
             | Some({jsDataFileContent, jsDataFilepath, _}) =>
@@ -828,13 +828,13 @@ let buildPageHtmlAndReactApp =
                   ~context=
                     "[PageBuilder.buildPageHtmlAndReactApp] [jsFilesPromises]",
                 )
-            }
-          );
+            },
+          _);
 
       let promises =
-        Js.Array2.concat(
-          [|resultHtmlFilePromise, resultReactAppFilePromise|],
-          jsFilesPromises,
+        Js.Array.concat(
+          ~other=jsFilesPromises,
+          [|resultHtmlFilePromise, resultReactAppFilePromise|]
         );
 
       promises->Promise.all->Promise.Result.all;

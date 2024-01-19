@@ -17,7 +17,7 @@ let bundler =
   Process.env
   ->Js.Dict.get("RESCRIPT_SSG_BUNDLER")
   ->Belt.Option.getWithDefault("")
-  ->Js.String2.toLowerCase
+  ->Js.String.toLowerCase
   ->fromString;
 
 let assetsDirname = "assets";
@@ -39,10 +39,10 @@ let assetFileExtensions = [|
 |];
 
 let assetFileExtensionsWithoutCss =
-  assetFileExtensions->Js.Array2.filter(ext => ext !== "css");
+  assetFileExtensions->Js.Array.filter(~f=ext => ext !== "css", _);
 
 let assetRegex = {
-  let regex: string = assetFileExtensions->Js.Array2.joinWith("|");
+  let regex: string = assetFileExtensions->Js.Array.join(~sep="|", _);
   let regex = {|\.|} ++ "(" ++ regex ++ ")" ++ "$";
   Js.Re.fromStringWithFlags(regex, ~flags="i");
 };
@@ -50,10 +50,10 @@ let assetRegex = {
 let getGlobalEnvValuesDict = (globalEnvValues: array((string, string))) => {
   let dict = Js.Dict.empty();
 
-  globalEnvValues->Js.Array2.forEach(((key, value)) => {
+  globalEnvValues->Js.Array.forEach(~f=((key, value)) => {
     let value = {j|"$(value)"|j};
     dict->Js.Dict.set(key, value);
-  });
+  }, _);
 
   dict;
 };
