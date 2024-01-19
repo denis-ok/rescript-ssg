@@ -254,7 +254,7 @@ let start =
   renderedPages
   ->Promise.map(renderedPages => {
       Js.Global.setTimeout(
-        () => {
+        ~f=() => {
           switch (Bundler.bundler) {
           | Esbuild =>
             Esbuild.watchAndServe(

@@ -660,7 +660,7 @@ let startDevServer =
       Js.log("[Webpack] Stopping dev server...");
 
       Js.Global.setTimeout(
-        () => {
+        ~f=() => {
           Js.log("[Webpack] Failed to gracefully shutdown.");
           Process.exit(1);
         },

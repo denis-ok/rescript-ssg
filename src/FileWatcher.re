@@ -250,8 +250,9 @@ let startWatcher =
                 pageModulesAndTheirDependencies->Js.Array.map(
                   ~f=((pageModulePath, pageDependencies)) => {
                   logger.debug(() => {
+                    let pageDependenciesStr = String.concat(", ", Stdlib.Array.to_list(pageDependencies));
                     Js.log(
-                      {j|[Watcher] Dependencies of updated page module: $(pageModulePath) are: $(pageDependencies)|j},
+                      {j|[Watcher] Dependencies of updated page module: $(pageModulePath) are: $(pageDependenciesStr)|j},
                     )
                   });
 

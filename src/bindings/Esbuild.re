@@ -249,7 +249,7 @@ let watchAndServe =
     Js.log("[Esbuild] Stopping esbuild...");
 
     Js.Global.setTimeout(
-      () => {
+      ~f=() => {
         Js.log("[Esbuild] Failed to gracefully shutdown.");
         Process.exit(1);
       },

@@ -269,7 +269,7 @@ let start =
           }
         | None =>
           let relatedPagePathWithDynamicSegment =
-            pagePathsWithDynamicSegments->Js.Array.find(pagePath =>
+            pagePathsWithDynamicSegments->Js.Array.find(~f=pagePath =>
               isPageWithDynamicPathSegmentRequested(reqPath, pagePath)
             , _);
           switch (relatedPagePathWithDynamicSegment) {
@@ -402,7 +402,7 @@ let start =
       server->Server.closeAllConnections();
 
       Js.Global.setTimeout(
-        () => {
+        ~f=() => {
           Js.Console.error("[Dev server] Failed to gracefully shutdown.");
           Process.exit(1);
         },
