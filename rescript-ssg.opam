@@ -14,6 +14,7 @@ depends: [
   "reason" {>= "3.10.0"}
   "reason-react"
   "reason-react-ppx"
+  "server-reason-react"
   "styled-ppx" {with-test} # only used for the example
   "ocaml-lsp-server" {with-test} # todo: use with-dev-setup once opam 2.2 is out
   "ocamlformat" {= "0.26.0" & with-test} # todo: use with-dev-setup once opam 2.2 is out
@@ -34,7 +35,9 @@ build: [
   ]
 ]
 pin-depends: [
-  ["reason-react.dev"      "git+https://github.com/reasonml/reason-react.git#2e99c8ee87cefe241b698c191c74226da54cf9db"]
-  ["reason-react-ppx.dev"  "git+https://github.com/reasonml/reason-react.git#2e99c8ee87cefe241b698c191c74226da54cf9db"]
-  ["styled-ppx.dev"        "git+https://github.com/davesnx/styled-ppx.git#acf6edee39edf7ee07da9bccd77d4fb4110a1331"]
+  ["melange.dev" "git+https://github.com/melange-re/melange#982cba971fa662439f0675465ef854424771ca3d"]
+  ["reason-react.dev" "https://github.com/reasonml/reason-react/archive/f799ac03d79d39de04fe937075607c348f8053b4.tar.gz"]
+  ["reason-react-ppx.dev" "https://github.com/reasonml/reason-react/archive/f799ac03d79d39de04fe937075607c348f8053b4.tar.gz"]
+  ["styled-ppx.dev" "https://github.com/davesnx/styled-ppx/archive/2e4fc8ce88f5be95114fe38ddf1e214ec15ea9ae.tar.gz"]
+  ["server-reason-react" "https://github.com/ml-in-barcelona/server-reason-react/archive/182c8629299fef7c58364f43ce4915ae10528097.zip"]
 ]
