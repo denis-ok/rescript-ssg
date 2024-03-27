@@ -3,10 +3,14 @@
 (library
  (name example)
  (modes melange)
- (libraries ssg styled-ppx.bs-css-emotion)
+ (libraries
+  ; comment for vertical formatting
+  ssg
+  styled-ppx.css
+  styled-ppx.emotion)
  (melange.runtime_deps
   src/content.css
   src/css/normalize.css
   src/images/cat.jpeg)
  (preprocess
-  (pps melange.ppx reason-react-ppx)))
+  (pps melange.ppx reason-react-ppx styled-ppx.lib)))

@@ -31,7 +31,7 @@ module Plugin = {
   };
 };
 
-[@module "esbuild"] external esbuild: esbuild = "default";
+[@mel.module "esbuild"] external esbuild: esbuild = "default";
 
 [@mel.send]
 external build': (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";

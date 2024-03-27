@@ -1,13 +1,13 @@
 module Server = {
   type t;
-  [@send] external listen: (t, int, unit => unit) => unit = "listen";
+  [@mel.send] external listen: (t, int, unit => unit) => unit = "listen";
 
-  [@send] external close: (t, unit => unit) => unit = "close";
+  [@mel.send] external close: (t, unit => unit) => unit = "close";
 
-  [@send]
+  [@mel.send]
   external closeAllConnections: (t, unit) => unit = "closeAllConnections";
 
-  [@set] external setKeepAliveTimeoutMs: (t, int) => unit = "keepAliveTimeout";
+  [@mel.set] external setKeepAliveTimeoutMs: (t, int) => unit = "keepAliveTimeout";
 };
 
 module ClientRequest = {

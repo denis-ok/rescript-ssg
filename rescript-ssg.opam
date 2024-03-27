@@ -9,15 +9,15 @@ bug-reports: "https://github.com/denis-ok/rescript-ssg/issues"
 dev-repo: "git+https://github.com/denis-ok/rescript-ssg.git"
 depends: [
   "dune" {>= "3.8"}
-  "ocaml"
-  "melange" {>= "2.0.0"}
-  "reason" {>= "3.10.0"}
-  "reason-react"
-  "reason-react-ppx"
+  "ocaml" {>= "5.1.0"}
+  "melange" {>= "3.0.0"}
+  "reason" {>= "3.11.0"}
+  "reason-react" {>= "0.14.0"}
+  "reason-react-ppx" {with-dev-setup}
   "server-reason-react"
-  "styled-ppx" {with-test} # only used for the example
-  "ocaml-lsp-server" {with-test} # todo: use with-dev-setup once opam 2.2 is out
-  "ocamlformat" {= "0.26.0" & with-test} # todo: use with-dev-setup once opam 2.2 is out
+  "styled-ppx" {with-dev-setup} # only used for the example
+  "ocaml-lsp-server" {with-dev-setup}
+  "ocamlformat" {with-dev-setup}
   "odoc" {with-doc}
 ]
 build: [
@@ -35,9 +35,6 @@ build: [
   ]
 ]
 pin-depends: [
-  ["melange.dev" "git+https://github.com/melange-re/melange#982cba971fa662439f0675465ef854424771ca3d"]
-  ["reason-react.dev" "https://github.com/reasonml/reason-react/archive/f799ac03d79d39de04fe937075607c348f8053b4.tar.gz"]
-  ["reason-react-ppx.dev" "https://github.com/reasonml/reason-react/archive/f799ac03d79d39de04fe937075607c348f8053b4.tar.gz"]
-  ["styled-ppx.dev" "https://github.com/davesnx/styled-ppx/archive/2e4fc8ce88f5be95114fe38ddf1e214ec15ea9ae.tar.gz"]
-  ["server-reason-react" "https://github.com/ml-in-barcelona/server-reason-react/archive/182c8629299fef7c58364f43ce4915ae10528097.zip"]
+  ["server-reason-react.dev" "https://github.com/ml-in-barcelona/server-reason-react/archive/b8756a5c71345e5e8f087a9ec7209b43a066d5f0.tar.gz"]
+  ["styled-ppx.dev" "https://github.com/davesnx/styled-ppx/archive/ec69e98cebfe64bed73a30cbc73c4560319acf93.tar.gz"]
 ]
