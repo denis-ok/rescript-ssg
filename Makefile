@@ -10,16 +10,16 @@ COMMANDS_DIR = $(EXAMPLE_DIR)/src/commands
 
 .PHONY: clean-rescript
 clean-rescript:
-	$(NODE_BINS)/rescript clean -with-deps
+	$(NODE_BINS)/bsb -clean-world
 
 .PHONY: build-rescript
 build-rescript:
-	$(NODE_BINS)/rescript
+	$(NODE_BINS)/bsb -make-world
 
 .PHONY: start-rescript
 start-rescript:
 	mkdir $(EXAMPLE_DIR)/build; \
-	$(NODE_BINS)/rescript build -w
+	$(NODE_BINS)/bsb -make-world -w
 
 .PHONY: build-example
 build-example:

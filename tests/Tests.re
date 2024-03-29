@@ -75,7 +75,7 @@ module BuildPageHtmlAndReactApp = {
 
   let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true});
 
-  let compileCommand = Path.join2(dirname, "../node_modules/.bin/rescript");
+  let compileCommand = Path.join2(dirname, "../node_modules/.bin/bsb");
 
   let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup();
