@@ -13,9 +13,9 @@ depends: [
   "melange" {>= "3.0.0"}
   "reason" {>= "3.11.0"}
   "reason-react" {>= "0.14.0"}
-  "reason-react-ppx" {with-dev-setup}
+  "reason-react-ppx"
   "server-reason-react"
-  "styled-ppx" {with-dev-setup} # only used for the example
+  "styled-ppx" # only used for the example
   "ocaml-lsp-server" {with-dev-setup}
   "ocamlformat" {with-dev-setup}
   "odoc" {with-doc}

@@ -5,11 +5,11 @@ type shutdownRunningTask = unit => Js.Promise.t(unit);
 let runningTasks: ref(array(shutdownRunningTask)) = ref([||]);
 
 let addTask = (task: shutdownRunningTask) => {
-  runningTasks := Js.Array2.concat([|task|], runningTasks^);
+  runningTasks := Js.Array.concat(~other=runningTasks^, [|task|]);
 };
 
 let shutdownRunningTasks = () =>
-  (runningTasks^)->Js.Array2.map(terminate => terminate())->Promise.all;
+  (runningTasks^)->Js.Array.map(~f=terminate => terminate(), _)->Promise.all;
 
 Process.onTerminate(() => {
   Js.log("[rescript-ssg] Performing graceful shutdown...");

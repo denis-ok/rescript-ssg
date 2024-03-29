@@ -11,9 +11,9 @@ external window: _ = "window";
 
 let dirnameFromFilepath = filepath => {
   filepath
-  ->Js.String2.split("/")
-  ->Js.Array2.slice(~start=0, ~end_=-1)
-  ->Js.Array2.joinWith("/");
+  ->Js.String.split(~sep="/", _)
+  ->Js.Array.slice(~start=0, ~end_=-1, _)
+  ->Js.Array.join(~sep="/", _);
 };
 
 // Reusable functions that can be simply called from any module instead of
@@ -23,17 +23,17 @@ let getFilepathFromError = jsError => {
   let lineWithPath =
     jsError
     ->getStack
-    ->Js.String2.split("\n")
-    ->Js.Array2.slice(~start=2, ~end_=3)
+    ->Js.String.split(~sep="\n", _)
+    ->Js.Array.slice(~start=2, ~end_=3, _)
     ->Belt.Array.get(0);
 
   switch (lineWithPath) {
   | None => Js.Exn.raiseError("[getFilepathFromError] lineWithPath is None")
   | Some(lineWithPath) =>
     lineWithPath
-    ->Js.String2.trim
-    ->Js.String2.replace("at file://", "")
-    ->Js.String2.replaceByRe(Js.Re.fromString(":[0-9]+:[0-9]+"), "")
+    ->Js.String.trim
+    ->Js.String.replace(~search="at file://", ~replacement="", _)
+    ->Js.String.replaceByRe(~regexp=Js.Re.fromString(":[0-9]+:[0-9]+"), ~replacement="", _)
   };
 };
 
@@ -47,10 +47,10 @@ let getFilepath = () =>
 let getDirname = () => makeError()->getFilepathFromError->dirnameFromFilepath;
 
 let getModuleNameFromModulePath = modulePath => {
-  let segments = modulePath->Js.String2.split("/");
+  let segments = modulePath->Js.String.split(~sep="/", _);
 
   let filename =
-    segments->Js.Array2.copy->Js.Array2.reverseInPlace->Belt.Array.get(0);
+    segments->Js.Array.copy->Js.Array.reverseInPlace->Belt.Array.get(0);
 
   switch (filename) {
   | None
@@ -59,19 +59,19 @@ let getModuleNameFromModulePath = modulePath => {
       "[Utils.getModuleNameFromModulePath] Filename is empty or None",
     );
     Process.exit(1);
-  | Some(filename) => filename->Js.String2.replace(".bs.js", "")
+  | Some(filename) => filename->Js.String.replace(~search=".bs.js", ~replacement="")
   };
 };
 
 let maybeAddSlashPrefix = path =>
-  if (path->Js.String2.startsWith("http") || path->Js.String2.startsWith("/")) {
+  if (path->Js.String.startsWith(~prefix="http", _) || path->Js.String.startsWith(~prefix="/", _)) {
     path;
   } else {
     "/" ++ path;
   };
 
 let maybeAddSlashSuffix = path =>
-  if (path->Js.String2.endsWith("/")) {
+  if (path->Js.String.endsWith(~suffix="/", _)) {
     path;
   } else {
     path ++ "/";

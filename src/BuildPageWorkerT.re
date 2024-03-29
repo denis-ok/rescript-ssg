@@ -44,5 +44,5 @@ let showPage = (page: workerPage) => {
 };
 
 let showPages = (pages: array(workerPage)) => {
-  pages->Js.Array2.map(page => page->showPage);
+  pages->Js.Array.map(~f=page => page->showPage, _);
 };

@@ -16,4 +16,4 @@ external env: Js.Dict.t(string) = "process.env";
 
 let onTerminate = callback =>
   [|"SIGINT", "SIGTERM"|]
-  ->Js.Array2.forEach(signal => process->on(signal, callback));
+  ->Js.Array.forEach(~f=signal => process->on(signal, callback), _);

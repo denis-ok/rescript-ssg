@@ -1,4 +1,6 @@
-open Ssg;
+let dirname = Utils.getDirname();
+
+external process: Js.t('a) = "process";
 
 [@mel.module] external util: Js.t('a) = "util";
 
@@ -67,23 +69,13 @@ module BuildPageHtmlAndReactApp = {
 
   let logger = Log.makeLogger(Info);
 
-  external projectRoot: option(string) = "process.env.PROJECT_ROOT";
-
-  let projectRoot =
-    switch (projectRoot) {
-    | Some(dir) => dir
-    | _ =>
-      Js.Console.error("PROJECT_ROOT env var is missing");
-      Process.exit(1);
-    };
-
-  let outputDir = Path.join2(projectRoot, "tests/output");
+  let outputDir = Path.join2(dirname, "output");
 
   let artifactsOutputDir = PageBuilder.getArtifactsOutputDir(~outputDir);
 
   let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true});
 
-  let compileCommand = "make build";
+  let compileCommand = Path.join2(dirname, "../node_modules/.bin/bsb");
 
   let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup();

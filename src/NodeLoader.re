@@ -4,14 +4,14 @@ external replaceAll: (string, string, string) => string = "replaceAll";
 let bsArtifactRegex = [%re {|/file:.*\.bs\.js$/i|}];
 
 let isBsArtifact = fileUrl => {
-  switch (Js.String2.match(fileUrl, bsArtifactRegex)) {
+  switch (Js.String.match(~regexp=bsArtifactRegex, fileUrl)) {
   | Some(_) => true
   | None => false
   };
 };
 
 let isAsset = fileUrl => {
-  switch (Js.String2.match(fileUrl, Bundler.assetRegex)) {
+  switch (Js.String.match(~regexp=Bundler.assetRegex, fileUrl)) {
   | Some(_) => true
   | None => false
   };
@@ -28,13 +28,13 @@ let isAsset = fileUrl => {
 let getEsbuildFileHash = (buffer: Buffer.t) => {
   HashWasm.createXXHash64AndReturnBinaryDigest(buffer)
   ->Promise.map(buffer => {
-      Base32Encode.base32Encode(buffer)->Js.String2.slice(~from=0, ~to_=8)
+      Base32Encode.base32Encode(buffer)->Js.String.slice(~start=0, ~end_=8, _)
     });
 };
 
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
 let getFinalHashedAssetPath = (url: string) => {
-  let filePath = url->Js.String2.replace("file://", "");
+  let filePath = url->Js.String.replace(~search="file://", ~replacement="", _);
 
   filePath
   ->Fs.Promises.readFileAsBuffer
@@ -50,7 +50,7 @@ let getFinalHashedAssetPath = (url: string) => {
 
       let fileExt = Path.extname(fileName);
 
-      let filenameWithoutExt = fileName->Js.String2.replace(fileExt, "");
+      let filenameWithoutExt = fileName->Js.String.replace(~search=fileExt, ~replacement="", _);
 
       let filenameWithHash =
         switch (Bundler.bundler) {
@@ -74,7 +74,7 @@ let getFinalHashedAssetPath = (url: string) => {
 
       filenameWithHash->Promise.map(filenameWithHash => {
         let assetPath =
-          switch (EnvParams.assetPrefix->Js.String2.startsWith("https://")) {
+          switch (EnvParams.assetPrefix->Js.String.startsWith(~prefix="https://", _)) {
           | false =>
             let assetsDir =
               Path.join2(EnvParams.assetPrefix, Bundler.assetsDirname);
