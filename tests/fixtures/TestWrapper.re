@@ -2,4 +2,4 @@
 let make = (~children) =>
   <div> "Hello from page wrapper"->React.string children </div>;
 
-let modulePath = Utils.getFilepath();
+let modulePath = Ssg.Utils.getFilepath();

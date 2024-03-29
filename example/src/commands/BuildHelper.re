@@ -1,3 +1,5 @@
+open Ssg;
+
 let build = (~webpackMinimizer) =>
   Commands.build(
     ~pageAppArtifactsType=Js,
@@ -6,6 +8,7 @@ let build = (~webpackMinimizer) =>
     ~webpackMode=Production,
     ~outputDir=Pages.outputDir,
     ~projectRootDir=Pages.projectRootDir,
+    ~melangeOutputDir=Pages.melangeOutputDir,
     ~logLevel=Info,
     ~compileCommand=
       Path.join2(Pages.projectRootDir, "node_modules/.bin/rescript"),

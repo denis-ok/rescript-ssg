@@ -1,4 +1,4 @@
-let modulePath = Utils.getFilepath();
+let modulePath = Ssg.Utils.getFilepath();
 
 [@react.component]
 let make = (~data, ~children) =>

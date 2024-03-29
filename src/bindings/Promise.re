@@ -1,23 +1,23 @@
 include Js.Promise;
 
-[@bs.send]
+[@mel.send]
 external map: (Js.Promise.t('a), 'a => 'b) => Js.Promise.t('b) = "then";
 
-[@bs.send]
+[@mel.send]
 external flatMap:
   (Js.Promise.t('a), 'a => Js.Promise.t('b)) => Js.Promise.t('b) =
   "then";
 
-[@bs.send]
+[@mel.send]
 external catch:
   (Js.Promise.t('a), Js.Promise.error => Js.Promise.t('b)) =>
   Js.Promise.t('b) =
   "catch";
 
 let seqRun = (functions: array(unit => Js.Promise.t('a))) => {
-  Js.Array2.reduce(
+  Js.Array.reduce(
     functions,
-    (acc, func) => {
+    ~f=(acc, func) => {
       switch (acc) {
       | [] => [func()]
       | [promise, ...rest] => [
@@ -27,7 +27,7 @@ let seqRun = (functions: array(unit => Js.Promise.t('a))) => {
         ]
       }
     },
-    [],
+    ~init=[],
   )
   ->Belt.List.toArray
   ->Js.Promise.all;
@@ -44,13 +44,14 @@ module Result = {
   let all = (promises: Js.Promise.t(array(Belt.Result.t('ok, 'error)))) =>
     promises->map(promises => {
       let (oks, errors) =
-        promises->Js.Array2.reduce(
-          ((oks, errors), result) =>
+        promises->Js.Array.reduce(
+          ~f=((oks, errors), result) =>
             switch (result) {
-            | Ok(ok) => (Js.Array2.concat([|ok|], oks), errors)
-            | Error(error) => (oks, Js.Array2.concat([|error|], errors))
+            | Ok(ok) => (Js.Array.concat(~other=oks, [|ok|]), errors)
+            | Error(error) => (oks, Js.Array.concat(~other=errors, [|error|]))
             },
-          ([||], [||]),
+          ~init=([||], [||]),
+          _
         );
 
       switch (errors) {

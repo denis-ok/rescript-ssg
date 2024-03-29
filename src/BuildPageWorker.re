@@ -1,4 +1,17 @@
-[@bs.val] external import_: string => Promise.t('a) = "import";
+module DomParser = {
+  // Quick workaround to fix react-intl error: Cannot format XML message without DOMParser.
+  // https://github.com/vercel/next.js/issues/10533#issuecomment-587477942
+  // This should be fixed more elegantly and removed from here.
+  type domParser;
+
+  [@mel.module "@xmldom/xmldom"] external domParser: domParser = "DOMParser";
+
+  external globalThis: Js.Dict.t(domParser) = "globalThis";
+
+  let () = globalThis->Js.Dict.set("DOMParser", domParser);
+};
+
+external import_: string => Js.Promise.t('a) = "import";
 
 let showPage = (page: BuildPageWorkerT.workerPage) => {
   Log.makeMinimalPrintablePageObj(
@@ -13,7 +26,7 @@ let parentPort = WorkerThreads.parentPort;
 
 let pages = workerData.pages;
 
-let pagesCount: string = workerData.pages->Js.Array2.length->Belt.Int.toString;
+let pagesCount: string = workerData.pages->Js.Array.length->Belt.Int.toString;
 
 let logger = Log.makeLogger(workerData.logLevel);
 
@@ -26,7 +39,7 @@ let startTime = Performance.now();
 
 let workerOutput: workerOutput =
   pages
-  ->Js.Array2.map(page => {
+  ->Js.Array.map(~f=(page: BuildPageWorkerT.workerPage) => {
       let moduleName: string =
         Utils.getModuleNameFromModulePath(page.modulePath);
 
@@ -171,7 +184,7 @@ let workerOutput: workerOutput =
           let result = Belt.Result.Error(page.path);
           Promise.resolve(result);
         });
-    })
+    }, _)
   ->Promise.all
   ->Promise.map(pages => {
       Js.log2(

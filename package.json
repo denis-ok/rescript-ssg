@@ -39,16 +39,13 @@
   "peerDependencies": {
     "@emotion/css": "^11.10.0",
     "@emotion/server": "^11.10.0",
-    "@rescript/react": "^0.10.3",
-    "bs-css-emotion": "^5.0.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-helmet": "^6.1.0"
   },
   "devDependencies": {
     "c8": "^8.0.1",
     "lite-flag-icon": "^1.0.8",
-    "rescript": "^9.1.4",
     "serve": "^14.2.1"
   }
 }

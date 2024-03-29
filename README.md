@@ -38,17 +38,17 @@ let make = () => {
 }
 
 // This helper call gets a filepath of this module
-let modulePath = RescriptSsg.Utils.getFilepath()
+let modulePath = Ssg.Utils.getFilepath()
 ```
 
 2. Create `Pages.res` file where we'll define our pages array:
 
 ```rescript
-let currentDir = RescriptSsg.Utils.getDirname()
+let currentDir = Ssg.Utils.getDirname()
 
-let outputDir = RescriptSsg.Path.join2(currentDir, "../build")
+let outputDir = Ssg.Path.join2(currentDir, "../build")
 
-let index: RescriptSsg.PageBuilder.page = {
+let index: Ssg.PageBuilder.page = {
   hydrationMode: FullHydration,
   pageWrapper: None,
   component: ComponentWithoutData(<Index />),
@@ -66,9 +66,9 @@ let pages = [index]
 3. Create `Build.res` file. We'll pass this file to `rescript-ssg` binary to perform build.
 
 ```rescript
-let currentDir = RescriptSsg.Utils.getDirname()
+let currentDir = Ssg.Utils.getDirname()
 
-let () = RescriptSsg.Commands.build(
+let () = Ssg.Commands.build(
   ~mode=Production,
   ~outputDir=Pages.outputDir,
   ~logLevel=Info,
@@ -85,7 +85,7 @@ let () = RescriptSsg.Commands.build(
 4. Create `Start.res` file. We'll pass this file to `rescript-ssg` binary to start dev mode.
 
 ```rescript
-let () = RescriptSsg.Commands.start(
+let () = Ssg.Commands.start(
   ~devServerOptions={listenTo: Port(9000), proxy: None},
   ~mode=Development,
   ~globalEnvValues=Pages.globalEnvValues,

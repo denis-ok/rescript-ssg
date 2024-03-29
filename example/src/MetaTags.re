@@ -1,3 +1,5 @@
+module ReactHelmet = Ssg.ReactHelmet;
+
 [@react.component]
 let make = (~title, ~description) =>
   <ReactHelmet>

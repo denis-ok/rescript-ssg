@@ -3,18 +3,18 @@ module Hash = {
 
   type hash;
 
-  [@bs.module "node:crypto"] external crypto: crypto = "default";
+  [@mel.module "node:crypto"] external crypto: crypto = "default";
 
-  [@bs.send "createHash"]
+  [@mel.send "createHash"]
   external createHash': (crypto, string) => hash = "createHash";
 
-  [@bs.send "update"]
+  [@mel.send "update"]
   external updateBufferWithBuffer: (hash, Buffer.t) => hash = "update";
 
-  [@bs.send "update"]
+  [@mel.send "update"]
   external updateBufferWithString: (hash, string) => hash = "update";
 
-  [@bs.send "digest"] external digest: (hash, string) => string = "digest";
+  [@mel.send "digest"] external digest: (hash, string) => string = "digest";
 
   let digestLength = 20;
 
@@ -24,11 +24,11 @@ module Hash = {
     createMd5()
     ->updateBufferWithBuffer(data)
     ->digest("hex")
-    ->Js.String2.slice(~from=0, ~to_=digestLength);
+    ->Js.String.slice(~start=0, ~end_=digestLength, _);
 
   let stringToHash = (data: string) =>
     createMd5()
     ->updateBufferWithString(data)
     ->digest("hex")
-    ->Js.String2.slice(~from=0, ~to_=digestLength);
+    ->Js.String.slice(~start=0, ~end_=digestLength, _);
 };

@@ -1,4 +1,6 @@
-let modulePath = Utils.getFilepath();
+let modulePath = Ssg.Utils.getFilepath();
+
+module PartialHydration = Ssg.PartialHydration;
 
 module Local = {
   [@react.component]
