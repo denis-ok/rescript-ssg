@@ -1,3 +1,5 @@
+open Ssg;
+
 let dirname = Utils.getDirname();
 
 external process: Js.t('a) = "process";
@@ -63,8 +65,8 @@ module BuildPageHtmlAndReactApp = {
   };
 
   let removeNewlines = (str: string) => {
-    let regex = Js.Re.fromStringWithFlags({js|[\r\n]+|js}, ~flags="g");
-    str->Js.String2.replaceByRe(regex, "");
+    let regexp = Js.Re.fromStringWithFlags({js|[\r\n]+|js}, ~flags="g");
+    str->Js.String.replaceByRe(~regexp, ~replacement="", _);
   };
 
   let logger = Log.makeLogger(Info);

@@ -13,7 +13,7 @@ let make = (~h1Text) => {
       </li>
       {Page.all
        ->(
-           Js.Array2.map(page => {
+           Js.Array.map(~f=page => {
              let slug = Page.toSlug(page);
              <li key=slug>
                <a href={"/" ++ slug}> <h3> slug->React.string </h3> </a>

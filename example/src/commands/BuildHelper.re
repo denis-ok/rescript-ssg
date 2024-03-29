@@ -1,3 +1,5 @@
+open Ssg;
+
 let build = (~webpackMinimizer) =>
   Commands.build(
     ~pageAppArtifactsType=Js,
@@ -7,8 +9,7 @@ let build = (~webpackMinimizer) =>
     ~outputDir=Pages.outputDir,
     ~projectRootDir=Pages.projectRootDir,
     ~logLevel=Info,
-    ~compileCommand=
-      Path.join2(Pages.projectRootDir, "node_modules/.bin/bsb"),
+    ~compileCommand=Path.join2(Pages.projectRootDir, "node_modules/.bin/bsb"),
     ~webpackMinimizer,
     ~webpackBundleAnalyzerMode=
       Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),

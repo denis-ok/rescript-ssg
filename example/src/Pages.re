@@ -1,3 +1,5 @@
+open Ssg;
+
 // It's more reliable to have a constant for the project root directory and build paths relative to it
 // instead of building paths relative to the directory of the current module.
 // In the case of Melange, JS files are emitted to a different directory with a different nesting structure
@@ -172,18 +174,18 @@ let pages = [|
 let fakeExtralanguages = [|"es"|];
 
 let localizedPages =
-  Js.Array2.map(fakeExtralanguages, language =>
-    Js.Array2.map(pages, page =>
+  Js.Array.map(fakeExtralanguages, ~f=language =>
+    Js.Array.map(pages, ~f=(page: Ssg.PageBuilder.page) =>
       {
         ...page,
         path:
           switch (page.path) {
           | Root => Path([|language|])
           | Path(segments) =>
-            Path(Js.Array2.concat([|language|], segments))
+            Path(Js.Array.concat(~other=[|language|], segments))
           },
       }
     )
   );
 
-let pages = Js.Array2.concat([|pages|], localizedPages);
+let pages = Js.Array.concat(~other=[|pages|], localizedPages);
