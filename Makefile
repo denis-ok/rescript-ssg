@@ -87,4 +87,4 @@ clean-tests: ## Clean test artifacts
 
 .PHONY: tests
 tests: clean-tests ## Run tests
-	PROJECT_ROOT=$(MAKEFILE_DIR) $(NODE_BINS_DIR)/c8 node $(COMPILED_TESTS_DIR)/Tests.bs.js
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(NODE_BINS_DIR)/c8 node $(COMPILED_TESTS_DIR)/Tests.bs.js

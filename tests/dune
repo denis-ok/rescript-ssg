@@ -4,5 +4,9 @@
  (name tests)
  (modes melange)
  (libraries ssg)
+ ; TODO Fix:
+ ; Error (alert deprecated): ReactDOM.hydrate
+ ; This function will be removed in the next release. Use ReactDOM.Client.hydrateRoot instead.
+ (flags -alert -deprecated)
  (preprocess
   (pps melange.ppx reason-react-ppx)))

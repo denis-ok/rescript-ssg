@@ -71,13 +71,27 @@ module BuildPageHtmlAndReactApp = {
 
   let logger = Log.makeLogger(Info);
 
-  let outputDir = Path.join2(dirname, "output");
+  external projectRootDir': option(string) = "process.env.PROJECT_ROOT_DIR";
+
+  let projectRootDir =
+    switch (projectRootDir') {
+    | Some(dir) => dir
+    | _ =>
+      Js.Console.error("PROJECT_ROOT_DIR env var is missing");
+      Process.exit(1);
+    };
+
+  let outputDir = Path.join2(projectRootDir, "tests/output");
+
+  // TODO Check what melangeOutputDir does and if we should test it
+  // let melangeOutputDir =
+  // Path.join2(projectRootDir, "_build/default/app/example/build");
 
   let artifactsOutputDir = PageBuilder.getArtifactsOutputDir(~outputDir);
 
   let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true});
 
-  let compileCommand = Path.join2(dirname, "../node_modules/.bin/bsb");
+  let compileCommand = "make build";
 
   let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
     cleanup();
