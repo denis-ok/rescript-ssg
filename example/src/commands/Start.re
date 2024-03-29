@@ -9,6 +9,7 @@ let () =
     ~webpackDevServerOptions={listenTo: Port(9007), proxy: None},
     ~webpackMode=Development,
     ~outputDir=Pages.outputDir,
+    ~melangeOutputDir=Pages.melangeOutputDir,
     ~projectRootDir=Path.join2(currentDir, "../../../"),
     ~logLevel=Info,
     ~globalEnvValues=Pages.globalEnvValues,

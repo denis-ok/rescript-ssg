@@ -7,6 +7,7 @@ let build = (~webpackMinimizer) =>
     ~globalEnvValues=Pages.globalEnvValues,
     ~webpackMode=Production,
     ~outputDir=Pages.outputDir,
+    ~melangeOutputDir=Pages.melangeOutputDir,
     ~projectRootDir=Pages.projectRootDir,
     ~logLevel=Info,
     ~compileCommand=Path.join2(Pages.projectRootDir, "node_modules/.bin/bsb"),
