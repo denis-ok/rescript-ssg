@@ -7,6 +7,11 @@
   (es6 bs.js))
  (runtime_deps package.json))
 
+(install
+ (section bin)
+ (package rescript-ssg)
+ (files src/js/bin.mjs))
+
 (subdir
  app
  (subdir
