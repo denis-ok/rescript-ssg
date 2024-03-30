@@ -16,8 +16,9 @@ depends: [
   "reason-react-ppx"
   "server-reason-react"
   "styled-ppx" # only used for the example
-  "ocaml-lsp-server" {with-test} # todo: use {with-dev-setup} once opam 2.2 is out
-  "ocamlformat" {with-test} # todo: use {with-dev-setup} once opam 2.2 is out
+  "ocaml-lsp-server" {with-test} # todo: use with-dev-setup once opam 2.2 is out
+  "ocamlformat" {with-test} # todo: use with-dev-setup once opam 2.2 is out
+  "opam-check-npm-deps" {with-test} # todo: use with-dev-setup once opam 2.2 is out
   "odoc" {with-doc}
 ]
 build: [
