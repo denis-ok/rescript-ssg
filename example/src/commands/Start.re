@@ -6,14 +6,15 @@ let () =
   Commands.start(
     ~pageAppArtifactsType=Js,
     ~pages=Pages.pages,
-    ~webpackDevServerOptions={listenTo: Port(9007), proxy: None},
+    ~globalEnvValues=Pages.globalEnvValues,
     ~webpackMode=Development,
     ~outputDir=Pages.outputDir,
     ~melangeOutputDir=Pages.melangeOutputDir,
-    ~projectRootDir=Path.join2(currentDir, "../../../"),
+    ~projectRootDir=Pages.projectRootDir,
     ~logLevel=Info,
-    ~globalEnvValues=Pages.globalEnvValues,
+    ~webpackDevServerOptions={listenTo: Port(9007), proxy: None},
     ~webpackBundleAnalyzerMode=None,
     ~buildWorkersCount=1,
+    ~pageAppArtifactsSuffix=UnixTimestamp,
     (),
   );

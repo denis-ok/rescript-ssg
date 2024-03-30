@@ -10,7 +10,9 @@ let build = (~webpackMinimizer) =>
     ~melangeOutputDir=Pages.melangeOutputDir,
     ~projectRootDir=Pages.projectRootDir,
     ~logLevel=Info,
-    ~compileCommand=Path.join2(Pages.projectRootDir, "node_modules/.bin/bsb"),
+    // compileCommand isn't used with pageAppArtifactsType=Js
+    // Should be removed/refactored in the future
+    ~compileCommand="",
     ~webpackMinimizer,
     ~webpackBundleAnalyzerMode=
       Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
