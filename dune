@@ -5,8 +5,9 @@
  (libraries ssg example tests)
  (module_systems
   (es6 bs.js))
- (runtime_deps package.json))
+ (runtime_deps package.json src/js/bin.mjs))
 
+; doesn't work, added to check
 (install
  (section bin)
  (package rescript-ssg)
