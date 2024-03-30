@@ -1,4 +1,8 @@
-// open CssJs;
-
-// let link = style(. [|color(blue), hover([|color(blueviolet)|])|]);
-let link = "";
+let link = [%cx
+  {|
+    color: blue;
+    &:hover {
+      color: blueviolet;
+    }
+  |}
+];
