@@ -52,20 +52,27 @@ let getDirname = () => makeError()->getFilepathFromError->dirnameFromFilepath;
 
 let getModuleNameFromModulePath = modulePath => {
   let segments = modulePath->Js.String.split(~sep="/", _);
-
-  let filename =
-    segments->Js.Array.copy->Js.Array.reverseInPlace->Belt.Array.get(0);
-
+  let filename = segments->Belt.Array.get(Belt.Array.length(segments) - 1);
   switch (filename) {
   | None
   | Some("") =>
     Js.Console.error(
-      "[Utils.getModuleNameFromModulePath] Filename is empty or None",
+      "[Utils.getModuleNameFromModulePath] Filename is empty or None, modulePath: "
+      ++ modulePath,
     );
     Process.exit(1);
   | Some(filename) =>
-    // TODO we should search and replace melangeArtifactsExtension
-    filename->Js.String.replace(~search=".mel.mjs", ~replacement="")
+    let filenameSplit = filename->Js.String.split(~sep=".", _);
+    let moduleName = filenameSplit->Belt.Array.get(0);
+    switch (moduleName) {
+    | None =>
+      Js.Console.error(
+        "[Utils.getModuleNameFromModulePath] moduleName is None, modulePath: "
+        ++ modulePath,
+      );
+      Process.exit(1);
+    | Some(moduleName) => moduleName
+    };
   };
 };
 
