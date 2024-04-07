@@ -1,5 +1,8 @@
 let dirname = Utils.getDirname();
 
+// This module is expected to be imported when we use bin.mjs and
+// all other files imported by binary are emitted with "mel.mjs" output ("install" target).
+// So we have hardcoded .mel.js extension here and it should work fine.
 let nodeLoaderPath = Path.join2(dirname, "./NodeLoader.mel.mjs");
 
 let nodeOptions = [|
