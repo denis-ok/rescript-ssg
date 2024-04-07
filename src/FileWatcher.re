@@ -35,6 +35,7 @@ let showPages = (pages: array(PageBuilder.page)) => {
 
 let startWatcher =
     (
+      ~melangeArtifactsExtension,
       ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~projectRootDir: string,
       ~outputDir: string,
@@ -208,6 +209,7 @@ let startWatcher =
         )
       );
       BuildPageWorkerHelpers.buildPagesWithWorkers(
+        ~melangeArtifactsExtension,
         ~pageAppArtifactsType,
         ~buildWorkersCount,
         // TODO Here we probably should group pages to rebuild by globalValues (one globalValues per worker)

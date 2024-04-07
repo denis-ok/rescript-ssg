@@ -33,7 +33,11 @@ let getFilepathFromError = jsError => {
     lineWithPath
     ->Js.String.trim
     ->Js.String.replace(~search="at file://", ~replacement="", _)
-    ->Js.String.replaceByRe(~regexp=Js.Re.fromString(":[0-9]+:[0-9]+"), ~replacement="", _)
+    ->Js.String.replaceByRe(
+        ~regexp=Js.Re.fromString(":[0-9]+:[0-9]+"),
+        ~replacement="",
+        _,
+      )
   };
 };
 
@@ -59,12 +63,15 @@ let getModuleNameFromModulePath = modulePath => {
       "[Utils.getModuleNameFromModulePath] Filename is empty or None",
     );
     Process.exit(1);
-  | Some(filename) => filename->Js.String.replace(~search=".bs.js", ~replacement="")
+  | Some(filename) =>
+    // TODO we should search and replace melangeArtifactsExtension
+    filename->Js.String.replace(~search=".mel.mjs", ~replacement="")
   };
 };
 
 let maybeAddSlashPrefix = path =>
-  if (path->Js.String.startsWith(~prefix="http", _) || path->Js.String.startsWith(~prefix="/", _)) {
+  if (path->Js.String.startsWith(~prefix="http", _)
+      || path->Js.String.startsWith(~prefix="/", _)) {
     path;
   } else {
     "/" ++ path;

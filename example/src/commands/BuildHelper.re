@@ -2,6 +2,7 @@ open Ssg;
 
 let build = (~webpackMinimizer) =>
   Commands.build(
+    ~melangeArtifactsExtension=Pages.melangeArtifactsExtension,
     ~pageAppArtifactsType=Js,
     ~pages=Pages.pages,
     ~globalEnvValues=Pages.globalEnvValues,

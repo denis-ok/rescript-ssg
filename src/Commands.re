@@ -63,6 +63,7 @@ type pageAppArtifactsSuffix =
 
 let initializeAndBuildPages =
     (
+      ~melangeArtifactsExtension,
       ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~logLevel,
       ~buildWorkersCount,
@@ -99,6 +100,7 @@ let initializeAndBuildPages =
 
   let renderedPages =
     BuildPageWorkerHelpers.buildPagesWithWorkers(
+      ~melangeArtifactsExtension,
       ~pageAppArtifactsType,
       ~buildWorkersCount,
       ~pages,
@@ -120,6 +122,7 @@ let initializeAndBuildPages =
 
 let build =
     (
+      ~melangeArtifactsExtension,
       ~pages: array(array(PageBuilder.page)),
       ~globalEnvValues: array((string, string))=[||],
       ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType=Reason,
@@ -141,6 +144,7 @@ let build =
     : Js.Promise.t(unit) => {
   let (logger, _pages, renderedPages) =
     initializeAndBuildPages(
+      ~melangeArtifactsExtension,
       ~pageAppArtifactsType,
       ~logLevel,
       ~buildWorkersCount,
@@ -192,6 +196,7 @@ let build =
 
 let start =
     (
+      ~melangeArtifactsExtension,
       ~pages: array(array(PageBuilder.page)),
       ~globalEnvValues: array((string, string))=[||],
       ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType=Reason,
@@ -220,6 +225,7 @@ let start =
     ) => {
   let (logger, pages, renderedPages) =
     initializeAndBuildPages(
+      ~melangeArtifactsExtension,
       ~pageAppArtifactsType,
       ~logLevel,
       ~buildWorkersCount,
@@ -233,6 +239,7 @@ let start =
 
   let startFileWatcher = (): unit =>
     FileWatcher.startWatcher(
+      ~melangeArtifactsExtension,
       ~projectRootDir,
       ~pageAppArtifactsType,
       ~outputDir,

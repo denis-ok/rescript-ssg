@@ -7,6 +7,8 @@ open Ssg;
 
 external projectRootDir': option(string) = "process.env.PROJECT_ROOT_DIR";
 
+let melangeArtifactsExtension = "mel.mjs";
+
 let projectRootDir =
   switch (projectRootDir') {
   | Some(dir) => dir

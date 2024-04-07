@@ -1,6 +1,6 @@
 let dirname = Utils.getDirname();
 
-let nodeLoaderPath = Path.join2(dirname, "./NodeLoader.mjs");
+let nodeLoaderPath = Path.join2(dirname, "./NodeLoader.mel.mjs");
 
 let nodeOptions = [|
   {j|--experimental-loader=$(nodeLoaderPath)|j},

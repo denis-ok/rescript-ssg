@@ -4,14 +4,14 @@
  (target app)
  (libraries ssg example tests)
  (module_systems
-  (es6 bs.js)))
+  (es6 mel.mjs)))
 
 (melange.emit
  (alias install)
  (target ssgbin)
  (libraries ssg)
  (module_systems
-  (es6 mjs)))
+  (es6 mel.mjs)))
 
 (install
  (section lib)

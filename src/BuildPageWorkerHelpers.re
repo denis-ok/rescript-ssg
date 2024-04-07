@@ -36,17 +36,23 @@ let mapPageToPageForRebuild =
 };
 
 let runBuildPageWorker =
-    (~onExit, ~workerData: BuildPageWorkerT.workerData)
+    (
+      ~melangeArtifactsExtension: string,
+      ~onExit: int => unit,
+      ~workerData: BuildPageWorkerT.workerData,
+    )
     : BuildPageWorker.workerOutput =>
   // This is the place where we have to manually annotate output type of runWorker call
   WorkerThreads.runWorker(
-    ~workerModulePath=Path.join2(dirname, "BuildPageWorker.bs.js"),
+    ~workerModulePath=
+      Path.join2(dirname, "BuildPageWorker." ++ melangeArtifactsExtension),
     ~workerData,
     ~onExit,
   );
 
 let buildPagesWithWorker =
     (
+      ~melangeArtifactsExtension,
       ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
@@ -68,7 +74,7 @@ let buildPagesWithWorker =
     pageAppArtifactsSuffix,
   };
 
-  runBuildPageWorker(~workerData, ~onExit=exitCode => {
+  runBuildPageWorker(~melangeArtifactsExtension, ~workerData, ~onExit=exitCode => {
     logger.debug(() => Js.log2("[Worker] Exit code:", exitCode))
   });
 };
@@ -77,6 +83,7 @@ let defaultWorkersCount = 8;
 
 let buildPagesWithWorkers =
     (
+      ~melangeArtifactsExtension: string,
       ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~pages: array(array(PageBuilder.page)),
       ~outputDir: string,
@@ -141,6 +148,7 @@ let buildPagesWithWorkers =
           pagesChunk
           ->Js.Array.map(~f=chunk =>
               buildPagesWithWorker(
+                ~melangeArtifactsExtension,
                 ~pageAppArtifactsType,
                 ~outputDir,
                 ~melangeOutputDir,
