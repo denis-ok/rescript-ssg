@@ -61,7 +61,7 @@ test-watch: ## Run the tests and watch for changes
 COMPILED_RESCRIPT_SSG_DIR = _build/default/app/node_modules/rescript-ssg.ssg
 COMPILED_EXAMPLE_DIR = _build/default/app/example
 COMPILED_TESTS_DIR = _build/default/app/tests
-RESCRIPT_SSG_BIN = ENV_VAR=FOO $(COMPILED_RESCRIPT_SSG_DIR)/js/bin.mjs
+RESCRIPT_SSG_BIN = ENV_VAR=FOO _build/install/default/lib/rescript-ssg/ssgbin/node_modules/rescript-ssg.ssg/js/bin.mjs
 NODE_BINS_DIR = node_modules/.bin
 
 .PHONY: clean-example

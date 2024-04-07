@@ -4,44 +4,30 @@
  (target app)
  (libraries ssg example tests)
  (module_systems
-  (es6 bs.js))
- (runtime_deps package.json src/js/bin.mjs))
+  (es6 bs.js)))
 
-; doesn't work, added to check
+(melange.emit
+ (alias install)
+ (target ssgbin)
+ (libraries ssg)
+ (module_systems
+  (es6 mjs)))
+
 (install
- (section bin)
+ (section lib)
  (package rescript-ssg)
- (files src/js/bin.mjs))
+ (files
+  ; can we put these files to the root of rescript-ssg dir?
+  (glob_files ssgbin/node_modules/melange/*.mjs)
+  (glob_files ssgbin/node_modules/melange.belt/*.mjs)
+  (glob_files ssgbin/node_modules/melange.dom/*.mjs)
+  (glob_files ssgbin/node_modules/melange.js/*.mjs)
+  (glob_files ssgbin/node_modules/reason-react/*.mjs)
+  (glob_files ssgbin/node_modules/rescript-ssg.ssg/*.mjs)
+  (glob_files ssgbin/node_modules/rescript-ssg.ssg/bindings/*.mjs)))
 
-(subdir
- app
- (subdir
-  node_modules
-  (subdir
-   melange
-   (rule
-    (action
-     (with-stdout-to
-      package.json
-      (run echo "{\"type\": \"module\"}")))))
-  (subdir
-   melange.belt
-   (rule
-    (action
-     (with-stdout-to
-      package.json
-      (run echo "{\"type\": \"module\"}")))))
-  (subdir
-   melange.js
-   (rule
-    (action
-     (with-stdout-to
-      package.json
-      (run echo "{\"type\": \"module\"}")))))
-  (subdir
-   rescript-ssg.ssg
-   (rule
-    (action
-     (with-stdout-to
-      package.json
-      (run echo "{\"type\": \"module\"}")))))))
+(install
+ (section libexec)
+ (package rescript-ssg)
+ (files
+  (glob_files ssgbin/node_modules/rescript-ssg.ssg/js/bin.mjs)))
