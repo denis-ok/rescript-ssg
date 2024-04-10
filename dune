@@ -23,11 +23,11 @@
   (glob_files ssgbin/node_modules/melange.dom/*.mjs)
   (glob_files ssgbin/node_modules/melange.js/*.mjs)
   (glob_files ssgbin/node_modules/reason-react/*.mjs)
-  (glob_files ssgbin/node_modules/rescript-ssg.ssg/*.mjs)
-  (glob_files ssgbin/node_modules/rescript-ssg.ssg/bindings/*.mjs)))
+  (glob_files ssgbin/node_modules/rescript-ssg/*.mjs)
+  (glob_files ssgbin/node_modules/rescript-ssg/bindings/*.mjs)))
 
 (install
  (section libexec)
  (package rescript-ssg)
  (files
-  (glob_files ssgbin/node_modules/rescript-ssg.ssg/js/bin.mjs)))
+  (glob_files ssgbin/node_modules/rescript-ssg/js/bin.mjs)))
