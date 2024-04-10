@@ -58,9 +58,8 @@ test: ## Run the tests
 test-watch: ## Run the tests and watch for changes
 	$(DUNE) build -w @runtest
 
-COMPILED_RESCRIPT_SSG_DIR = _build/default/app/node_modules/rescript-ssg.ssg
-COMPILED_EXAMPLE_DIR = _build/default/app/example
-COMPILED_TESTS_DIR = _build/default/app/tests
+COMPILED_EXAMPLE_DIR = _build/default/all/example
+COMPILED_TESTS_DIR = _build/default/all/tests
 RESCRIPT_SSG_BIN = ENV_VAR=FOO _build/install/default/lib/rescript-ssg/ssgbin/node_modules/rescript-ssg/js/bin.mjs
 
 NODE_BINS_DIR = node_modules/.bin

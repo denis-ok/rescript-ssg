@@ -1,7 +1,7 @@
 (dirs :standard \ node_modules)
 
 (melange.emit
- (target app)
+ (target all)
  (libraries rescript-ssg example tests)
  (module_systems
   (es6 mel.mjs)))

@@ -20,7 +20,7 @@ let projectRootDir =
 let outputDir = Path.join2(projectRootDir, "example/build");
 
 let melangeOutputDir =
-  Path.join2(projectRootDir, "_build/default/app/example/build");
+  Path.join2(projectRootDir, "_build/default/all/example/build");
 
 let normalizeCssFilePath =
   Path.join2(projectRootDir, "example/src/css/normalize.css");
