@@ -17,7 +17,6 @@
  (section lib)
  (package rescript-ssg)
  (files
-  ; can we put these files to the root of rescript-ssg dir?
   (glob_files ssgbin/node_modules/melange/*.mjs)
   (glob_files ssgbin/node_modules/melange.belt/*.mjs)
   (glob_files ssgbin/node_modules/melange.dom/*.mjs)
@@ -29,5 +28,4 @@
 (install
  (section libexec)
  (package rescript-ssg)
- (files
-  (glob_files ssgbin/node_modules/rescript-ssg/js/bin.mjs)))
+ (files ssgbin/node_modules/rescript-ssg/js/bin.mjs))
