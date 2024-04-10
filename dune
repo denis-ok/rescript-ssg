@@ -28,4 +28,5 @@
 (install
  (section libexec)
  (package rescript-ssg)
- (files ssgbin/node_modules/rescript-ssg/js/bin.mjs))
+ (files
+  (glob_files ssgbin/node_modules/rescript-ssg/js/bin.mjs)))
