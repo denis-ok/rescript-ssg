@@ -224,7 +224,7 @@ $(importPageWrapperDataString)
 $(importPageDataString)
 
 switch (ReactDOM.querySelector("#root")) {
-| Some(root) => ReactDOM.hydrate($(elementString), root)
+| Some(root) => ReactDOM.Client.hydrateRoot(root, $(elementString))->ignore
 | None => ()
 };
 |j};
@@ -456,7 +456,7 @@ module JsArtifact = {
       | Some(childrenProp) => childrenProp
       };
     {j|
-React.createElement($(componentName).make, {
+JsxRuntime.jsx($(componentName).make, {
   data: $(dataPropString),
   children: $(childrenPropString),
 })
@@ -626,6 +626,7 @@ if (root !== null) {
 
 let buildPageHtmlAndReactApp =
     (
+      ~melangeArtifactsExtension: string,
       ~pageAppArtifactsType: pageAppArtifactsType,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
@@ -843,7 +844,7 @@ let buildPageHtmlAndReactApp =
   writeFilePromises->Promise.Result.map(_createdFiles => {
     let compiledReactAppFilename =
       switch (pageAppArtifactsType) {
-      | Reason => ".bs.js"
+      | Reason => "." ++ melangeArtifactsExtension
       | Js => ".mjs"
       };
 

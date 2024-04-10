@@ -148,6 +148,7 @@ let workerOutput: workerOutput =
           };
 
           PageBuilder.buildPageHtmlAndReactApp(
+            ~melangeArtifactsExtension=workerData.melangeArtifactsExtension,
             ~pageAppArtifactsType=workerData.pageAppArtifactsType,
             ~outputDir=workerData.outputDir,
             ~melangeOutputDir=workerData.melangeOutputDir,

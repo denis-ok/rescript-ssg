@@ -52,7 +52,7 @@ let runBuildPageWorker =
 
 let buildPagesWithWorker =
     (
-      ~melangeArtifactsExtension,
+      ~melangeArtifactsExtension: string,
       ~pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
@@ -65,6 +65,7 @@ let buildPagesWithWorker =
     pages->Js.Array.map(~f=page => mapPageToPageForRebuild(~page), _);
 
   let workerData: BuildPageWorkerT.workerData = {
+    melangeArtifactsExtension,
     pageAppArtifactsType,
     outputDir,
     melangeOutputDir,

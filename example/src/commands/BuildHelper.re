@@ -13,12 +13,12 @@ let build = (~webpackMinimizer) =>
     ~logLevel=Info,
     // compileCommand isn't used with pageAppArtifactsType=Js
     // Should be removed/refactored in the future
-    ~compileCommand="",
+    ~compileCommand="dune build",
     ~webpackMinimizer,
     ~webpackBundleAnalyzerMode=
       Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
     ~buildWorkersCount=1,
-    ~pageAppArtifactsSuffix=UnixTimestamp,
+    ~pageAppArtifactsSuffix=NoSuffix,
     (),
   )
   ->Promise.map(_ => Js.log("[rescript-ssg] Build success!"))

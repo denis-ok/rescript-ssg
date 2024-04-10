@@ -98,6 +98,7 @@ module BuildPageHtmlAndReactApp = {
 
     let renderedPage =
       PageBuilder.buildPageHtmlAndReactApp(
+        ~melangeArtifactsExtension="mel.mjs",
         ~pageAppArtifactsType=Reason,
         ~outputDir,
         ~melangeOutputDir=None,

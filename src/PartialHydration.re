@@ -10,7 +10,7 @@ let renderReactAppTemplate = (~modulesWithHydration__Mutable: array(string)) => 
       let scriptId = makeScriptId(~moduleName);
       {j|
 switch (ReactDOM.querySelector("#$(scriptId)")) {
-| Some(root) => ReactDOM.hydrate(<$(moduleName) />, root)
+| Some(root) => ReactDOM.Client.hydrateRoot(root, <$(moduleName) />)->ignore
 | None => ()
 };
 |j};
