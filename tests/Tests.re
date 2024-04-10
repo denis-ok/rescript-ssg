@@ -1,4 +1,4 @@
-open Ssg;
+open RescriptSsg;
 
 let dirname = Utils.getDirname();
 

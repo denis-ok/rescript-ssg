@@ -45,4 +45,4 @@ let make = (~data: option(data), ~children) =>
     children
   </div>;
 
-let modulePath = Ssg.Utils.getFilepath();
+let modulePath = RescriptSsg.Utils.getFilepath();

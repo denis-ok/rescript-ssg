@@ -5,7 +5,7 @@
  (modes melange)
  (libraries
   ; comment for vertical formatting
-  ssg
+  rescript-ssg
   styled-ppx.css
   styled-ppx.emotion)
  (melange.runtime_deps

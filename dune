@@ -2,14 +2,14 @@
 
 (melange.emit
  (target app)
- (libraries ssg example tests)
+ (libraries rescript-ssg example tests)
  (module_systems
   (es6 mel.mjs)))
 
 (melange.emit
  (alias install)
  (target ssgbin)
- (libraries ssg)
+ (libraries rescript-ssg)
  (module_systems
   (es6 mel.mjs)))
 

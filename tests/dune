@@ -3,6 +3,6 @@
 (library
  (name tests)
  (modes melange)
- (libraries ssg)
+ (libraries rescript-ssg)
  (preprocess
   (pps melange.ppx reason-react-ppx)))

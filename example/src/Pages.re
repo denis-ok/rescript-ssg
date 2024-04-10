@@ -1,4 +1,4 @@
-open Ssg;
+open RescriptSsg;
 
 // It's more reliable to have a constant for the project root directory and build paths relative to it
 // instead of building paths relative to the directory of the current module.
@@ -180,7 +180,7 @@ let fakeExtralanguages = [|"es"|];
 
 let localizedPages =
   Js.Array.map(fakeExtralanguages, ~f=language =>
-    Js.Array.map(pages, ~f=(page: Ssg.PageBuilder.page) =>
+    Js.Array.map(pages, ~f=(page: RescriptSsg.PageBuilder.page) =>
       {
         ...page,
         path:

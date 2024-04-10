@@ -1,4 +1,4 @@
-open Ssg;
+open RescriptSsg;
 
 let build = (~webpackMinimizer) =>
   Commands.build(
