@@ -1,16 +1,3 @@
-module DomParser = {
-  // Quick workaround to fix react-intl error: Cannot format XML message without DOMParser.
-  // https://github.com/vercel/next.js/issues/10533#issuecomment-587477942
-  // This should be fixed more elegantly and removed from here.
-  type domParser;
-
-  [@mel.module "@xmldom/xmldom"] external domParser: domParser = "DOMParser";
-
-  external globalThis: Js.Dict.t(domParser) = "globalThis";
-
-  let () = globalThis->Js.Dict.set("DOMParser", domParser);
-};
-
 external import_: string => Js.Promise.t('a) = "import";
 
 let showPage = (page: BuildPageWorkerT.workerPage) => {
