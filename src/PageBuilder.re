@@ -514,8 +514,8 @@ JsxRuntime.jsx($(componentName).make, {
       };
 
     {j|
-import * as React from "react";
-import * as ReactDom from "react-dom";
+import * as Client from "react-dom/client";
+import * as JsxRuntime from "react/jsx-runtime";
 import * as Page from "$(pageArtifactPath)";
 $(pageDataImport)
 $(pageWrapperImport)
@@ -523,8 +523,8 @@ $(pageWrapperDataImport)
 
 const root = document.querySelector("#root");
 
-if (root !== null) {
-  ReactDom.hydrate($(elementString), root);
+if (!(root == null)) {
+  Client.hydrateRoot(root, $(elementString));
 }
 |j};
   };
