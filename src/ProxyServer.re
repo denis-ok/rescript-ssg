@@ -262,11 +262,8 @@ let start =
         switch (exactPagePathRelatedToRequestedPath) {
         | Some(_) =>
           // esbuild server redirects request to a path with trailing slash if a path without trailing slash requested.
-          // To avoid this redirect we add trailing slash.
-          {
-            ...defaultTarget,
-            path: defaultTarget.path->Utils.maybeAddSlashSuffix,
-          }
+          // To avoid this redirect we add a trailing slash in reqPathNormalized.
+          {...defaultTarget, path: reqPathNormalized ++ reqQueryString};
         | None =>
           let relatedPagePathWithDynamicSegment =
             pagePathsWithDynamicSegments->Js.Array.find(~f=pagePath =>
