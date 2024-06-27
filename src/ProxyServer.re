@@ -39,6 +39,8 @@ module ServerResponse = {
     (t, ~statusCode: int, ~headers: option(Js.Dict.t(string))) => t =
     "writeHead";
 
+  [@mel.send] external setHeader: (t, string, string) => unit = "setHeader";
+
   [@send] external end_: (t, string) => unit = "end";
 };
 
@@ -67,8 +69,18 @@ external nodeCreateServer:
   ((IncommingMessage.t, ServerResponse.t) => unit) => Server.t =
   "createServer";
 
+[@bs.module "node:https"]
+external nodeHttpsCreateServer:
+  ((IncommingMessage.t, ServerResponse.t) => unit) => Server.t =
+  "createServer";
+
 [@bs.module "node:http"]
 external nodeRequest:
+  (nodeRequestOptions, IncommingMessage.t => unit) => ClientRequest.t =
+  "request";
+
+[@bs.module "node:https"]
+external nodeHttpsRequest:
   (nodeRequestOptions, IncommingMessage.t => unit) => ClientRequest.t =
   "request";
 
@@ -109,6 +121,8 @@ module ProxyRule = {
   type proxyTo = {
     target,
     pathRewrite: option(pathRewrite),
+    changeOrigin: bool,
+    secure: bool,
   };
 
   type t = {
@@ -125,11 +139,15 @@ module ValidProxyRule = {
   type proxyTo = {
     target,
     pathRewrite: option(ProxyRule.pathRewrite),
+    changeOrigin: bool,
+    secure: bool,
   };
 
   type t = {
     fromPath: string,
     proxyTo,
+    changeOrigin: bool,
+    secure: bool,
   };
 
   let fromProxyRule = (proxyRule: ProxyRule.t): t => {
@@ -154,7 +172,11 @@ module ValidProxyRule = {
       proxyTo: {
         target,
         pathRewrite: proxyRule.proxyTo.pathRewrite,
+        changeOrigin: proxyRule.proxyTo.changeOrigin,
+        secure: proxyRule.proxyTo.secure,
       },
+      secure: proxyRule.proxyTo.secure,
+      changeOrigin: proxyRule.proxyTo.changeOrigin,
     };
   };
 };
@@ -296,7 +318,11 @@ let start =
               // Technically, this is some kind of error:
               // User requested a path that doesn't have related page and proxy rule for this request also not exist.
               defaultTarget
-            | Some({fromPath, proxyTo: {target, pathRewrite}}) =>
+            | Some({
+                fromPath,
+                proxyTo: {target, pathRewrite, changeOrigin, secure},
+                _,
+              }) =>
               let (path, isPathRewritten) =
                 switch (pathRewrite) {
                 | None => (reqPath, false)
@@ -326,43 +352,55 @@ let start =
                   method: req->IncommingMessage.method,
                   headers: req->IncommingMessage.headers,
                 }
-              | Url(url) => {
-                  hostname: Some(url->Url.hostname),
+              | Url(url) =>
+                let hostName = url->Url.hostname;
+                if (changeOrigin) {
+                  Js.Dict.set(
+                    req->IncommingMessage.headers,
+                    "host",
+                    hostName,
+                  );
+                };
+
+                {
+                  hostname: Some(hostName),
                   port:
                     Some(
                       url
                       ->Url.port
                       ->Belt.Int.fromString
-                      ->Belt.Option.getWithDefault(80),
+                      ->Belt.Option.getWithDefault(secure ? 443 : 80),
                     ),
                   socketPath: None,
                   path: path ++ reqQueryString,
                   method: req->IncommingMessage.method,
                   headers: req->IncommingMessage.headers,
-                }
+                };
               };
             };
           };
         };
       };
 
-      let proxyReq =
-        nodeRequest(
-          targetReqOptions,
-          targetRes => {
-            res
-            ->ServerResponse.writeHead(
-                ~statusCode=targetRes->IncommingMessage.statusCode,
-                ~headers=Some(targetRes->IncommingMessage.headers),
-              )
-            ->ignore;
-            targetRes->IncommingMessage.pipeToServerResponse(
-              res,
-              {end_: true},
-            );
-          },
-        );
+      let proxyReq = {
+        let writeHeaders = targetRes => {
+          res
+          ->ServerResponse.writeHead(
+              ~statusCode=targetRes->IncommingMessage.statusCode,
+              ~headers=Some(targetRes->IncommingMessage.headers),
+            )
+          ->ignore;
+          targetRes->IncommingMessage.pipeToServerResponse(
+            res,
+            {end_: true},
+          );
+        };
 
+        switch (targetReqOptions.port) {
+        | Some(443) => nodeHttpsRequest(targetReqOptions, writeHeaders)
+        | _ => nodeRequest(targetReqOptions, writeHeaders)
+        };
+      };
       proxyReq->ClientRequest.on("error", error => {
         Js.Console.error2("[Dev server] Error with proxy request:", error);
         res
