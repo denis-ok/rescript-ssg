@@ -1,12 +1,12 @@
 let makeScriptId = (~moduleName) => {
   // TODO hashify it
-  let modulePrefix = moduleName->Js.String2.replaceByRe([%re {|/\./g|}], "_");
+  let modulePrefix = moduleName->Js.String.replaceByRe(~regexp=[%re {|/\./g|}], ~replacement="_", _);
   "withHydration__" ++ modulePrefix;
 };
 
 let renderReactAppTemplate = (~modulesWithHydration__Mutable: array(string)) => {
   modulesWithHydration__Mutable
-  ->Js.Array2.map(moduleName => {
+  ->Js.Array.map(~f=moduleName => {
       let scriptId = makeScriptId(~moduleName);
       {j|
 switch (ReactDOM.querySelector("#$(scriptId)")) {
@@ -14,8 +14,8 @@ switch (ReactDOM.querySelector("#$(scriptId)")) {
 | None => ()
 };
 |j};
-    })
-  ->Js.Array2.joinWith("\n");
+    }, _)
+  ->Js.Array.join(~sep="\n", _);
 };
 
 module WithHydrationContext = {
@@ -41,7 +41,7 @@ module WithHydration = {
   let make = (~moduleName, ~children) => {
     let modulesWithHydration = React.useContext(WithHydrationContext.context);
 
-    let () = modulesWithHydration->Js.Array2.push(moduleName)->ignore;
+    let () = modulesWithHydration->Js.Array.push(~value=moduleName)->ignore;
 
     <div id={makeScriptId(~moduleName)}> children </div>;
   };

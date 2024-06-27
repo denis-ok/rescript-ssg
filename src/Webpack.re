@@ -232,9 +232,9 @@ let makeConfig =
     ) => {
   let entries =
     renderedPages
-    ->Js.Array2.map(({path, entryPath, _}) =>
+    ->Js.Array.map(~f=({path, entryPath, _}: RenderedPage.t) =>
         (PagePath.toWebpackEntryName(path), entryPath)
-      )
+      , _)
     ->Js.Dict.fromArray;
 
   let shouldMinimize = webpackMode == Production;
@@ -269,7 +269,7 @@ let makeConfig =
 
     "plugins": {
       let htmlWebpackPlugins =
-        renderedPages->Js.Array2.map(({path, htmlTemplatePath, _}) => {
+        renderedPages->Js.Array.map(~f=({path, htmlTemplatePath, _}: RenderedPage.t) => {
           HtmlWebpackPlugin.make({
             "template": htmlTemplatePath,
             "filename": Path.join2(PagePath.toString(path), "index.html"),
@@ -286,7 +286,7 @@ let makeConfig =
               "minifyCSS": shouldMinimize,
             },
           })
-        });
+        }, _);
 
       let globalValuesPlugin = getPluginWithGlobalValues(globalEnvValues);
 
@@ -301,11 +301,11 @@ let makeConfig =
         | Some(mode) => [|WebpackBundleAnalyzerPlugin.make(mode)|]
         };
 
-      Js.Array2.concat(
+      Js.Array.concat(
+        ~other=[|miniCssExtractPlugin, globalValuesPlugin|],
         htmlWebpackPlugins,
-        [|miniCssExtractPlugin, globalValuesPlugin|],
       )
-      ->Js.Array2.concat(webpackBundleAnalyzerPlugin);
+      ->Js.Array.concat(~other=webpackBundleAnalyzerPlugin, _);
     },
     // Explicitly disable source maps in dev mode
     "devtool": false,
@@ -339,7 +339,7 @@ let makeConfig =
             "test": {
               let frameworkPackages =
                 [|"react", "react-dom", "scheduler", "prop-types"|]
-                ->Js.Array2.joinWith("|");
+                ->Js.Array.join(~sep="|", _);
               let regexStr = {j|(?<!node_modules.*)[\\\\/]node_modules[\\\\/]($(frameworkPackages))[\\\\/]|j};
               let regex = Js.Re.fromString(regexStr);
               regex;
@@ -350,7 +350,7 @@ let makeConfig =
             "priority": 30,
             "name": "react-helmet",
             "test": {
-              let packages = [|"react-helmet"|]->Js.Array2.joinWith("|");
+              let packages = [|"react-helmet"|]->Js.Array.join(~sep="|", _);
               let regexStr = {j|[\\\\/]node_modules[\\\\/]($(packages))[\\\\/]|j};
               let regex = Js.Re.fromString(regexStr);
               regex;
@@ -394,9 +394,9 @@ let makeConfig =
                   | Path(segments) =>
                     let hasDynamicPart =
                       segments
-                      ->Js.Array2.find(segment =>
+                      ->Js.Array.find(~f=segment =>
                           segment == PagePath.dynamicSegment
-                        )
+                        , _)
                       ->Belt.Option.isSome;
 
                     switch (hasDynamicPart) {
@@ -404,10 +404,10 @@ let makeConfig =
                     | _true =>
                       let pathWithAsterisks =
                         segments
-                        ->Js.Array2.map(segment =>
+                        ->Js.Array.map(~f=segment =>
                             segment == PagePath.dynamicSegment ? ".*" : segment
-                          )
-                        ->Js.Array2.joinWith("/");
+                          , _)
+                        ->Js.Array.join(~sep="/", _);
 
                       let regexString = "^/" ++ pathWithAsterisks;
 
@@ -456,7 +456,7 @@ let makeConfig =
               let proxyDict:
                 Js.Dict.t(DevServerOptions.Proxy.devServerProxyTo) =
                 proxySettings
-                ->Js.Array2.map(proxy => {
+                ->Js.Array.map(~f=(proxy: DevServerOptions.Proxy.t) => {
                     let proxyTo: DevServerOptions.Proxy.devServerProxyTo = {
                       target:
                         switch (proxy.to_.target) {
@@ -483,7 +483,7 @@ let makeConfig =
                     };
 
                     (proxy.from, proxyTo);
-                  })
+                  }, _)
                 ->Js.Dict.fromArray;
 
               logger.debug(() =>
@@ -660,7 +660,7 @@ let startDevServer =
       Js.log("[Webpack] Stopping dev server...");
 
       Js.Global.setTimeout(
-        () => {
+        ~f=() => {
           Js.log("[Webpack] Failed to gracefully shutdown.");
           Process.exit(1);
         },

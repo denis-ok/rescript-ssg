@@ -12,7 +12,7 @@ let debounce = (~delayMs: int, func: unit => unit) => {
     timeoutId :=
       Some(
         Js.Global.setTimeout(
-          () => {
+          ~f=() => {
             func();
             timeoutId := None;
           },
