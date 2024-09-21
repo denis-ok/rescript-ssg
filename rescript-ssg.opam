@@ -36,6 +36,6 @@ build: [
   ]
 ]
 pin-depends: [
-  ["server-reason-react.dev" "https://github.com/ml-in-barcelona/server-reason-react/archive/b8756a5c71345e5e8f087a9ec7209b43a066d5f0.tar.gz"]
-  ["styled-ppx.dev" "https://github.com/davesnx/styled-ppx/archive/ec69e98cebfe64bed73a30cbc73c4560319acf93.tar.gz"]
+  ["server-reason-react.dev" "https://github.com/ml-in-barcelona/server-reason-react/archive/3f98927ab95283edf1d916e50313bfc31a1a56e8.tar.gz"]
+  ["styled-ppx.dev" "https://github.com/davesnx/styled-ppx/archive/2fd57cd270505eb7adabcd2d9afd47e2d29560b0.tar.gz"]
 ]

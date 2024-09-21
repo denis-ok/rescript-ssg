@@ -6,11 +6,11 @@
  (libraries
   ; comment for vertical formatting
   rescript-ssg
-  styled-ppx.css
-  styled-ppx.emotion)
+  styled-ppx.melange
+  )
  (melange.runtime_deps
   src/content.css
   src/css/normalize.css
   src/images/cat.jpeg)
  (preprocess
-  (pps melange.ppx reason-react-ppx styled-ppx.lib)))
+  (pps melange.ppx reason-react-ppx styled-ppx)))
