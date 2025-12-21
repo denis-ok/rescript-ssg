@@ -52,12 +52,7 @@ let getFinalHashedAssetPath = (url: string) => {
 
       let filenameWithoutExt = fileName->Js.String.replace(~search=fileExt, ~replacement="", _);
 
-      let filenameWithHash =
-        switch (Bundler.bundler) {
-        | Webpack =>
-          let fileHash = Crypto.Hash.bufferToHash(fileData);
-          Promise.resolve(filenameWithoutExt ++ "." ++ fileHash ++ fileExt);
-        | Esbuild =>
+      let filenameWithHash = {
           // cat-FU5UU3XL.jpeg
           getEsbuildFileHash(fileData)
           ->Promise.map(fileHash => {

@@ -1,1 +1,1 @@
-let () = BuildHelper.build(~webpackMinimizer=Terser);
+let () = BuildHelper.build();

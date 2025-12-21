@@ -79,8 +79,8 @@ let initializeAndBuildPages =
   let logger = Log.makeLogger(logLevel);
 
   let pages =
-    switch (Bundler.bundler, bundlerMode) {
-    | (Esbuild, Watch) =>
+    switch (bundlerMode) {
+    | (Watch) =>
       pages->Js.Array.map(~f=pages =>
         pages->Js.Array.map(~f=(page: PageBuilder.page) =>
           {
@@ -95,7 +95,7 @@ let initializeAndBuildPages =
           }
         , _)
       , _)
-    | _ => pages
+    | Build => pages
     };
 
   let renderedPages =
@@ -133,10 +133,6 @@ let build =
       ~compileCommand: option(string)=?,
       ~logLevel: Log.level,
       ~buildWorkersCount: option(int)=?,
-      ~webpackMode: Webpack.Mode.t=Production,
-      ~webpackMinimizer: Webpack.Minimizer.t=Terser,
-      ~webpackBundleAnalyzerMode:
-         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
       ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
       ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       (),
@@ -169,8 +165,6 @@ let build =
       | (Js, _) => ()
       };
 
-    switch (Bundler.bundler) {
-    | Esbuild =>
       Esbuild.build(
         ~outputDir,
         ~projectRootDir,
@@ -180,17 +174,7 @@ let build =
         ~logOverride=?esbuildLogOverride,
         (),
       )
-    | Webpack =>
-      Webpack.build(
-        ~webpackMode,
-        ~outputDir,
-        ~logger,
-        ~webpackBundleAnalyzerMode,
-        ~webpackMinimizer,
-        ~globalEnvValues,
-        ~renderedPages,
-      )
-    };
+    
   });
 };
 
@@ -206,15 +190,6 @@ let start =
       ~melangeOutputDir: option(string)=?,
       ~logLevel: Log.level,
       ~buildWorkersCount: option(int)=?,
-      ~webpackMode: Webpack.Mode.t=Development,
-      ~webpackMinimizer: Webpack.Minimizer.t=Terser,
-      ~webpackBundleAnalyzerMode:
-         option(Webpack.WebpackBundleAnalyzerPlugin.Mode.t)=None,
-      ~webpackDevServerOptions: Webpack.DevServerOptions.t={
-                                                             listenTo:
-                                                               Port(9000),
-                                                             proxy: None,
-                                                           },
       ~esbuildLogLevel: option(Esbuild.LogLevel.t)=?,
       ~esbuildLogOverride: option(Js.Dict.t(Esbuild.LogLevel.t))=?,
       ~esbuildLogLimit: option(int)=?,
@@ -262,8 +237,7 @@ let start =
   ->Promise.map(renderedPages => {
       Js.Global.setTimeout(
         ~f=() => {
-          switch (Bundler.bundler) {
-          | Esbuild =>
+         
             Esbuild.watchAndServe(
               ~outputDir,
               ~projectRootDir,
@@ -293,21 +267,7 @@ let start =
                 ();
               })
             ->ignore
-          | Webpack =>
-            let () =
-              Webpack.startDevServer(
-                ~webpackDevServerOptions,
-                ~webpackBundleAnalyzerMode,
-                ~webpackMode,
-                ~logger,
-                ~outputDir,
-                ~webpackMinimizer,
-                ~globalEnvValues,
-                ~renderedPages,
-                ~onStart=startFileWatcher,
-              );
-            ();
-          }
+          
         },
         delayBeforeDevServerStart,
       )

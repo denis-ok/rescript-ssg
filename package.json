@@ -25,22 +25,16 @@
     "@craftamap/esbuild-plugin-html": "https://github.com/denis-ok/esbuild-plugin-html#79f512f447eb98efa6b6786875f617a095eaaf09",
     "base32-encode": "^2.0.0",
     "chokidar": "^3.5.3",
-    "css-loader": "^6.8.1",
-    "esbuild": "^0.19.5",
-    "esbuild-loader": "^4.0.2",
-    "hash-wasm": "^4.10.0",
-    "html-webpack-plugin": "^5.5.3",
+    "esbuild": "^0.27.2",
+    "hash-wasm": "^4.12.0",
     "jsesc": "^3.0.2",
-    "mini-css-extract-plugin": "^2.7.6",
-    "webpack": "^5.88.2",
-    "webpack-bundle-analyzer": "^4.9.1",
-    "webpack-dev-server": "^4.15.1"
+    "ssg-esbuild": "npm:esbuild@^0.19.5"
   },
   "peerDependencies": {
-    "@emotion/css": "^11.10.0",
+    "@emotion/css": "^11.13.5",
     "@emotion/server": "^11.10.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "react-helmet": "^6.1.0"
   },
   "devDependencies": {
