@@ -12,20 +12,20 @@ jobs:
           # - macos-latest
           # - windows-latest # for some reason windows build is not picking dune 3.5
         ocaml-compiler:
-          - 5.1.x
+          - 5.3.0
       fail-fast: false
 
     runs-on: ${{ matrix.system }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v6
         with:
-          node-version: '18.16.0'
+          node-version: '22.18.0'
 
       - name: Use OCaml ${{ matrix.ocaml-compiler }}
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
