@@ -39,6 +39,6 @@
   "devDependencies": {
     "c8": "^8.0.1",
     "lite-flag-icon": "^1.0.9",
-    "serve": "^14.2.1"
+    "serve": "^14.2.5"
   }
 }
