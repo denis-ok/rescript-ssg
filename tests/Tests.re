@@ -7,7 +7,14 @@ external process: Js.t('a) = "process";
 [@mel.module] external util: Js.t('a) = "util";
 
 let inspect = (value): string =>
-  util##inspect(value, {"compact": false, "depth": 20, "colors": true});
+  util##inspect(
+    value,
+    {
+      "compact": false,
+      "depth": 20,
+      "colors": true,
+    },
+  );
 
 let exitWithError = () => Process.exit(1);
 
@@ -40,11 +47,7 @@ module MakeReactAppModuleName = {
 
   let test = (~pagePath, ~expect) => {
     let reactAppModuleName =
-      PageBuilder.pagePathToPageAppModuleName(
-        ~pageAppArtifactsSuffix="",
-        ~pagePath,
-        ~moduleName,
-      );
+      PageBuilder.pagePathToPageAppModuleName(~pageAppArtifactsSuffix="", ~pagePath, ~moduleName);
     isEqual(~msg="makeReactAppModuleName", reactAppModuleName, expect);
   };
 
@@ -89,7 +92,14 @@ module BuildPageHtmlAndReactApp = {
 
   let artifactsOutputDir = PageBuilder.getArtifactsOutputDir(~outputDir);
 
-  let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true});
+  let cleanup = () =>
+    Fs.rmSync(
+      outputDir,
+      {
+        force: true,
+        recursive: true,
+      },
+    );
 
   let compileCommand = "make build";
 
@@ -120,26 +130,13 @@ module BuildPageHtmlAndReactApp = {
         let pagePath: string = page.path->PagePath.toString;
 
         let reactAppModuleName =
-          PageBuilder.pagePathToPageAppModuleName(
-            ~pageAppArtifactsSuffix="",
-            ~pagePath,
-            ~moduleName,
-          );
+          PageBuilder.pagePathToPageAppModuleName(~pageAppArtifactsSuffix="", ~pagePath, ~moduleName);
 
-        let testPageAppContent =
-          Fs.readFileSyncAsUtf8(
-            Path.join2(artifactsOutputDir, reactAppModuleName ++ ".re"),
-          );
+        let testPageAppContent = Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, reactAppModuleName ++ ".re"));
 
-        isEqual(
-          removeNewlines(testPageAppContent),
-          removeNewlines(expectedAppContent),
-        );
+        isEqual(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent));
 
-        let _html =
-          Fs.readFileSyncAsUtf8(
-            Path.join2(artifactsOutputDir, "index.html"),
-          );
+        let _html = Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, "index.html"));
         ();
       }
     });
@@ -167,8 +164,7 @@ switch (ReactDOM.querySelector("#root")) {
 
     let expectedHtmlContent = "";
 
-    let testPromise = () =>
-      test(~page, ~expectedAppContent, ~expectedHtmlContent);
+    let testPromise = () => test(~page, ~expectedAppContent, ~expectedHtmlContent);
   };
 
   module PageWithWrapper = {
@@ -176,10 +172,7 @@ switch (ReactDOM.querySelector("#root")) {
       hydrationMode: FullHydration,
       pageWrapper:
         Some({
-          component:
-            WrapperWithChildren(
-              children => <TestWrapper> children </TestWrapper>,
-            ),
+          component: WrapperWithChildren(children => <TestWrapper> children </TestWrapper>),
           modulePath: TestWrapper.modulePath,
         }),
       component: ComponentWithoutData(<TestPage />),
@@ -199,8 +192,7 @@ switch (ReactDOM.querySelector("#root")) {
 |js};
     let expectedHtmlContent = "";
 
-    let testPromise = () =>
-      test(~page, ~expectedAppContent, ~expectedHtmlContent);
+    let testPromise = () => test(~page, ~expectedAppContent, ~expectedHtmlContent);
   };
 
   module PageWithData = {
@@ -240,8 +232,7 @@ switch (ReactDOM.querySelector("#root")) {
 |js};
     let expectedHtmlContent = "";
 
-    let testPromise = () =>
-      test(~page, ~expectedAppContent, ~expectedHtmlContent);
+    let testPromise = () => test(~page, ~expectedAppContent, ~expectedHtmlContent);
   };
 
   module PageWrapperWithDataAndPageWithData = {
@@ -251,8 +242,7 @@ switch (ReactDOM.querySelector("#root")) {
         Some({
           component:
             WrapperWithDataAndChildren({
-              component: (data, children) =>
-                <TestWrapperWithData data> children </TestWrapperWithData>,
+              component: (data, children) => <TestWrapperWithData data> children </TestWrapperWithData>,
               data:
                 Some({
                   bool: true,
@@ -302,8 +292,7 @@ switch (ReactDOM.querySelector("#root")) {
 |js};
     let expectedHtmlContent = "";
 
-    let testPromise = () =>
-      test(~page, ~expectedAppContent, ~expectedHtmlContent);
+    let testPromise = () => test(~page, ~expectedAppContent, ~expectedHtmlContent);
   };
 
   let tests =

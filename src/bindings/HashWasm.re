@@ -20,12 +20,8 @@ type hasher = {
   load: (. Buffer.t) => hasher,
 };
 
-[@mel.module "hash-wasm"]
-external createXXHash64: unit => Promise.t(hasher) = "createXXHash64";
+[@mel.module "hash-wasm"] external createXXHash64: unit => Promise.t(hasher) = "createXXHash64";
 
 let createXXHash64AndReturnBinaryDigest = (buffer: Buffer.t) => {
-  createXXHash64()
-  ->Promise.map(hasher =>
-      hasher.init(.).update(. buffer).digest(. "binary")
-    );
+  createXXHash64()->Promise.map(hasher => hasher.init(.).update(. buffer).digest(. "binary"));
 };

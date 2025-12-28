@@ -10,4 +10,12 @@ type options = {
 [@mel.module "jsesc"] external jsesc: ('a, options) => string = "default";
 
 let jsesc = a =>
-  jsesc(a, {quotes: "double", json: false, wrap: true, es6: false});
+  jsesc(
+    a,
+    {
+      quotes: "double",
+      json: false,
+      wrap: true,
+      es6: false,
+    },
+  );

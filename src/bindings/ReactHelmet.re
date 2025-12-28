@@ -1,5 +1,4 @@
-[@react.component] [@mel.module "react-helmet"]
-external make: (~children: React.element) => React.element = "Helmet";
+[@react.component] [@mel.module "react-helmet"] external make: (~children: React.element) => React.element = "Helmet";
 
 type helmetProperty = {
   //
@@ -20,5 +19,4 @@ type helmetInstance = {
 
 // https://github.com/nfl/react-helmet#server-usage
 
-[@mel.module "react-helmet"] [@mel.scope "Helmet"]
-external renderStatic: unit => helmetInstance = "renderStatic";
+[@mel.module "react-helmet"] [@mel.scope "Helmet"] external renderStatic: unit => helmetInstance = "renderStatic";

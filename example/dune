@@ -6,8 +6,7 @@
  (libraries
   ; comment for vertical formatting
   rescript-ssg
-  styled-ppx.melange
-  )
+  styled-ppx.melange)
  (melange.runtime_deps
   src/content.css
   src/css/normalize.css

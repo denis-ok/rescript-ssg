@@ -30,3 +30,10 @@
  (package rescript-ssg)
  (files
   (glob_files ssgbin/node_modules/rescript-ssg/js/bin.mjs)))
+
+(env
+ (_
+  (env-vars
+   (REFMT_PRINT_WIDTH 120))
+  (flags
+   (-warn-error +A))))

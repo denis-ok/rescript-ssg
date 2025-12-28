@@ -19,23 +19,15 @@ let projectRootDir =
 
 let outputDir = Path.join2(projectRootDir, "example/build");
 
-let melangeOutputDir =
-  Path.join2(projectRootDir, "_build/default/all/example/build");
+let melangeOutputDir = Path.join2(projectRootDir, "_build/default/all/example/build");
 
-let normalizeCssFilePath =
-  Path.join2(projectRootDir, "example/src/css/normalize.css");
+let normalizeCssFilePath = Path.join2(projectRootDir, "example/src/css/normalize.css");
 
-let globalEnvValues = [|
-  ("process.env.ENV_VAR", Env.envVar),
-  ("GLOBAL_VAR", "BAR"),
-|];
+let globalEnvValues = [|("process.env.ENV_VAR", Env.envVar), ("GLOBAL_VAR", "BAR")|];
 
 let wrapperWithoutData: PageBuilder.pageWrapper = (
   {
-    PageBuilder.component:
-      WrapperWithChildren(
-        children => <WrapperWithoutData> children </WrapperWithoutData>,
-      ),
+    PageBuilder.component: WrapperWithChildren(children => <WrapperWithoutData> children </WrapperWithoutData>),
     modulePath: WrapperWithoutData.modulePath,
   }: PageBuilder.pageWrapper
 );
@@ -44,8 +36,7 @@ let wrapperWithData: PageBuilder.pageWrapper = (
   {
     component:
       WrapperWithDataAndChildren({
-        component: (data, children) =>
-          <WrapperWithData data> children </WrapperWithData>,
+        component: (data, children) => <WrapperWithData data> children </WrapperWithData>,
         data: "LALA \"escaped quotes\"",
       }),
     modulePath: WrapperWithData.modulePath,
@@ -61,10 +52,7 @@ let pageWithoutData: PageBuilder.page = (
     headCssFilepaths: [|normalizeCssFilePath|],
     path: Path([|Page.toSlug(PageWithoutData)|]),
     globalValues:
-      Some([|
-        ("PER_PAGE_GLOBAL_1", "ONE!"->Js.Json.string),
-        ("PER_PAGE_GLOBAL_2", "TWO!"->Js.Json.string),
-      |]),
+      Some([|("PER_PAGE_GLOBAL_1", "ONE!"->Js.Json.string), ("PER_PAGE_GLOBAL_2", "TWO!"->Js.Json.string)|]),
     headScripts: [||],
     bodyScripts: [||],
   }: PageBuilder.page
@@ -163,7 +151,10 @@ let pageWithoutHydration: PageBuilder.page = (
 );
 
 let pages = [|
-  {...pageWithoutData, path: Root},
+  {
+    ...pageWithoutData,
+    path: Root,
+  },
   pageWithoutData,
   pageWithoutDataAndWrapperWithoutData,
   pageWithoutDataAndWrapperWithData,
@@ -186,8 +177,7 @@ let localizedPages =
         path:
           switch (page.path) {
           | Root => Path([|language|])
-          | Path(segments) =>
-            Path(Js.Array.concat(~other=[|language|], segments))
+          | Path(segments) => Path(Js.Array.concat(~other=[|language|], segments))
           },
       }
     )

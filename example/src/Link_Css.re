@@ -1,8 +1,6 @@
-let link = [%cx
-  {|
+let link = [%cx {|
     color: blue;
     &:hover {
       color: blueviolet;
     }
-  |}
-];
+  |}];

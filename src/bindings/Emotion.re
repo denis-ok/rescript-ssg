@@ -36,12 +36,9 @@ module Server = {
   // All exports from "@emotion/server" index are the results of internal calling "createEmotionServer(cache)"
   // where passed cache is default cache imported from "@emotion/css".
 
-  [@mel.module "@emotion/server"]
-  external extractCritical: string => extractCriticalResult =
-    "extractCritical";
+  [@mel.module "@emotion/server"] external extractCritical: string => extractCriticalResult = "extractCritical";
 
-  [@mel.module "@emotion/server"]
-  external renderStylesToString: string => string = "renderStylesToString";
+  [@mel.module "@emotion/server"] external renderStylesToString: string => string = "renderStylesToString";
   // Below is a function to build emotion server manually with a custom cache.
   // [@mel.module
   //   "@emotion/server/create-instance/dist/emotion-server-create-instance.cjs.js"

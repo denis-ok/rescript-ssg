@@ -12,11 +12,7 @@ let make = () => {
       (),
     );
 
-  let path =
-    url.path
-    ->Belt.List.reverse
-    ->Belt.List.head
-    ->(Belt.Option.getWithDefault("None(unexpected)"));
+  let path = url.path->Belt.List.reverse->Belt.List.head->(Belt.Option.getWithDefault("None(unexpected)"));
 
   <>
     <MetaTags title="PageDynamic" description="PageDynamic description" />

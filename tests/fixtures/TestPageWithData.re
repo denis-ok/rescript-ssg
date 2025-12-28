@@ -4,7 +4,10 @@ type variant =
   | A
   | B(string);
 
-type polyVariant = [ | `hello | `world];
+type polyVariant = [
+  | `hello
+  | `world
+];
 
 type data = {
   string,

@@ -10,10 +10,7 @@ external window: _ = "window";
 // @module("path") external dirnameFromFilepath: string => string = "dirname"
 
 let dirnameFromFilepath = filepath => {
-  filepath
-  ->Js.String.split(~sep="/", _)
-  ->Js.Array.slice(~start=0, ~end_=-1, _)
-  ->Js.Array.join(~sep="/", _);
+  filepath->Js.String.split(~sep="/", _)->Js.Array.slice(~start=0, ~end_=-1, _)->Js.Array.join(~sep="/", _);
 };
 
 // Reusable functions that can be simply called from any module instead of
@@ -21,11 +18,7 @@ let dirnameFromFilepath = filepath => {
 
 let getFilepathFromError = jsError => {
   let lineWithPath =
-    jsError
-    ->getStack
-    ->Js.String.split(~sep="\n", _)
-    ->Js.Array.slice(~start=2, ~end_=3, _)
-    ->Belt.Array.get(0);
+    jsError->getStack->Js.String.split(~sep="\n", _)->Js.Array.slice(~start=2, ~end_=3, _)->Belt.Array.get(0);
 
   switch (lineWithPath) {
   | None => Js.Exn.raiseError("[getFilepathFromError] lineWithPath is None")
@@ -33,11 +26,7 @@ let getFilepathFromError = jsError => {
     lineWithPath
     ->Js.String.trim
     ->Js.String.replace(~search="at file://", ~replacement="", _)
-    ->Js.String.replaceByRe(
-        ~regexp=Js.Re.fromString(":[0-9]+:[0-9]+"),
-        ~replacement="",
-        _,
-      )
+    ->Js.String.replaceByRe(~regexp=Js.Re.fromString(":[0-9]+:[0-9]+"), ~replacement="", _)
   };
 };
 
@@ -56,20 +45,14 @@ let getModuleNameFromModulePath = modulePath => {
   switch (filename) {
   | None
   | Some("") =>
-    Js.Console.error(
-      "[Utils.getModuleNameFromModulePath] Filename is empty or None, modulePath: "
-      ++ modulePath,
-    );
+    Js.Console.error("[Utils.getModuleNameFromModulePath] Filename is empty or None, modulePath: " ++ modulePath);
     Process.exit(1);
   | Some(filename) =>
     let filenameSplit = filename->Js.String.split(~sep=".", _);
     let moduleName = filenameSplit->Belt.Array.get(0);
     switch (moduleName) {
     | None =>
-      Js.Console.error(
-        "[Utils.getModuleNameFromModulePath] moduleName is None, modulePath: "
-        ++ modulePath,
-      );
+      Js.Console.error("[Utils.getModuleNameFromModulePath] moduleName is None, modulePath: " ++ modulePath);
       Process.exit(1);
     | Some(moduleName) => moduleName
     };
@@ -77,8 +60,7 @@ let getModuleNameFromModulePath = modulePath => {
 };
 
 let maybeAddSlashPrefix = path =>
-  if (path->Js.String.startsWith(~prefix="http", _)
-      || path->Js.String.startsWith(~prefix="/", _)) {
+  if (path->Js.String.startsWith(~prefix="http", _) || path->Js.String.startsWith(~prefix="/", _)) {
     path;
   } else {
     "/" ++ path;

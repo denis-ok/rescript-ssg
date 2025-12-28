@@ -27,8 +27,7 @@
     "chokidar": "^3.5.3",
     "esbuild": "^0.27.2",
     "hash-wasm": "^4.12.0",
-    "jsesc": "^3.0.2",
-    "ssg-esbuild": "npm:esbuild@^0.19.5"
+    "jsesc": "^3.0.2"
   },
   "peerDependencies": {
     "@emotion/css": "^11.13.5",

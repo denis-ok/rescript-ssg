@@ -1,18 +1,17 @@
 let dirname = Utils.getDirname();
 
-let mapPageToPageForRebuild =
-    (~page: PageBuilder.page): BuildPageWorkerT.workerPage => {
+let mapPageToPageForRebuild = (~page: PageBuilder.page): BuildPageWorkerT.workerPage => {
   {
     hydrationMode: page.hydrationMode,
     pageWrapper: {
       switch (page.pageWrapper) {
       | None => None
       | Some({component: WrapperWithChildren(_), modulePath}) =>
-        Some({component: WrapperWithChildren, modulePath})
-      | Some({
-          component: PageBuilder.WrapperWithDataAndChildren({data, _}),
+        Some({
+          component: WrapperWithChildren,
           modulePath,
-        }) =>
+        })
+      | Some({component: PageBuilder.WrapperWithDataAndChildren({data, _}), modulePath}) =>
         Some({
           component: WrapperWithDataAndChildren({data: data}),
           modulePath,
@@ -22,8 +21,7 @@ let mapPageToPageForRebuild =
     component: {
       switch (page.component) {
       | ComponentWithoutData(_) => ComponentWithoutData
-      | PageBuilder.ComponentWithData({data, _}) =>
-        ComponentWithData({data: data})
+      | PageBuilder.ComponentWithData({data, _}) => ComponentWithData({data: data})
       };
     },
     modulePath: page.modulePath,
@@ -36,16 +34,11 @@ let mapPageToPageForRebuild =
 };
 
 let runBuildPageWorker =
-    (
-      ~melangeArtifactsExtension: string,
-      ~onExit: int => unit,
-      ~workerData: BuildPageWorkerT.workerData,
-    )
+    (~melangeArtifactsExtension: string, ~onExit: int => unit, ~workerData: BuildPageWorkerT.workerData)
     : BuildPageWorker.workerOutput =>
   // This is the place where we have to manually annotate output type of runWorker call
   WorkerThreads.runWorker(
-    ~workerModulePath=
-      Path.join2(dirname, "BuildPageWorker." ++ melangeArtifactsExtension),
+    ~workerModulePath=Path.join2(dirname, "BuildPageWorker." ++ melangeArtifactsExtension),
     ~workerData,
     ~onExit,
   );
@@ -61,8 +54,7 @@ let buildPagesWithWorker =
       ~pageAppArtifactsSuffix: string,
       pages: array(PageBuilder.page),
     ) => {
-  let rebuildPages =
-    pages->Js.Array.map(~f=page => mapPageToPageForRebuild(~page), _);
+  let rebuildPages = pages->Js.Array.map(~f=page => mapPageToPageForRebuild(~page), _);
 
   let workerData: BuildPageWorkerT.workerData = {
     melangeArtifactsExtension,
@@ -116,53 +108,58 @@ let buildPagesWithWorkers =
   // For example user has 2 locales and 8 cores and and to spawn 8 workers we must do an extra chunk splitting.
   let pages =
     pages
-    ->Js.Array.map(~f=pagesChunk => {
-        let pagesInChunk = pagesChunk->Js.Array.length;
-        switch (pagesInChunk >= minPagesCountForSplitting) {
-        | false => [|pagesChunk|]
-        | true =>
-          let chunksCount = pagesInChunk / minPagesCountForSplitting + 1;
-          let chunkSize =
-            pagesInChunk / chunksCount + pagesInChunk mod chunksCount;
-          pagesChunk->Array.splitIntoChunks(~chunkSize);
-        };
-      }, _)
+    ->Js.Array.map(
+        ~f=
+          pagesChunk => {
+            let pagesInChunk = pagesChunk->Js.Array.length;
+            switch (pagesInChunk >= minPagesCountForSplitting) {
+            | false => [|pagesChunk|]
+            | true =>
+              let chunksCount = pagesInChunk / minPagesCountForSplitting + 1;
+              let chunkSize = pagesInChunk / chunksCount + pagesInChunk mod chunksCount;
+              pagesChunk->Array.splitIntoChunks(~chunkSize);
+            };
+          },
+        _,
+      )
     ->Array.flat1;
 
   logger.info(() =>
-    Js.log3(
-      "[Commands.buildPagesWithWorkers] Building pages with ",
-      buildWorkersCount,
-      " workers...",
-    )
+    Js.log3("[Commands.buildPagesWithWorkers] Building pages with ", buildWorkersCount, " workers...")
   );
 
   let startTime = Performance.now();
 
-  let pagesChunkedForWorkers =
-    pages->Array.splitIntoChunks(~chunkSize=buildWorkersCount);
+  let pagesChunkedForWorkers = pages->Array.splitIntoChunks(~chunkSize=buildWorkersCount);
 
   let results =
     pagesChunkedForWorkers
-    ->Js.Array.map(~f=(pagesChunk: array(array(PageBuilder.page))) => {
-        let buildChunksWithWorkers = () =>
-          pagesChunk
-          ->Js.Array.map(~f=chunk =>
-              buildPagesWithWorker(
-                ~melangeArtifactsExtension,
-                ~pageAppArtifactsType,
-                ~outputDir,
-                ~melangeOutputDir,
-                ~logger,
-                ~globalEnvValues,
-                ~pageAppArtifactsSuffix,
-                chunk,
-              )
-            , _)
-          ->Promise.all;
+    ->Js.Array.map(
+        ~f=
+          (pagesChunk: array(array(PageBuilder.page))) => {
+            let buildChunksWithWorkers = () =>
+              pagesChunk
+              ->Js.Array.map(
+                  ~f=
+                    chunk =>
+                      buildPagesWithWorker(
+                        ~melangeArtifactsExtension,
+                        ~pageAppArtifactsType,
+                        ~outputDir,
+                        ~melangeOutputDir,
+                        ~logger,
+                        ~globalEnvValues,
+                        ~pageAppArtifactsSuffix,
+                        chunk,
+                      ),
+                  _,
+                )
+              ->Promise.all;
 
-        buildChunksWithWorkers;
-      }, _)
+            buildChunksWithWorkers;
+          },
+        _,
+      )
     ->Promise.seqRun
     ->Promise.map(results => Array.flat2(results))
     ->Promise.map(results => {

@@ -1,5 +1,4 @@
-[@mel.send]
-external replaceAll: (string, string, string) => string = "replaceAll";
+[@mel.send] external replaceAll: (string, string, string) => string = "replaceAll";
 
 let bsArtifactRegex = [%re {|/file:.*\.bs\.js$/i|}];
 
@@ -27,9 +26,7 @@ let isAsset = fileUrl => {
 // Source: https://github.com/evanw/esbuild/issues/3113#issuecomment-1542394482
 let getEsbuildFileHash = (buffer: Buffer.t) => {
   HashWasm.createXXHash64AndReturnBinaryDigest(buffer)
-  ->Promise.map(buffer => {
-      Base32Encode.base32Encode(buffer)->Js.String.slice(~start=0, ~end_=8, _)
-    });
+  ->Promise.map(buffer => {Base32Encode.base32Encode(buffer)->Js.String.slice(~start=0, ~end_=8, _)});
 };
 
 // We get a file's hash and make a JS module that exports a filename with hash suffix.
@@ -53,30 +50,26 @@ let getFinalHashedAssetPath = (url: string) => {
       let filenameWithoutExt = fileName->Js.String.replace(~search=fileExt, ~replacement="", _);
 
       let filenameWithHash = {
-          // cat-FU5UU3XL.jpeg
-          getEsbuildFileHash(fileData)
-          ->Promise.map(fileHash => {
-              filenameWithoutExt ++ "-" ++ fileHash ++ fileExt
-            })
-          ->Promise.catch(error => {
-              Js.Console.error2(
-                "[NodeLoader.getFinalHashedAssetPath] [Esbuild.getFileHash] Error:",
-                error->Util.inspect,
-              );
-              Process.exit(1);
-            })
-        };
+        // cat-FU5UU3XL.jpeg
+        getEsbuildFileHash(fileData)
+        ->Promise.map(fileHash => {filenameWithoutExt ++ "-" ++ fileHash ++ fileExt})
+        ->Promise.catch(error => {
+            Js.Console.error2(
+              "[NodeLoader.getFinalHashedAssetPath] [Esbuild.getFileHash] Error:",
+              error->Util.inspect,
+            );
+            Process.exit(1);
+          });
+      };
 
       filenameWithHash->Promise.map(filenameWithHash => {
         let assetPath =
           switch (EnvParams.assetPrefix->Js.String.startsWith(~prefix="https://", _)) {
           | false =>
-            let assetsDir =
-              Path.join2(EnvParams.assetPrefix, Bundler.assetsDirname);
+            let assetsDir = Path.join2(EnvParams.assetPrefix, Bundler.assetsDirname);
             Path.join2(assetsDir, filenameWithHash);
           | true =>
-            let assetsDir =
-              EnvParams.assetPrefix ++ "/" ++ Bundler.assetsDirname;
+            let assetsDir = EnvParams.assetPrefix ++ "/" ++ Bundler.assetsDirname;
             assetsDir ++ "/" ++ filenameWithHash;
           };
 
@@ -85,10 +78,7 @@ let getFinalHashedAssetPath = (url: string) => {
       });
     })
   ->Promise.catch(error => {
-      Js.Console.error2(
-        "[NodeLoader.getFinalHashedAssetPath] Unexpected promise rejection:",
-        error->Util.inspect,
-      );
+      Js.Console.error2("[NodeLoader.getFinalHashedAssetPath] Unexpected promise rejection:", error->Util.inspect);
       Process.exit(1);
     });
 };

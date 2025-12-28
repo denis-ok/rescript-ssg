@@ -1,5 +1,4 @@
-let uniqueStringArray = (array: array(string)) =>
-  Set.fromArray(array)->Set.toArray;
+let uniqueStringArray = (array: array(string)) => Set.fromArray(array)->Set.toArray;
 
 let uniqueArray = (array: array('a), ~getId: 'a => string) => {
   let items = array->Js.Array.map(~f=v => (v->getId, v), _);
@@ -11,12 +10,13 @@ let makeUniquePageArray = (pages: array(PageBuilder.page)) => {
 };
 
 let showPages = (pages: array(PageBuilder.page)) => {
-  pages->Js.Array.map(~f=(page: PageBuilder.page) => {
-    Log.makeMinimalPrintablePageObj(
-      ~pagePath=page.path,
-      ~pageModulePath=page.modulePath,
-    )
-  }, _);
+  pages->Js.Array.map(
+           ~f=
+             (page: PageBuilder.page) => {
+               Log.makeMinimalPrintablePageObj(~pagePath=page.path, ~pageModulePath=page.modulePath)
+             },
+           _,
+         );
 };
 
 // To make a watcher work properly we need to:
@@ -61,10 +61,7 @@ let startWatcher =
   let updateDependencyToPageModulesDict = (~dependency, ~pageModulePath) => {
     switch (dependencyToPageModulesDict->Js.Dict.get(dependency)) {
     | None =>
-      dependencyToPageModulesDict->Js.Dict.set(
-        dependency,
-        ([|pageModulePath|], Set.fromArray([|pageModulePath|])),
-      )
+      dependencyToPageModulesDict->Js.Dict.set(dependency, ([|pageModulePath|], Set.fromArray([|pageModulePath|])))
     | Some((pageModulePaths, pageModulePathsSet)) =>
       switch (pageModulePathsSet->Set.has(pageModulePath)) {
       | true => ()
@@ -81,66 +78,74 @@ let startWatcher =
   let modulePathToPagesDict = Js.Dict.empty();
   let headCssFileToPagesDict = Js.Dict.empty();
   let pageWrapperModulePaths = [||];
+  // Multiple pages can use the same page module. The common case is localized pages.
+  // We get modulePath -> array(pages) dict here.
+  // Fill modulePathToPagesDict
+  // Fill headCssFileToPagesDict
+  // We handle pageWrapper module as a dependency of the page's module.
+  // If pageWrapper module changes we check what page modules depend on it and rebuild them.
+  // Fill pageWrapperModulePaths
+  // Page wrapper can import other modules and have dependencies as well.
+  // This should be also handled.
+  pages->Js.Array.forEach(
+           ~f=
+             (page: PageBuilder.page) => {
+               switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
+               | None => modulePathToPagesDict->Js.Dict.set(page.modulePath, [|page|])
+               | Some(pages) => pages->Js.Array.push(~value=page, _)->ignore
+               };
 
-  pages->Js.Array.forEach(~f=(page: PageBuilder.page) => {
-    // Multiple pages can use the same page module. The common case is localized pages.
-    // We get modulePath -> array(pages) dict here.
-    // Fill modulePathToPagesDict
-    switch (modulePathToPagesDict->Js.Dict.get(page.modulePath)) {
-    | None => modulePathToPagesDict->Js.Dict.set(page.modulePath, [|page|])
-    | Some(pages) => pages->Js.Array.push(~value=page, _)->ignore
-    };
+               page.headCssFilepaths
+               ->Js.Array.forEach(
+                   ~f=
+                     headCssFile => {
+                       switch (headCssFileToPagesDict->Js.Dict.get(headCssFile)) {
+                       | None =>
+                         headCssFileToPagesDict->Js.Dict.set(
+                           headCssFile,
+                           ([|page|], Set.fromArray([|page.path->PagePath.toString|])),
+                         )
+                       | Some((pages, pagePathsSet)) =>
+                         switch (pagePathsSet->Set.has(page.path->PagePath.toString)) {
+                         | true => ()
+                         | _false =>
+                           pages->Js.Array.push(~value=page, _)->ignore;
+                           headCssFileToPagesDict->Js.Dict.set(
+                             headCssFile,
+                             (pages, pagePathsSet->Set.add(page.path->PagePath.toString)),
+                           );
+                         }
+                       }
+                     },
+                   _,
+                 );
 
-    // Fill headCssFileToPagesDict
-    page.headCssFilepaths
-    ->Js.Array.forEach(~f=headCssFile => {
-        switch (headCssFileToPagesDict->Js.Dict.get(headCssFile)) {
-        | None =>
-          headCssFileToPagesDict->Js.Dict.set(
-            headCssFile,
-            ([|page|], Set.fromArray([|page.path->PagePath.toString|])),
-          )
-        | Some((pages, pagePathsSet)) =>
-          switch (pagePathsSet->Set.has(page.path->PagePath.toString)) {
-          | true => ()
-          | _false =>
-            pages->Js.Array.push(~value=page, _)->ignore;
-            headCssFileToPagesDict->Js.Dict.set(
-              headCssFile,
-              (pages, pagePathsSet->Set.add(page.path->PagePath.toString)),
-            );
-          }
-        }
-      }, _);
-
-    // We handle pageWrapper module as a dependency of the page's module.
-    // If pageWrapper module changes we check what page modules depend on it and rebuild them.
-    // Fill pageWrapperModulePaths
-    switch (page.pageWrapper) {
-    | None => ()
-    | Some(wrapper) =>
-      // Page wrapper can import other modules and have dependencies as well.
-      // This should be also handled.
-      pageWrapperModulePaths->Js.Array.push(~value=wrapper.modulePath, _)->ignore;
-      updateDependencyToPageModulesDict(
-        ~dependency=wrapper.modulePath,
-        ~pageModulePath=page.modulePath,
-      );
-    };
-  }, _);
+               switch (page.pageWrapper) {
+               | None => ()
+               | Some(wrapper) =>
+                 pageWrapperModulePaths->Js.Array.push(~value=wrapper.modulePath, _)->ignore;
+                 updateDependencyToPageModulesDict(~dependency=wrapper.modulePath, ~pageModulePath=page.modulePath);
+               };
+             },
+           _,
+         );
 
   let pageModulePaths = modulePathToPagesDict->Js.Dict.keys;
 
+  // Initial watcher start and getModuleDependencies must perform successfully.
   let pageModulesAndTheirDependencies =
-    pageModulePaths->Js.Array.map(~f=pageModulePath => {
-      Esbuild.getModuleDependencies(
-        // Initial watcher start and getModuleDependencies must perform successfully.
-        ~exitOnError=true,
-        ~projectRootDir,
-        ~modulePath=pageModulePath,
-      )
-      ->Promise.map(pageDependencies => (pageModulePath, pageDependencies))
-    }, _);
+    pageModulePaths->Js.Array.map(
+                       ~f=
+                         pageModulePath => {
+                           Esbuild.getModuleDependencies(
+                             ~exitOnError=true,
+                             ~projectRootDir,
+                             ~modulePath=pageModulePath,
+                           )
+                           ->Promise.map(pageDependencies => (pageModulePath, pageDependencies))
+                         },
+                       _,
+                     );
 
   let _: Js.Promise.t(unit) =
     pageModulesAndTheirDependencies
@@ -148,34 +153,43 @@ let startWatcher =
     ->Promise.map(pageModulesAndTheirDependencies => {
         // Fill dependencyToPageModulesDict
         pageModulesAndTheirDependencies->Js.Array.forEach(
-          ~f=((pageModulePath, pageDependencies)) => {
-          pageDependencies->Js.Array.forEach(~f=dependency =>
-            updateDependencyToPageModulesDict(~dependency, ~pageModulePath)
-          , _)
-        }, _);
+                                           ~f=
+                                             ((pageModulePath, pageDependencies)) => {
+                                               pageDependencies->Js.Array.forEach(
+                                                                   ~f=
+                                                                    dependency =>
+                                                                    updateDependencyToPageModulesDict(
+                                                                    ~dependency,
+                                                                    ~pageModulePath,
+                                                                    ),
+                                                                   _,
+                                                                 )
+                                             },
+                                           _,
+                                         );
 
         let allDependencies = {
           let dependencies = [||];
 
           headCssFileToPagesDict
           ->Js.Dict.keys
-          ->Js.Array.forEach(~f=headCssPath =>
-              dependencies->Js.Array.push(~value=headCssPath, _)->ignore
-            , _);
+          ->Js.Array.forEach(~f=headCssPath => dependencies->Js.Array.push(~value=headCssPath, _)->ignore, _);
 
           dependencyToPageModulesDict
           ->Js.Dict.keys
-          ->Js.Array.forEach(~f=dependencyPath =>
-              dependencies->Js.Array.push(~value=dependencyPath, _)->ignore
-            , _);
+          ->Js.Array.forEach(~f=dependencyPath => dependencies->Js.Array.push(~value=dependencyPath, _)->ignore, _);
 
-          pageModulePaths->Js.Array.forEach(~f=pageModulePath =>
-            dependencies->Js.Array.push(~value=pageModulePath, _)->ignore
-          , _);
+          pageModulePaths->Js.Array.forEach(
+                             ~f=pageModulePath => dependencies->Js.Array.push(~value=pageModulePath, _)->ignore,
+                             _,
+                           );
 
-          pageWrapperModulePaths->Js.Array.forEach(~f=pageWrapperModulePath =>
-            dependencies->Js.Array.push(~value=pageWrapperModulePath, _)->ignore
-          , _);
+          pageWrapperModulePaths->Js.Array.forEach(
+                                    ~f=
+                                      pageWrapperModulePath =>
+                                        dependencies->Js.Array.push(~value=pageWrapperModulePath, _)->ignore,
+                                    _,
+                                  );
 
           dependencies;
         };
@@ -187,12 +201,7 @@ let startWatcher =
           Js.Console.timeEnd(durationLabel);
         });
 
-        logger.debug(() =>
-          Js.log2(
-            "[Watcher] Initial watcher dependencies:\n",
-            allDependencies,
-          )
-        );
+        logger.debug(() => Js.log2("[Watcher] Initial watcher dependencies:\n", allDependencies));
       });
 
   let rebuildQueueRef: ref(array(PageBuilder.page)) = ref([||]);
@@ -202,12 +211,7 @@ let startWatcher =
     | [||] => Promise.resolve()
     | pagesToRebuild =>
       logger.info(() => Js.log("[Watcher] Pages rebuild triggered..."));
-      logger.debug(() =>
-        Js.log2(
-          "[Watcher] Passing pages to worker to rebuild:\n",
-          pagesToRebuild->showPages,
-        )
-      );
+      logger.debug(() => Js.log2("[Watcher] Passing pages to worker to rebuild:\n", pagesToRebuild->showPages));
       BuildPageWorkerHelpers.buildPagesWithWorkers(
         ~melangeArtifactsExtension,
         ~pageAppArtifactsType,
@@ -222,51 +226,62 @@ let startWatcher =
         ~pageAppArtifactsSuffix="",
       )
       ->Promise.flatMap(_ => {
-          logger.debug(() =>
-            Js.log(
-              "[Watcher] Pages rebuild success, updating dependencies to watch...",
-            )
-          );
+          logger.debug(() => Js.log("[Watcher] Pages rebuild success, updating dependencies to watch..."));
 
           let updatedPageModulesAndTheirDependencies =
-            pagesToRebuild->Js.Array.map(~f=(page: PageBuilder.page) => {
-              let pageModulePath = page.modulePath;
+            pagesToRebuild-> // While compiler is working, this operation may fail.
+// It will return an empty array in this case, so we can ignore the error.
+                                                                    // Maybe we should add some logic to make one more attempt to get dependencies.
+                                                                    Js.Array.map(
+                                                                    ~f=
 
-              Esbuild.getModuleDependencies(
-                // While compiler is working, this operation may fail.
-                // It will return an empty array in this case, so we can ignore the error.
-                // Maybe we should add some logic to make one more attempt to get dependencies.
-                ~exitOnError=false,
-                ~projectRootDir,
-                ~modulePath=pageModulePath,
-              )
-              ->Promise.map(pageDependencies =>
-                  (pageModulePath, pageDependencies)
-                );
-            }, _);
+                                                                    (page: PageBuilder.page) => {
+                                                                    let pageModulePath = page.modulePath;
+
+                                                                    Esbuild.getModuleDependencies(
+                                                                    ~exitOnError=false,
+                                                                    ~projectRootDir,
+                                                                    ~modulePath=pageModulePath,
+                                                                    )
+                                                                    ->Promise.map(pageDependencies =>
+                                                                    (pageModulePath, pageDependencies)
+                                                                    );
+                                                                    },
+                                                                    _,
+                                                                    );
 
           let newDependencies =
             updatedPageModulesAndTheirDependencies
             ->Promise.all
             ->Promise.map(pageModulesAndTheirDependencies => {
                 pageModulesAndTheirDependencies->Js.Array.map(
-                  ~f=((pageModulePath, pageDependencies)) => {
-                  logger.debug(() => {
-                    let pageDependenciesStr = String.concat(", ", Stdlib.Array.to_list(pageDependencies));
-                    Js.log(
-                      {j|[Watcher] Dependencies of updated page module: $(pageModulePath) are: $(pageDependenciesStr)|j},
-                    )
-                  });
+                                                   ~f=
+                                                     ((pageModulePath, pageDependencies)) => {
+                                                       logger.debug(() => {
+                                                         let pageDependenciesStr =
+                                                           String.concat(
+                                                             ", ",
+                                                             Stdlib.Array.to_list(pageDependencies),
+                                                           );
+                                                         Js.log(
+                                                           {j|[Watcher] Dependencies of updated page module: $(pageModulePath) are: $(pageDependenciesStr)|j},
+                                                         );
+                                                       });
 
-                  pageDependencies->Js.Array.forEach(~f=dependency =>
-                    updateDependencyToPageModulesDict(
-                      ~dependency,
-                      ~pageModulePath,
-                    )
-                  , _);
+                                                       pageDependencies->Js.Array.forEach(
+                                                                    ~f=
+                                                                    dependency =>
+                                                                    updateDependencyToPageModulesDict(
+                                                                    ~dependency,
+                                                                    ~pageModulePath,
+                                                                    ),
+                                                                    _,
+                                                                    );
 
-                  pageDependencies;
-                }, _)
+                                                       pageDependencies;
+                                                     },
+                                                   _,
+                                                 )
               });
 
           newDependencies->Promise.map(newDependencies => {
@@ -275,17 +290,10 @@ let startWatcher =
             watcher->Chokidar.add(newDependencies);
 
             logger.debug(() => {
-              Js.log2(
-                "[Watcher] Pages are rebuilded, dependencyToPageModulesDict:\n",
-                dependencyToPageModulesDict,
-              )
+              Js.log2("[Watcher] Pages are rebuilded, dependencyToPageModulesDict:\n", dependencyToPageModulesDict)
             });
 
-            logger.info(() => {
-              Js.log(
-                "[Watcher] Pages are rebuilded, files to watch are updated",
-              )
-            });
+            logger.info(() => {Js.log("[Watcher] Pages are rebuilded, files to watch are updated")});
 
             rebuildQueueRef := [||];
           });
@@ -293,26 +301,20 @@ let startWatcher =
     };
   };
 
-  let rebuildPagesDebounced =
-    Debounce.debounce(~delayMs=1000, () => rebuildPages()->ignore);
+  let rebuildPagesDebounced = Debounce.debounce(~delayMs=1000, () => rebuildPages()->ignore);
 
   let onChangeOrUnlink = filepath => {
     let pagesToRebuild =
       switch (modulePathToPagesDict->Js.Dict.get(filepath)) {
       | Some(pages) =>
-        logger.debug(() =>
-          Js.log2("[Watcher] Exact page module changed: ", filepath)
-        );
+        logger.debug(() => Js.log2("[Watcher] Exact page module changed: ", filepath));
         pages;
       | None =>
         switch (dependencyToPageModulesDict->Js.Dict.get(filepath)) {
         | Some((pageModules, _pageModulesSet)) =>
           logger.debug(() => {
             Js.log2("[Watcher] Dependency changed: ", filepath);
-            Js.log2(
-              "[Watcher] Should rebuild these page modules:\n",
-              pageModules,
-            );
+            Js.log2("[Watcher] Should rebuild these page modules:\n", pageModules);
           });
 
           let pages =
@@ -322,10 +324,7 @@ let startWatcher =
                 | Some(pages) => Some(pages)
                 | None =>
                   logger.debug(() =>
-                    Js.log2(
-                      "[Watcher] [Warning] The following page module is missing in dict: ",
-                      modulePath,
-                    )
+                    Js.log2("[Watcher] [Warning] The following page module is missing in dict: ", modulePath)
                   );
                   None;
                 }
@@ -336,37 +335,24 @@ let startWatcher =
         | None =>
           switch (headCssFileToPagesDict->Js.Dict.get(filepath)) {
           | Some((pages, _pagePathsSet)) =>
-            logger.debug(() =>
-              Js.log2("[Watcher] Head CSS file changed: ", filepath)
-            );
+            logger.debug(() => Js.log2("[Watcher] Head CSS file changed: ", filepath));
             pages;
           | None =>
             // Nothing depends on a changed file. We should remove it from watcher.
             watcher->Chokidar.unwatch([|filepath|]);
 
-            logger.debug(() =>
-              Js.log2(
-                "[Watcher] [Warning] No pages depend on the file: ",
-                filepath,
-              )
-            );
+            logger.debug(() => Js.log2("[Watcher] [Warning] No pages depend on the file: ", filepath));
 
             [||];
           }
         }
       };
 
-    let newRebuildQueue =
-      Js.Array.concat(~other=rebuildQueueRef^, pagesToRebuild)->makeUniquePageArray;
+    let newRebuildQueue = Js.Array.concat(~other=rebuildQueueRef^, pagesToRebuild)->makeUniquePageArray;
 
     rebuildQueueRef := newRebuildQueue;
 
-    logger.debug(() =>
-      Js.log2(
-        "[Watcher] Rebuild pages queue:\n",
-        (rebuildQueueRef^)->showPages,
-      )
-    );
+    logger.debug(() => Js.log2("[Watcher] Rebuild pages queue:\n", (rebuildQueueRef^)->showPages));
 
     rebuildPagesDebounced();
   };
