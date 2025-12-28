@@ -18,7 +18,7 @@ depends: [
   "styled-ppx"
   "ocamlformat" {with-dev-setup}
   "ocaml-lsp-server" {with-dev-setup}
-  "opam-check-npm-deps" {with-dev-setup}
+  # "opam-check-npm-deps" {with-dev-setup}
   "odoc" {with-dev-setup}
 ]
 build: [
