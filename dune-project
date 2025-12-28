@@ -1,5 +1,5 @@
-(lang dune 3.16)
+(lang dune 3.20)
 
-(using melange 0.1)
+(using melange 1.0)
 
 (name rescript-ssg)

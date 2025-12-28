@@ -15,7 +15,7 @@ help: ## Print this help message
 
 .PHONY: create-switch
 create-switch: ## Create opam switch
-	opam switch create . 5.2.0 -y --deps-only
+	opam switch create . 5.3.0 -y --deps-only
 
 .PHONY: init
 init: create-switch install ## Configure everything to develop this repository in local
@@ -24,7 +24,7 @@ init: create-switch install ## Configure everything to develop this repository i
 install: ## Install development dependencies
 	npm ci
 	opam update
-	opam install -y . --deps-only --with-test
+	opam install -y . --deps-only --with-dev-setup
 
 .PHONY: build
 build: ## Build the project
