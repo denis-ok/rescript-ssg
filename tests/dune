@@ -1,8 +1,35 @@
 (include_subdirs unqualified)
 
+(melange.emit
+ (target node)
+ (alias main)
+ (libraries melange-fest)
+ (modules FestTests FestTests2)
+ (preprocess
+  (pps melange.ppx reason-react-ppx))
+ (module_systems
+  (es6 mjs)))
+
 (library
  (name tests)
  (modes melange)
- (libraries rescript-ssg)
+ (libraries rescript-ssg melange-fest)
+ (modules Tests TestPage TestPageWithData TestWrapper TestWrapperWithData)
  (preprocess
   (pps melange.ppx reason-react-ppx)))
+
+(rule
+ (alias runtest)
+ (deps
+  (alias_rec main)
+  (:input %{dep:./node/tests/FestTests.mjs}))
+ (action
+  (run node %{input})))
+
+(rule
+ (alias runtest)
+ (deps
+  (alias_rec main)
+  (:input %{dep:./node/tests/FestTests2.mjs}))
+ (action
+  (run node %{input})))
