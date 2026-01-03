@@ -70,11 +70,11 @@ clean-example: ## Clean example site artifacts
 
 .PHONY: build-example
 build-example: clean-example build ## Build the whole project and build example site
-	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMPILED_EXAMPLE_DIR)/src/commands/Build.mel.mjs
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(COMPILED_EXAMPLE_DIR)/src/commands/Build.mel.mjs
 
 .PHONY: start-example
 start-example: ## Start example site in watch mode
-	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) RESCRIPT_SSG_BUNDLER=esbuild $(RESCRIPT_SSG_BIN) $(COMPILED_EXAMPLE_DIR)/src/commands/Start.mel.mjs
+	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(RESCRIPT_SSG_BIN) $(COMPILED_EXAMPLE_DIR)/src/commands/Start.mel.mjs
 
 .PHONY: serve-example
 serve-example: ## Serve example site (use after build)
