@@ -2,7 +2,7 @@
 
 (melange.emit
  (target all)
- (libraries rescript-ssg example tests)
+ (libraries rescript-ssg example)
  (module_systems
   (es6 mel.mjs)))
 
