@@ -22,13 +22,29 @@ let seqRun = (functions: array(unit => Js.Promise.t('a))) => {
   ->Js.Promise.all;
 };
 
-module Result = {
-  let catch = (promise, ~context: string): Js.Promise.t(Belt.Result.t('ok, (string, Js.Promise.error))) =>
-    promise
-    ->map(value => Belt.Result.Ok(value))
-    ->catch(error => Belt.Result.Error((context, error))->Js.Promise.resolve);
+type promiseErrorData = {
+  error: Js.Promise.error,
+  context: string,
+};
 
-  let all = (promises: Js.Promise.t(array(Belt.Result.t('ok, 'error)))) =>
+type promiseError = [ | `PromiseError(promiseErrorData)];
+
+let catchResult = (~context: string, promise: Js.Promise.t('a)): Js.Promise.t(Result.t('a, promiseError)) =>
+  promise
+  ->map(value => Result.Ok(value))
+  ->catch(error =>
+      Result.Error(
+        `PromiseError({
+          error,
+          context,
+        }),
+      )
+      ->Js.Promise.resolve
+    );
+
+module Result = {
+  let all =
+      (promises: Js.Promise.t(array(Result.t('ok, 'error)))): Js.Promise.t(Result.t(array('ok), array('error))) =>
     promises->map(promises => {
       let (oks, errors) =
         promises->Js.Array.reduce(
@@ -48,13 +64,15 @@ module Result = {
       };
     });
 
-  let map = (promise: Js.Promise.t(Belt.Result.t('a, 'error)), func: 'a => 'b) =>
+  let map = (promise: Js.Promise.t(Result.t('a, 'error)), func: 'a => 'b): Js.Promise.t(Result.t('b, 'error)) =>
     promise->map(result => result->Belt.Result.map(func));
 
-  let flatMap = (promise: Js.Promise.t(Belt.Result.t('a, 'error)), func: 'a => Js.Promise.t('b)) =>
+  let flatMap =
+      (promise: Js.Promise.t(Result.t('a, 'error)), func: 'a => Js.Promise.t('b))
+      : Js.Promise.t(Result.t('b, 'error)) =>
     promise->flatMap(result =>
       switch (result) {
-      | Ok(ok) => func(ok)
+      | Ok(ok) => func(ok)->map(value => Result.Ok(value))
       | Error(error) => Js.Promise.resolve(Error(error))
       }
     );

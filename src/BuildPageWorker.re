@@ -16,7 +16,7 @@ let logger = Log.makeLogger(workerData.logLevel);
 
 logger.info(() => Js.log({j|[Worker] Building $(pagesCount) pages...|j}));
 
-type workerOutput = Promise.t(array(Belt.Result.t(RenderedPage.t, PagePath.t)));
+type workerOutput = Promise.t(array(Result.t(RenderedPage.t, PagePath.t)));
 
 let startTime = Performance.now();
 
@@ -130,7 +130,7 @@ let workerOutput: workerOutput =
               | Ok(renderedPage: RenderedPage.t) =>
                 Js.log(successText);
                 Belt.Result.Ok(renderedPage);
-              | Error(errors: array((string, Js.Promise.error))) =>
+              | Error(errors: array(Promise.promiseError)) =>
                 logger.info(() => {Js.Console.error2({j|[Worker] $(pageInfo) Build page errors:|j}, errors)});
                 let result = Belt.Result.Error(page.path);
                 result;

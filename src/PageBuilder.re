@@ -701,9 +701,9 @@ let buildPageHtmlAndReactApp =
   let mkDirPromises =
     [|
       Fs.Promises.mkDir(pageOutputDir, {recursive: true})
-      ->Promise.Result.catch(~context="[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageOutputDir)]"),
+      ->Promise.catchResult(~context="[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageOutputDir)]"),
       Fs.Promises.mkDir(pageWrappersDataDir, {recursive: true})
-      ->Promise.Result.catch(
+      ->Promise.catchResult(
           ~context="[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageWrappersDataDir)]",
         ),
     |]
@@ -722,11 +722,11 @@ let buildPageHtmlAndReactApp =
 
       let resultHtmlFilePromise =
         Fs.Promises.writeFile(~path=resultHtmlPath, ~data=resultHtml)
-        ->Promise.Result.catch(~context="[PageBuilder.buildPageHtmlAndReactApp] [resultHtmlFilePromise]");
+        ->Promise.catchResult(~context="[PageBuilder.buildPageHtmlAndReactApp] [resultHtmlFilePromise]");
 
       let resultReactAppFilePromise =
         Fs.Promises.writeFile(~path=Path.join2(pageOutputDir, reactAppFilename), ~data=resultReactApp)
-        ->Promise.Result.catch(~context="[PageBuilder.buildPageHtmlAndReactApp] [resultReactAppFilePromise]");
+        ->Promise.catchResult(~context="[PageBuilder.buildPageHtmlAndReactApp] [resultReactAppFilePromise]");
 
       let jsFilesPromises =
         [|pageWrapperDataProp, pageDataProp|]
@@ -737,7 +737,7 @@ let buildPageHtmlAndReactApp =
                 | None => Promise.resolve(Belt.Result.Ok())
                 | Some({jsDataFileContent, jsDataFilepath, _}) =>
                   Fs.Promises.writeFile(~path=jsDataFilepath, ~data=jsDataFileContent)
-                  ->Promise.Result.catch(~context="[PageBuilder.buildPageHtmlAndReactApp] [jsFilesPromises]")
+                  ->Promise.catchResult(~context="[PageBuilder.buildPageHtmlAndReactApp] [jsFilesPromises]")
                 },
             _,
           );
