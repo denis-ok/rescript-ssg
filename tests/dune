@@ -7,7 +7,6 @@
  (modules
   NodeTest
   FestTests
-  FestTests2
   Tests
   TestPage
   TestPageWithData
@@ -18,21 +17,13 @@
  (module_systems
   (es6 mjs)))
 
-; (rule
-;  (alias runtest)
-;  (deps
-;   (alias_rec main)
-;   (:input %{dep:./node/tests/FestTests.mjs}))
-;  (action
-;   (run node --test %{input})))
-
-; (rule
-;  (alias runtest)
-;  (deps
-;   (alias_rec main)
-;   (:input %{dep:./node/tests/FestTests2.mjs}))
-;  (action
-;   (run node --test %{input})))
+(rule
+ (alias runtest)
+ (deps
+  (alias_rec main)
+  (:input %{dep:./node/tests/FestTests.mjs}))
+ (action
+  (run node --test %{input})))
 
 (rule
  (alias runtest)

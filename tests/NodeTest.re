@@ -1,9 +1,5 @@
 /** Bindings for functions from {{: https://nodejs.org/api/test.html#test-runner }node:test} and {{: https://nodejs.org/api/assert.html#strict-assertion-mode }node:assert/strict} modules  */;
 
-/** Create a test with a given name and callback function that runs the test */
-[@mel.module "node:test"]
-external test: (string, unit => unit) => unit = "test";
-
 /** Abstract type for {{: https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal }AbortSignal} */
 type abortSignal;
 
@@ -33,11 +29,41 @@ type testOptions = {
   plan: option(int),
 };
 
+module TestContext = {
+  /** https://nodejs.org/api/test.html#class-testcontext */
+  type t;
+
+  // This function is used to create a hook running before subtest of the current test.
+  [@mel.send] external before: (t => Js.Promise.t(unit), [@mel.this] t) => unit = "before";
+  // This function is used to create a hook that runs after the current test finishes.
+  [@mel.send] external after: (t => Js.Promise.t(unit), [@mel.this] t) => unit = "after";
+
+  // This function is used to create a hook running before each subtest of the current test.
+  [@mel.send] external beforeEach: (t => Js.Promise.t(unit), [@mel.this] t) => unit = "beforeEach";
+  // This function is used to create a hook running after each subtest of the current test.
+  [@mel.send] external afterEach: (t => Js.Promise.t(unit), [@mel.this] t) => unit = "afterEach";
+
+  [@mel.send] external test: (string, t => unit, [@mel.this] t) => unit = "test";
+
+  [@mel.send] external testWithOptions: (string, testOptions, t => unit, [@mel.this] t) => unit = "test";
+
+  [@mel.send] external testPromise: (string, t => Js.Promise.t(unit), [@mel.this] t) => Js.Promise.t(unit) = "test";
+
+  [@mel.send]
+  external testPromiseWithOptions:
+    (string, testOptions, t => Js.Promise.t(unit), [@mel.this] t) => Js.Promise.t(unit) =
+    "test";
+};
+
+/** Create a test with a given name and callback function that runs the test */
+[@mel.module "node:test"]
+external test: (string, TestContext.t => unit) => unit = "test";
+
 let makeOptions = testOptions;
 
 /** Create a test with a given name, options, and callback function that runs the test */
 [@mel.module "node:test"]
-external testWithOptions: (string, testOptions, unit => unit) => unit = "test";
+external testWithOptions: (string, testOptions, TestContext.t => unit) => unit = "test";
 
 /** This promise-based module is needed for nested tests, see {: https://nodejs.org/api/test.html#subtests } */
 module Promise = {
@@ -47,7 +73,7 @@ module Promise = {
 
   /** Create a top-level test with a given name and callback function that runs the test and returns a promise. */
   [@mel.module "node:test"]
-  external test: (string, unit => Js.Promise.t(unit)) => unit = "test";
+  external test: (string, TestContext.t => Js.Promise.t(unit)) => unit = "test";
 
   /** Create a subtest with a given name and callback function that runs the test and returns a promise. It is supposed to be used inside a {!test} function call. */
   [@mel.module "node:test"]
@@ -55,7 +81,8 @@ module Promise = {
 
   /** Create a top-level test with options that returns a promise */
   [@mel.module "node:test"]
-  external testWithOptions: (string, testOptions, unit => Js.Promise.t(unit)) => unit = "test";
+  external testWithOptions: (string, testOptions, TestContext.t => Js.Promise.t(unit)) => Js.Promise.t(unit) =
+    "test";
 
   /** Create a subtest with options that returns a promise */
   [@mel.module "node:test"]
