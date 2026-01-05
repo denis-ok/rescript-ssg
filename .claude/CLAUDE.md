@@ -1,16 +1,15 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `src/` holds the library sources; `src/bindings/` contains JS/Node bindings and externals.
-- `tests/` holds test modules and fixtures; the entry module is `tests/Tests.re`.
-- `example/` is a full demo site (`example/src/`), including CSS and static assets under `example/src/images/`.
+- `src/` holds the library sources. Mostly OCaml/Reason code and a bit of JS; `src/bindings/` contains JS/Node bindings.
+- `tests/` holds test modules and fixtures;
+- `example/` is a demo project build with this library.
 - `_build/`, `coverage/`, and `example/build/` are generated outputs and should not be edited directly.
 
 ## Build, Test, and Development Commands
-- `make init` sets up the local toolchain (opam switch, npm deps, opam deps).
-- `make build` builds the library via `dune`.
-- `make watch` runs `dune` in watch mode for fast iteration.
-- `make tests` runs the JS/Melange test runner with coverage via `c8`.
+- `make build` compailes the library (OCaml/Reason) sources using OCaml/Melange compiler with `dune`.
+- `make watch` runs `dune` in watch mode.
+- `make tests` runs the JS/Melange test runner.
 - `make build-example` builds the demo site; `make start-example` runs it in watch mode.
 - `make serve-example` serves the built demo site on port 3005.
 
