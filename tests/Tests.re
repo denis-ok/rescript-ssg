@@ -29,24 +29,23 @@ module Utils_ = {
 module MakeReactAppModuleName = {
   let moduleName = "Page";
 
-  let testCase = (~pagePath, ~expect as expected) => {
-    NodeTest.Promise.subtest(
-      "PageBuilder.pagePathToPageAppModuleName: " ++ pagePath,
-      () => {
-        let reactAppModuleName =
-          PageBuilder.pagePathToPageAppModuleName(~pageAppArtifactsSuffix="", ~pagePath, ~moduleName);
-        NodeTest.expect |> NodeTest.equal(reactAppModuleName, expected);
-        Js.Promise.resolve();
-      },
-    );
-  };
+  let cases = [|
+    (".", "Page__PageApp"),
+    ("foo/bar", "foobarPage__PageApp"),
+    ("foo/bar-baz", "foobarbazPage__PageApp"),
+  |];
 
-  let run = () => {
-    let* () = testCase(~pagePath=".", ~expect="Page__PageApp");
-    let* () = testCase(~pagePath="foo/bar", ~expect="foobarPage__PageApp");
-    let* () = testCase(~pagePath="foo/bar-baz", ~expect="foobarbazPage__PageApp");
-    Js.Promise.resolve();
-  };
+  let () =
+    cases->Belt.Array.forEach(((pagePath, expected)) =>
+      NodeTest.test(
+        "PageBuilder.pagePathToPageAppModuleName: " ++ pagePath,
+        _context => {
+          let reactAppModuleName =
+            PageBuilder.pagePathToPageAppModuleName(~pageAppArtifactsSuffix="", ~pagePath, ~moduleName);
+          NodeTest.expect |> NodeTest.equal(reactAppModuleName, expected);
+        },
+      )
+    );
 };
 
 module BuildPageHtmlAndReactApp = {
@@ -57,7 +56,11 @@ module BuildPageHtmlAndReactApp = {
 
   let logger = Log.makeLogger(Info);
 
-  let projectRootDir = "/Users/denstr/projects/rescript-ssg";
+  let projectRootDir =
+    switch (Js.Dict.get(Process.env, "PROJECT_ROOT_DIR")) {
+    | Some(dir) => dir
+    | None => Js.Exn.raiseError("PROJECT_ROOT_DIR environment variable not set")
+    };
 
   let outputDir = Path.join2(projectRootDir, "tests/output");
 
@@ -74,53 +77,52 @@ module BuildPageHtmlAndReactApp = {
 
   let compileCommand = "true";
 
-  let runTest = (~name, ~page, ~expectedAppContent, ~expectedHtmlContent as _) =>
-    NodeTest.Promise.subtest(
-      name,
-      () => {
-        cleanup();
+  let runTest = (context, ~name, ~page, ~expectedAppContent, ~expectedHtmlContent as _) =>
+    context
+    |> TestContext.test(
+         name,
+         _context => {
+           let renderedPage =
+             PageBuilder.buildPageHtmlAndReactApp(
+               ~melangeArtifactsExtension="mel.mjs",
+               ~pageAppArtifactsType=Reason,
+               ~outputDir,
+               ~melangeOutputDir=None,
+               ~logger,
+               ~pageAppArtifactsSuffix="",
+               page,
+             );
 
-        let renderedPage =
-          PageBuilder.buildPageHtmlAndReactApp(
-            ~melangeArtifactsExtension="mel.mjs",
-            ~pageAppArtifactsType=Reason,
-            ~outputDir,
-            ~melangeOutputDir=None,
-            ~logger,
-            ~pageAppArtifactsSuffix="",
-            page,
-          );
+           Js.Promise.then_(
+             renderedPage => {
+               switch (renderedPage) {
+               | Error(errors) =>
+                 Js.Console.error2("Test failed:", errors);
+                 Js.Exn.raiseError("BuildPageHtmlAndReactApp failed");
+               | Ok(_) =>
+                 Commands.compileRescript(~compileCommand, ~logger);
 
-        Js.Promise.then_(
-          renderedPage => {
-            switch (renderedPage) {
-            | Error(errors) =>
-              Js.Console.error2("Test failed:", errors);
-              Js.Exn.raiseError("BuildPageHtmlAndReactApp failed");
-            | Ok(_) =>
-              Commands.compileRescript(~compileCommand, ~logger);
+                 let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
 
-              let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
+                 let pagePath: string = page.path->PagePath.toString;
 
-              let pagePath: string = page.path->PagePath.toString;
+                 let reactAppModuleName =
+                   PageBuilder.pagePathToPageAppModuleName(~pageAppArtifactsSuffix="", ~pagePath, ~moduleName);
 
-              let reactAppModuleName =
-                PageBuilder.pagePathToPageAppModuleName(~pageAppArtifactsSuffix="", ~pagePath, ~moduleName);
+                 let testPageAppContent =
+                   Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, reactAppModuleName ++ ".re"));
 
-              let testPageAppContent =
-                Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, reactAppModuleName ++ ".re"));
+                 NodeTest.expect
+                 |> NodeTest.equal(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent));
 
-              NodeTest.expect
-              |> NodeTest.equal(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent));
-
-              let _html = Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, "index.html"));
-              Js.Promise.resolve();
-            }
-          },
-          renderedPage,
-        );
-      },
-    );
+                 let _html = Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, "index.html"));
+                 Js.Promise.resolve();
+               }
+             },
+             renderedPage,
+           );
+         },
+       );
 
   module SimplePage = {
     let page: PageBuilder.page = {
@@ -267,48 +269,55 @@ switch (ReactDOM.querySelector("#root")) {
     let expectedHtmlContent = "";
   };
 
-  let run = () => {
-    let* () =
-      runTest(
-        ~name="BuildPageHtmlAndReactApp: SimplePage",
-        ~page=SimplePage.page,
-        ~expectedAppContent=SimplePage.expectedAppContent,
-        ~expectedHtmlContent=SimplePage.expectedHtmlContent,
-      );
+  let () =
+    NodeTest.Promise.testWithOptions(
+      "BuildPageHtmlAndReactApp",
+      NodeTest.makeOptions(),
+      context => {
+        context
+        |> TestContext.afterEach(_context => {
+             cleanup();
+             Js.Promise.resolve();
+           });
 
-    let* () =
-      runTest(
-        ~name="BuildPageHtmlAndReactApp: PageWithWrapper",
-        ~page=PageWithWrapper.page,
-        ~expectedAppContent=PageWithWrapper.expectedAppContent,
-        ~expectedHtmlContent=PageWithWrapper.expectedHtmlContent,
-      );
+        let* () =
+          runTest(
+            context,
+            ~name="SimplePage",
+            ~page=SimplePage.page,
+            ~expectedAppContent=SimplePage.expectedAppContent,
+            ~expectedHtmlContent=SimplePage.expectedHtmlContent,
+          );
 
-    let* () =
-      runTest(
-        ~name="BuildPageHtmlAndReactApp: PageWithData",
-        ~page=PageWithData.page,
-        ~expectedAppContent=PageWithData.expectedAppContent,
-        ~expectedHtmlContent=PageWithData.expectedHtmlContent,
-      );
+        let* () =
+          runTest(
+            context,
+            ~name="PageWithWrapper",
+            ~page=PageWithWrapper.page,
+            ~expectedAppContent=PageWithWrapper.expectedAppContent,
+            ~expectedHtmlContent=PageWithWrapper.expectedHtmlContent,
+          );
 
-    let* () =
-      runTest(
-        ~name="BuildPageHtmlAndReactApp: PageWrapperWithDataAndPageWithData",
-        ~page=PageWrapperWithDataAndPageWithData.page,
-        ~expectedAppContent=PageWrapperWithDataAndPageWithData.expectedAppContent,
-        ~expectedHtmlContent=PageWrapperWithDataAndPageWithData.expectedHtmlContent,
-      );
+        let* () =
+          runTest(
+            context,
+            ~name="PageWithData",
+            ~page=PageWithData.page,
+            ~expectedAppContent=PageWithData.expectedAppContent,
+            ~expectedHtmlContent=PageWithData.expectedHtmlContent,
+          );
 
-    Js.Promise.resolve();
-  };
+        let* () =
+          runTest(
+            context,
+            ~name="PageWrapperWithDataAndPageWithData",
+            ~page=PageWrapperWithDataAndPageWithData.page,
+            ~expectedAppContent=PageWrapperWithDataAndPageWithData.expectedAppContent,
+            ~expectedHtmlContent=PageWrapperWithDataAndPageWithData.expectedHtmlContent,
+          );
+
+        Js.Promise.resolve();
+      },
+    )
+    |> ignore;
 };
-
-NodeTest.Promise.test(
-  "RescriptSsg Tests",
-  _context => {
-    let* () = MakeReactAppModuleName.run();
-    let* () = BuildPageHtmlAndReactApp.run();
-    Js.Promise.resolve();
-  },
-);

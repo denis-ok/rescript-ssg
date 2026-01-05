@@ -30,38 +30,6 @@ NodeTest.Promise.testWithOptions(
          Js.Promise.resolve();
        });
 
-    context
-    |> TestContext.test("TestContext.test 1", _context => {
-         Js.log("Running TestContext.test 1");
-         expect |> ok(true);
-       });
-
-    context
-    |> TestContext.test("TestContext.test 2", _context => {
-         Js.log("Running TestContext.test 2");
-         expect |> ok(true);
-       });
-
-    context
-    |> TestContext.testWithOptions(
-         "TestContext.testWithOptions 1",
-         NodeTest.makeOptions(),
-         _context => {
-           Js.log("Running TestContext.testWithOptions 1");
-           expect |> ok(true);
-         },
-       );
-
-    context
-    |> TestContext.testWithOptions(
-         "TestContext.testWithOptions 2",
-         NodeTest.makeOptions(),
-         _context => {
-           Js.log("Running TestContext.testWithOptions 2");
-           expect |> ok(true);
-         },
-       );
-
     // In this example we have to run async subtests one after another to ensure that both subtests have completed.
     // This is necessary because tests do not wait for their subtests to complete, unlike tests created within suites.
     // Any subtests that are still outstanding when their parent finishes are cancelled and treated as failures.
@@ -70,27 +38,27 @@ NodeTest.Promise.testWithOptions(
 
     let* () =
       context
-      |> TestContext.testPromise("TestContext.testPromise 1", _context => {
-           Js.log("Running TestContext.testPromise 1");
+      |> TestContext.test("TestContext.test 1", _context => {
+           Js.log("Running TestContext.test 1");
            expect |> ok(true);
            Js.Promise.resolve();
          });
 
     let* () =
       context
-      |> TestContext.testPromise("TestContext.testPromise 2", _context => {
-           Js.log("Running TestContext.testPromise 2");
+      |> TestContext.test("TestContext.test 2", _context => {
+           Js.log("Running TestContext.test 2");
            expect |> ok(true);
            Js.Promise.resolve();
          });
 
     let* () =
       context
-      |> TestContext.testPromiseWithOptions(
-           "TestContext.testPromiseWithOptions 1",
+      |> TestContext.testWithOptions(
+           "TestContext.testWithOptions 1",
            NodeTest.makeOptions(),
            _context => {
-             Js.log("Running TestContext.testPromiseWithOptions 1");
+             Js.log("Running TestContext.testWithOptions 1");
              expect |> ok(true);
              Js.Promise.resolve();
            },
@@ -98,11 +66,11 @@ NodeTest.Promise.testWithOptions(
 
     let* () =
       context
-      |> TestContext.testPromiseWithOptions(
-           "TestContext.testPromiseWithOptions 2",
+      |> TestContext.testWithOptions(
+           "TestContext.testWithOptions 2",
            NodeTest.makeOptions(),
            _context => {
-             Js.log("Running TestContext.testPromiseWithOptions 2");
+             Js.log("Running TestContext.testWithOptions 2");
              expect |> ok(true);
              Js.Promise.resolve();
            },

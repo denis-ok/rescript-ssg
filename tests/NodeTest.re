@@ -43,15 +43,10 @@ module TestContext = {
   // This function is used to create a hook running after each subtest of the current test.
   [@mel.send] external afterEach: (t => Js.Promise.t(unit), [@mel.this] t) => unit = "afterEach";
 
-  [@mel.send] external test: (string, t => unit, [@mel.this] t) => unit = "test";
-
-  [@mel.send] external testWithOptions: (string, testOptions, t => unit, [@mel.this] t) => unit = "test";
-
-  [@mel.send] external testPromise: (string, t => Js.Promise.t(unit), [@mel.this] t) => Js.Promise.t(unit) = "test";
+  [@mel.send] external test: (string, t => Js.Promise.t(unit), [@mel.this] t) => Js.Promise.t(unit) = "test";
 
   [@mel.send]
-  external testPromiseWithOptions:
-    (string, testOptions, t => Js.Promise.t(unit), [@mel.this] t) => Js.Promise.t(unit) =
+  external testWithOptions: (string, testOptions, t => Js.Promise.t(unit), [@mel.this] t) => Js.Promise.t(unit) =
     "test";
 };
 
@@ -63,7 +58,7 @@ let makeOptions = testOptions;
 
 /** Create a test with a given name, options, and callback function that runs the test */
 [@mel.module "node:test"]
-external testWithOptions: (string, testOptions, TestContext.t => unit) => unit = "test";
+external testWithOptions: (string, testOptions, TestContext.t => unit) => Js.Promise.t(unit) = "test";
 
 /** This promise-based module is needed for nested tests, see {: https://nodejs.org/api/test.html#subtests } */
 module Promise = {

@@ -79,12 +79,3 @@ start-example: ## Start example site in watch mode
 .PHONY: serve-example
 serve-example: ## Serve example site (use after build)
 	$(NODE_BINS_DIR)/serve -l 3005 example/build/public
-
-.PHONY: clean-tests
-clean-tests: ## Clean test artifacts
-	rm -rf tests/output
-	rm -rf coverage
-
-.PHONY: tests
-tests: clean-tests ## Run tests
-	PROJECT_ROOT_DIR=$(MAKEFILE_DIR) $(NODE_BINS_DIR)/c8 node $(COMPILED_TESTS_DIR)/Tests.mel.mjs
