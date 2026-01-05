@@ -8,6 +8,7 @@
   NodeTest
   FestTests
   Tests
+  ReasonReactHelmetTests
   TestPage
   TestPageWithData
   TestWrapper
@@ -37,3 +38,11 @@
    (chdir
     %{workspace_root}
     (run node --test %{input})))))
+
+(rule
+ (alias runtest)
+ (deps
+  (alias_rec main)
+  (:input %{dep:./node/tests/ReasonReactHelmetTests.mjs}))
+ (action
+  (run node --test %{input})))

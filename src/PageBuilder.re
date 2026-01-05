@@ -158,7 +158,7 @@ let renderHtmlTemplate =
     | Some(css) => "<style>" ++ css ++ "</style>"
     };
 
-  let helmet = ReactHelmet.renderStatic();
+  let helmet = ReasonReactHelmet.renderStatic();
 
   let htmlAttributes = helmet.htmlAttributes.toString();
   let title = helmet.title.toString();
