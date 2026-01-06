@@ -20,12 +20,11 @@
 
 ## Testing Guidelines
 - Tests are written in Reason/Melange under `tests/`, with fixtures in `tests/fixtures/`.
-- Prefer adding new test modules next to `tests/Tests.re` and wire them into the main test entry.
-- Use `make test` for dune-level checks and `make tests` for JS runtime/coverage; outputs land in `coverage/` and `tests/output/`.
+- Use `make test` command will compile code with tests and run tests.
 
 ## Commit & Pull Request Guidelines
 - Commit messages in history are short, lowercase, and imperative (e.g., "update chokidar"). Keep them focused.
 - PRs should include a clear description, relevant commands run (e.g., `make test`), and screenshots when changing the example site output.
 
 ## Configuration Notes
-- Tooling is split across `opam`/`dune` (OCaml/ReScript) and `npm` (JS tools). Keep both lockfiles and build outputs consistent.
+- Tooling is split across `opam`/`dune` (OCaml/Reason/Melange) and `npm` (JS tools).
