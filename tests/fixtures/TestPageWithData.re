@@ -1,10 +1,13 @@
-let modulePath = Utils.getFilepath();
+let modulePath = RescriptSsg.Utils.getFilepath();
 
 type variant =
   | A
   | B(string);
 
-type polyVariant = [ | `hello | `world];
+type polyVariant = [
+  | `hello
+  | `world
+];
 
 type data = {
   string,

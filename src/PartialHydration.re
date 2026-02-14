@@ -6,15 +6,19 @@ let makeScriptId = (~moduleName) => {
 
 let renderReactAppTemplate = (~modulesWithHydration__Mutable: array(string)) => {
   modulesWithHydration__Mutable
-  ->Js.Array.map(~f=moduleName => {
-      let scriptId = makeScriptId(~moduleName);
-      {j|
+  ->Js.Array.map(
+      ~f=
+        moduleName => {
+          let scriptId = makeScriptId(~moduleName);
+          {j|
 switch (ReactDOM.querySelector("#$(scriptId)")) {
-| Some(root) => ReactDOM.hydrate(<$(moduleName) />, root)
+| Some(root) => ReactDOM.Client.hydrateRoot(root, <$(moduleName) />)->ignore
 | None => ()
 };
 |j};
-    }, _)
+        },
+      _,
+    )
   ->Js.Array.join(~sep="\n", _);
 };
 
@@ -30,7 +34,10 @@ module WithHydrationContext = {
     let make = (~modulesWithHydration__Mutable: array(string), ~children) => {
       React.createElement(
         provider,
-        {"value": modulesWithHydration__Mutable, "children": children},
+        {
+          "value": modulesWithHydration__Mutable,
+          "children": children,
+        },
       );
     };
   };

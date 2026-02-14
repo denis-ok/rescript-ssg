@@ -1,19 +1,20 @@
-let build = (~webpackMinimizer) =>
+open RescriptSsg;
+
+let build = () =>
   Commands.build(
+    ~melangeArtifactsExtension=Pages.melangeArtifactsExtension,
     ~pageAppArtifactsType=Js,
     ~pages=Pages.pages,
     ~globalEnvValues=Pages.globalEnvValues,
-    ~webpackMode=Production,
     ~outputDir=Pages.outputDir,
+    ~melangeOutputDir=Pages.melangeOutputDir,
     ~projectRootDir=Pages.projectRootDir,
     ~logLevel=Info,
-    ~compileCommand=
-      Path.join2(Pages.projectRootDir, "node_modules/.bin/bsb"),
-    ~webpackMinimizer,
-    ~webpackBundleAnalyzerMode=
-      Some(Static({reportHtmlFilepath: "webpack-bundle/index.html"})),
+    // compileCommand isn't used with pageAppArtifactsType=Js
+    // Should be removed/refactored in the future
+    ~compileCommand="dune build",
     ~buildWorkersCount=1,
-    ~pageAppArtifactsSuffix=UnixTimestamp,
+    ~pageAppArtifactsSuffix=NoSuffix,
     (),
   )
   ->Promise.map(_ => Js.log("[rescript-ssg] Build success!"))

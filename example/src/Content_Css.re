@@ -1,9 +1,6 @@
-open CssJs;
-
-let content =
-  style(. [|
-    backgroundColor(`hex("F9F1F0")),
-    padding(`px(16)),
-    display(`grid),
-    gridGap(`px(16)),
-  |]);
+let content = [%cx {|
+    background-color: #F9F1F0;
+    padding: 16px;
+    display: grid;
+    grid-gap: 16px;
+  |}];

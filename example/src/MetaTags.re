@@ -1,7 +1,7 @@
 [@react.component]
 let make = (~title, ~description) =>
-  <ReactHelmet>
+  <RescriptSsg.ReasonReactHelmet>
     <html lang="en" />
     <title> title->React.string </title>
     <meta name="description" content=description />
-  </ReactHelmet>;
+  </RescriptSsg.ReasonReactHelmet>;

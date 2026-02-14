@@ -8,17 +8,14 @@ let addTask = (task: shutdownRunningTask) => {
   runningTasks := Js.Array.concat(~other=runningTasks^, [|task|]);
 };
 
-let shutdownRunningTasks = () =>
-  (runningTasks^)->Js.Array.map(~f=terminate => terminate(), _)->Promise.all;
+let shutdownRunningTasks = () => (runningTasks^)->Js.Array.map(~f=terminate => terminate(), _)->Promise.all;
 
 Process.onTerminate(() => {
   Js.log("[rescript-ssg] Performing graceful shutdown...");
 
   shutdownRunningTasks()
   ->Promise.map(_ => {
-      Js.log(
-        "[rescript-ssg] Bye-bye! Graceful shutdown performed successfully",
-      );
+      Js.log("[rescript-ssg] Bye-bye! Graceful shutdown performed successfully");
       Process.exit(0);
     })
   ->Promise.catch(error => {

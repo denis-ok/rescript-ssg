@@ -4,8 +4,7 @@ module Server = {
 
   [@mel.send] external close: (t, unit => unit) => unit = "close";
 
-  [@mel.send]
-  external closeAllConnections: (t, unit) => unit = "closeAllConnections";
+  [@mel.send] external closeAllConnections: (t, unit) => unit = "closeAllConnections";
 
   [@mel.set] external setKeepAliveTimeoutMs: (t, int) => unit = "keepAliveTimeout";
 };
@@ -34,10 +33,7 @@ module ServerResponse = {
   type t;
   [@mel.get] external statusCode: t => int = "statusCode";
 
-  [@mel.send]
-  external writeHead:
-    (t, ~statusCode: int, ~headers: option(Js.Dict.t(string))) => t =
-    "writeHead";
+  [@mel.send] external writeHead: (t, ~statusCode: int, ~headers: option(Js.Dict.t(string))) => t = "writeHead";
 
   [@mel.send] external end_: (t, string) => unit = "end";
 };
@@ -54,28 +50,19 @@ module IncommingMessage = {
     end_: bool,
   };
 
-  [@mel.send]
-  external pipeToServerResponse: (t, ServerResponse.t, pipeOptions) => unit =
-    "pipe";
-  [@mel.send]
-  external pipeToClientRequest: (t, ClientRequest.t, pipeOptions) => unit =
-    "pipe";
+  [@mel.send] external pipeToServerResponse: (t, ServerResponse.t, pipeOptions) => unit = "pipe";
+  [@mel.send] external pipeToClientRequest: (t, ClientRequest.t, pipeOptions) => unit = "pipe";
 };
 
 [@mel.module "node:http"]
-external nodeCreateServer:
-  ((IncommingMessage.t, ServerResponse.t) => unit) => Server.t =
-  "createServer";
+external nodeCreateServer: ((IncommingMessage.t, ServerResponse.t) => unit) => Server.t = "createServer";
 
 [@mel.module "node:http"]
-external nodeRequest:
-  (nodeRequestOptions, IncommingMessage.t => unit) => ClientRequest.t =
-  "request";
+external nodeRequest: (nodeRequestOptions, IncommingMessage.t => unit) => ClientRequest.t = "request";
 
 module Url = {
   type t;
-  [@mel.new] [@mel.scope "global"]
-  external makeExn: (string, ~base: option(string)) => t = "URL";
+  [@mel.new] [@mel.scope "global"] external makeExn: (string, ~base: option(string)) => t = "URL";
   [@mel.get] external hash: t => string = "hash";
   [@mel.get] external host: t => string = "host";
   [@mel.get] external hostname: t => string = "hostname";
@@ -140,10 +127,7 @@ module ValidProxyRule = {
         let url = Url.make(str, ~base=None);
         switch (url) {
         | None =>
-          Js.Console.error2(
-            "[Dev server] Error, failed to parse URL string:",
-            str,
-          );
+          Js.Console.error2("[Dev server] Error, failed to parse URL string:", str);
           Process.exit(1);
         | Some(url) => Url(url)
         };
@@ -161,11 +145,7 @@ module ValidProxyRule = {
 
 let sortPathsBySegmentCount = (a, b) => {
   // Sort paths to make sure that more specific rules are matched first.
-  let countSegments = s =>
-    s
-    ->Js.String.split(~sep="/", _)
-    ->Js.Array.filter(~f=s => s != "", _)
-    ->Js.Array.length;
+  let countSegments = s => s->Js.String.split(~sep="/", _)->Js.Array.filter(~f=s => s != "", _)->Js.Array.length;
 
   let segCount1 = countSegments(a);
   let segCount2 = countSegments(b);
@@ -179,8 +159,7 @@ let sortPathsBySegmentCount = (a, b) => {
   };
 };
 
-let isPageWithDynamicPathSegmentRequested =
-    (reqPath: string, pagePath: string) => {
+let isPageWithDynamicPathSegmentRequested = (reqPath: string, pagePath: string) => {
   let makeSegments = path =>
     path
     ->Utils.maybeAddSlashPrefix
@@ -198,41 +177,29 @@ let isPageWithDynamicPathSegmentRequested =
     | ([], _)
     | (_, []) => false
     | ([reqSegment, ...reqTail], [pageSegment, ...pageTail]) =>
-      pageSegment == PagePath.dynamicSegment || reqSegment == pageSegment
-        ? isMatch(reqTail, pageTail) : false
+      pageSegment == PagePath.dynamicSegment || reqSegment == pageSegment ? isMatch(reqTail, pageTail) : false
     };
   };
   isMatch(reqPathSegments, pagePathSegments);
 };
 
 let start =
-    (
-      ~port: int,
-      ~targetHost: string,
-      ~targetPort: int,
-      ~proxyRules: array(ProxyRule.t),
-      ~pagePaths: array(string),
-    ) => {
+    (~port: int, ~targetHost: string, ~targetPort: int, ~proxyRules: array(ProxyRule.t), ~pagePaths: array(string)) => {
   let pagePathsWithDynamicSegments =
     pagePaths
-    ->Js.Array.filter(~f=path =>
-        path->Js.String.includes(~search=PagePath.dynamicSegment, _)
-      , _)
+    ->Js.Array.filter(~f=path => path->Js.String.includes(~search=PagePath.dynamicSegment, _), _)
     ->Js.Array.sortInPlaceWith(~f=sortPathsBySegmentCount);
 
   let proxyRules =
     proxyRules
     ->Js.Array.map(~f=rule => ValidProxyRule.fromProxyRule(rule), _)
-    ->Js.Array.sortInPlaceWith(~f=(a: ValidProxyRule.t, b) =>
-        sortPathsBySegmentCount(a.fromPath, b.fromPath),
-      _);
+    ->Js.Array.sortInPlaceWith(~f=(a: ValidProxyRule.t, b) => sortPathsBySegmentCount(a.fromPath, b.fromPath), _);
 
   let server =
     nodeCreateServer((req, res) => {
       let reqUrl = req->IncommingMessage.url;
       let reqHeaders = req->IncommingMessage.headers;
-      let reqHost =
-        reqHeaders->Js.Dict.get("host")->Belt.Option.getWithDefault("");
+      let reqHost = reqHeaders->Js.Dict.get("host")->Belt.Option.getWithDefault("");
       let urlBase = "http://" ++ reqHost;
       let url = Url.make(reqUrl, ~base=Some(urlBase));
 
@@ -252,8 +219,7 @@ let start =
           socketPath: None,
         };
 
-        let reqPathNormalized =
-          reqPath->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;
+        let reqPathNormalized = reqPath->Utils.maybeAddSlashPrefix->Utils.maybeAddSlashSuffix;
 
         let exactPagePathRelatedToRequestedPath = {
           pagePaths->Js.Array.find(~f=pagePath => pagePath == reqPathNormalized, _);
@@ -266,9 +232,10 @@ let start =
           {...defaultTarget, path: reqPathNormalized ++ reqQueryString};
         | None =>
           let relatedPagePathWithDynamicSegment =
-            pagePathsWithDynamicSegments->Js.Array.find(~f=pagePath =>
-              isPageWithDynamicPathSegmentRequested(reqPath, pagePath)
-            , _);
+            pagePathsWithDynamicSegments->Js.Array.find(
+                                            ~f=pagePath => isPageWithDynamicPathSegmentRequested(reqPath, pagePath),
+                                            _,
+                                          );
           switch (relatedPagePathWithDynamicSegment) {
           | Some(relatedPagePathWithDynamicSegment) =>
             Js.log2(
@@ -285,9 +252,10 @@ let start =
             };
           | None =>
             let matchedProxyRule =
-              proxyRules->Js.Array.find(~f=rule =>
-                reqPath->Js.String.startsWith(~prefix=rule.ValidProxyRule.fromPath)
-              , _);
+              proxyRules->Js.Array.find(
+                            ~f=rule => reqPath->Js.String.startsWith(~prefix=rule.ValidProxyRule.fromPath),
+                            _,
+                          );
             switch (matchedProxyRule) {
             | None =>
               // Technically, this is some kind of error:
@@ -298,21 +266,13 @@ let start =
                 switch (pathRewrite) {
                 | None => (reqPath, false)
                 | Some({pathRewriteFrom, pathRewriteTo}) =>
-                  let newPath =
-                    reqPath->Js.String.replace(
-                      ~search=pathRewriteFrom,
-                      ~replacement=pathRewriteTo,
-                      _
-                    );
+                  let newPath = reqPath->Js.String.replace(~search=pathRewriteFrom, ~replacement=pathRewriteTo, _);
                   (newPath, true);
                 };
 
               switch (isPathRewritten) {
               | false => Js.log2("[Dev server] Proxy rule matched:", fromPath)
-              | true =>
-                Js.log(
-                  {j|[Dev server] Proxy rule matched: $(fromPath), path rewritten to: $(path)|j},
-                )
+              | true => Js.log({j|[Dev server] Proxy rule matched: $(fromPath), path rewritten to: $(path)|j})
               };
 
               switch (target) {
@@ -326,13 +286,7 @@ let start =
                 }
               | Url(url) => {
                   hostname: Some(url->Url.hostname),
-                  port:
-                    Some(
-                      url
-                      ->Url.port
-                      ->Belt.Int.fromString
-                      ->Belt.Option.getWithDefault(80),
-                    ),
+                  port: Some(url->Url.port->Belt.Int.fromString->Belt.Option.getWithDefault(80)),
                   socketPath: None,
                   path: path ++ reqQueryString,
                   method: req->IncommingMessage.method,
@@ -354,10 +308,7 @@ let start =
                 ~headers=Some(targetRes->IncommingMessage.headers),
               )
             ->ignore;
-            targetRes->IncommingMessage.pipeToServerResponse(
-              res,
-              {end_: true},
-            );
+            targetRes->IncommingMessage.pipeToServerResponse(res, {end_: true});
           },
         );
 
@@ -374,9 +325,7 @@ let start =
   server->Server.setKeepAliveTimeoutMs(2000);
 
   let startServer = () =>
-    server->Server.listen(port, () =>
-      Js.log("[Dev server] Listening on port " ++ string_of_int(port))
-    );
+    server->Server.listen(port, () => Js.log("[Dev server] Listening on port " ++ string_of_int(port)));
 
   switch (startServer()) {
   | () => ()
@@ -399,10 +348,11 @@ let start =
       server->Server.closeAllConnections();
 
       Js.Global.setTimeout(
-        ~f=() => {
-          Js.Console.error("[Dev server] Failed to gracefully shutdown.");
-          Process.exit(1);
-        },
+        ~f=
+          () => {
+            Js.Console.error("[Dev server] Failed to gracefully shutdown.");
+            Process.exit(1);
+          },
         GracefulShutdown.gracefulShutdownTimeout,
       )
       ->ignore;

@@ -1,15 +1,22 @@
-open CssJs;
+let injectGlobal = () => [%styled.global
+  {|
+    body {
+      font-size: 16px;
+      background-color: #FADCD9;
+      padding: 32px;
+    }
 
-let injectGlobal = () => {
-  global(.
-    "body",
-    [|
-      fontSize(`px(16)),
-      backgroundColor(`hex("FADCD9")),
-      padding(`px(32)),
-    |],
-  );
-  global(. "h1,h2,h3,h4,h5,h6", [|margin(`zero), fontWeight(`normal)|]);
-  global(. "a", [|color(black)|]);
-  global(. "a:hover", [|color(violet)|]);
-};
+    h1, h2, h3, h4, h5, h6 {
+      margin: 0;
+      font-weight: normal;
+    }
+
+    a {
+      color: black;
+    }
+
+    a:hover {
+      color: violet;
+    }
+  |}
+];

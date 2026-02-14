@@ -2,7 +2,10 @@ type variant =
   | A
   | B(string);
 
-type polyVariant = [ | `hello | `world];
+type polyVariant = [
+  | `hello
+  | `world
+];
 
 type data = {
   string,
@@ -45,4 +48,4 @@ let make = (~data: option(data), ~children) =>
     children
   </div>;
 
-let modulePath = Utils.getFilepath();
+let modulePath = RescriptSsg.Utils.getFilepath();

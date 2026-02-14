@@ -1,132 +1,128 @@
-let dirname = Utils.getDirname();
+open RescriptSsg;
+open NodeTest;
 
-external process: Js.t('a) = "process";
-
-[@mel.module] external util: Js.t('a) = "util";
-
-let inspect = (value): string =>
-  util##inspect(value, {"compact": false, "depth": 20, "colors": true});
-
-let exitWithError = () => Process.exit(1);
-
-let isEqual = (~msg="", v1, v2) =>
-  if (v1 != v2) {
-    Js.log2("Test failed:", msg);
-    Js.log2("expected this:", inspect(v1));
-    Js.log2("to be equal to:", inspect(v2));
-    exitWithError();
-  };
+let ( let* ) = (p, f) => Js.Promise.then_(f, p);
 
 module Utils_ = {
   module GetModuleNameFromModulePath = {
-    let testName = "Utils.getModuleNameFromModulePath";
-    let test = modulePath => {
-      let moduleName = Utils.getModuleNameFromModulePath(modulePath);
-      isEqual(~msg=testName, moduleName, "TestPage");
-    };
-    test("TestPage.bs.js");
-    test("/TestPage.bs.js");
-    test("./TestPage.bs.js");
-    test("/foo/bar/TestPage.bs.js");
-    test("foo/bar/TestPage.bs.js");
-    Js.log2(testName, " tests passed!");
+    let cases = [|
+      "TestPage.bs.js",
+      "/TestPage.bs.js",
+      "./TestPage.bs.js",
+      "/foo/bar/TestPage.bs.js",
+      "foo/bar/TestPage.bs.js",
+    |];
+
+    let () =
+      cases->Belt.Array.forEach(modulePath =>
+        NodeTest.test(
+          "Utils.getModuleNameFromModulePath: " ++ modulePath,
+          _context => {
+            let moduleName = Utils.getModuleNameFromModulePath(modulePath);
+            expect |> equal(moduleName, "TestPage");
+          },
+        )
+      );
   };
 };
 
 module MakeReactAppModuleName = {
   let moduleName = "Page";
 
-  let test = (~pagePath, ~expect) => {
-    let reactAppModuleName =
-      PageBuilder.pagePathToPageAppModuleName(
-        ~pageAppArtifactsSuffix="",
-        ~pagePath,
-        ~moduleName,
-      );
-    isEqual(~msg="makeReactAppModuleName", reactAppModuleName, expect);
-  };
+  let cases = [|
+    (".", "Page__PageApp"),
+    ("foo/bar", "foobarPage__PageApp"),
+    ("foo/bar-baz", "foobarbazPage__PageApp"),
+  |];
 
-  test(~pagePath=".", ~expect="Page__PageApp");
-
-  test(~pagePath="foo/bar", ~expect="foobarPage__PageApp");
-
-  test(~pagePath="foo/bar-baz", ~expect="foobarbazPage__PageApp");
-
-  Js.log("MakeReactAppModuleName tests passed!");
+  let () =
+    cases->Belt.Array.forEach(((pagePath, expected)) =>
+      NodeTest.test(
+        "PageBuilder.pagePathToPageAppModuleName: " ++ pagePath,
+        _context => {
+          let reactAppModuleName =
+            PageBuilder.pagePathToPageAppModuleName(~pageAppArtifactsSuffix="", ~pagePath, ~moduleName);
+          NodeTest.expect |> NodeTest.equal(reactAppModuleName, expected);
+        },
+      )
+    );
 };
 
 module BuildPageHtmlAndReactApp = {
-  let dummyLogger: Log.logger = {
-    logLevel: Log.Info,
-    info: ignore,
-    debug: ignore,
-  };
-
   let removeNewlines = (str: string) => {
-    let regex = Js.Re.fromStringWithFlags({js|[\r\n]+|js}, ~flags="g");
-    str->Js.String2.replaceByRe(regex, "");
+    let regexp = Js.Re.fromStringWithFlags({js|[\r\n]+|js}, ~flags="g");
+    str->Js.String.replaceByRe(~regexp, ~replacement="", _);
   };
 
   let logger = Log.makeLogger(Info);
 
-  let outputDir = Path.join2(dirname, "output");
+  let projectRootDir =
+    switch (Js.Dict.get(Process.env, "PROJECT_ROOT_DIR")) {
+    | Some(dir) => dir
+    | None => Js.Exn.raiseError("PROJECT_ROOT_DIR environment variable not set")
+    };
+
+  let outputDir = Path.join2(projectRootDir, "tests/output");
 
   let artifactsOutputDir = PageBuilder.getArtifactsOutputDir(~outputDir);
 
-  let cleanup = () => Fs.rmSync(outputDir, {force: true, recursive: true});
+  let cleanup = () =>
+    Fs.rmSync(
+      outputDir,
+      {
+        force: true,
+        recursive: true,
+      },
+    );
 
-  let compileCommand = Path.join2(dirname, "../node_modules/.bin/bsb");
+  let compileCommand = "true";
 
-  let test = (~page, ~expectedAppContent, ~expectedHtmlContent as _) => {
-    cleanup();
+  let runTest = (context, ~name, ~page, ~expectedAppContent, ~expectedHtmlContent as _) =>
+    context
+    |> TestContext.test(
+         name,
+         _context => {
+           let renderedPage =
+             PageBuilder.buildPageHtmlAndReactApp(
+               ~melangeArtifactsExtension="mel.mjs",
+               ~pageAppArtifactsType=Reason,
+               ~outputDir,
+               ~melangeOutputDir=None,
+               ~logger,
+               ~pageAppArtifactsSuffix="",
+               page,
+             );
 
-    let renderedPage =
-      PageBuilder.buildPageHtmlAndReactApp(
-        ~pageAppArtifactsType=Reason,
-        ~outputDir,
-        ~melangeOutputDir=None,
-        ~logger,
-        ~pageAppArtifactsSuffix="",
-        page,
-      );
+           Js.Promise.then_(
+             renderedPage => {
+               switch (renderedPage) {
+               | Error(errors) =>
+                 Js.Console.error2("Test failed:", errors);
+                 Js.Exn.raiseError("BuildPageHtmlAndReactApp failed");
+               | Ok(_) =>
+                 Commands.compileRescript(~compileCommand, ~logger);
 
-    renderedPage->Promise.map(renderedPage => {
-      switch (renderedPage) {
-      | Error(errors) =>
-        Js.Console.error2("Test failed:", errors);
-        Process.exit(1);
-      | Ok(_) =>
-        Commands.compileRescript(~compileCommand, ~logger);
+                 let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
 
-        let moduleName = Utils.getModuleNameFromModulePath(page.modulePath);
+                 let pagePath: string = page.path->PagePath.toString;
 
-        let pagePath: string = page.path->PagePath.toString;
+                 let reactAppModuleName =
+                   PageBuilder.pagePathToPageAppModuleName(~pageAppArtifactsSuffix="", ~pagePath, ~moduleName);
 
-        let reactAppModuleName =
-          PageBuilder.pagePathToPageAppModuleName(
-            ~pageAppArtifactsSuffix="",
-            ~pagePath,
-            ~moduleName,
-          );
+                 let testPageAppContent =
+                   Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, reactAppModuleName ++ ".re"));
 
-        let testPageAppContent =
-          Fs.readFileSyncAsUtf8(
-            Path.join2(artifactsOutputDir, reactAppModuleName ++ ".re"),
-          );
+                 NodeTest.expect
+                 |> NodeTest.equal(removeNewlines(testPageAppContent), removeNewlines(expectedAppContent));
 
-        isEqual(
-          removeNewlines(testPageAppContent),
-          removeNewlines(expectedAppContent),
-        );
-
-        let _html =
-          Fs.readFileSyncAsUtf8(
-            Path.join2(artifactsOutputDir, "index.html"),
-          );
-        ();
-      }
-    });
-  };
+                 let _html = Fs.readFileSyncAsUtf8(Path.join2(artifactsOutputDir, "index.html"));
+                 Js.Promise.resolve();
+               }
+             },
+             renderedPage,
+           );
+         },
+       );
 
   module SimplePage = {
     let page: PageBuilder.page = {
@@ -143,15 +139,12 @@ module BuildPageHtmlAndReactApp = {
 
     let expectedAppContent = {js|
 switch (ReactDOM.querySelector("#root")) {
-| Some(root) => ReactDOM.hydrate(<TestPage />, root)
+| Some(root) => ReactDOM.Client.hydrateRoot(root, <TestPage />)->ignore
 | None => ()
 };
 |js};
 
     let expectedHtmlContent = "";
-
-    let testPromise = () =>
-      test(~page, ~expectedAppContent, ~expectedHtmlContent);
   };
 
   module PageWithWrapper = {
@@ -159,10 +152,7 @@ switch (ReactDOM.querySelector("#root")) {
       hydrationMode: FullHydration,
       pageWrapper:
         Some({
-          component:
-            WrapperWithChildren(
-              children => <TestWrapper> children </TestWrapper>,
-            ),
+          component: WrapperWithChildren(children => <TestWrapper> children </TestWrapper>),
           modulePath: TestWrapper.modulePath,
         }),
       component: ComponentWithoutData(<TestPage />),
@@ -176,14 +166,11 @@ switch (ReactDOM.querySelector("#root")) {
 
     let expectedAppContent = {js|
 switch (ReactDOM.querySelector("#root")) {
-| Some(root) => ReactDOM.hydrate(<TestWrapper><TestPage /></TestWrapper>, root)
+| Some(root) => ReactDOM.Client.hydrateRoot(root, <TestWrapper><TestPage /></TestWrapper>)->ignore
 | None => ()
 };
 |js};
     let expectedHtmlContent = "";
-
-    let testPromise = () =>
-      test(~page, ~expectedAppContent, ~expectedHtmlContent);
   };
 
   module PageWithData = {
@@ -217,14 +204,11 @@ type pageData;
 [@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.mjs"] external pageData: pageData = "data";
 
 switch (ReactDOM.querySelector("#root")) {
-| Some(root) => ReactDOM.hydrate(<TestPageWithData data={pageData->Obj.magic} />, root)
+| Some(root) => ReactDOM.Client.hydrateRoot(root, <TestPageWithData data={pageData->Obj.magic} />)->ignore
 | None => ()
 };
 |js};
     let expectedHtmlContent = "";
-
-    let testPromise = () =>
-      test(~page, ~expectedAppContent, ~expectedHtmlContent);
   };
 
   module PageWrapperWithDataAndPageWithData = {
@@ -234,8 +218,7 @@ switch (ReactDOM.querySelector("#root")) {
         Some({
           component:
             WrapperWithDataAndChildren({
-              component: (data, children) =>
-                <TestWrapperWithData data> children </TestWrapperWithData>,
+              component: (data, children) => <TestWrapperWithData data> children </TestWrapperWithData>,
               data:
                 Some({
                   bool: true,
@@ -279,24 +262,62 @@ type pageData;
 [@mel.module "./TestPageWithData_Data_688ca4c30fca5edb6793.mjs"] external pageData: pageData = "data";
 
 switch (ReactDOM.querySelector("#root")) {
-| Some(root) => ReactDOM.hydrate(<TestWrapperWithData data={pageWrapperData->Obj.magic} ><TestPageWithData data={pageData->Obj.magic} /></TestWrapperWithData>, root)
+| Some(root) => ReactDOM.Client.hydrateRoot(root, <TestWrapperWithData data={pageWrapperData->Obj.magic} ><TestPageWithData data={pageData->Obj.magic} /></TestWrapperWithData>)->ignore
 | None => ()
 };
 |js};
     let expectedHtmlContent = "";
-
-    let testPromise = () =>
-      test(~page, ~expectedAppContent, ~expectedHtmlContent);
   };
 
-  let tests =
-    [|
-      SimplePage.testPromise,
-      PageWithWrapper.testPromise,
-      PageWithData.testPromise,
-      PageWrapperWithDataAndPageWithData.testPromise,
-    |]
-    ->Promise.seqRun
-    ->Promise.map(_ => Js.log("BuildPageHtmlAndReactApp tests passed!"))
-    ->ignore;
+  let () =
+    NodeTest.Promise.testWithOptions(
+      "BuildPageHtmlAndReactApp",
+      NodeTest.makeOptions(),
+      context => {
+        context
+        |> TestContext.afterEach(_context => {
+             cleanup();
+             Js.Promise.resolve();
+           });
+
+        let* () =
+          runTest(
+            context,
+            ~name="SimplePage",
+            ~page=SimplePage.page,
+            ~expectedAppContent=SimplePage.expectedAppContent,
+            ~expectedHtmlContent=SimplePage.expectedHtmlContent,
+          );
+
+        let* () =
+          runTest(
+            context,
+            ~name="PageWithWrapper",
+            ~page=PageWithWrapper.page,
+            ~expectedAppContent=PageWithWrapper.expectedAppContent,
+            ~expectedHtmlContent=PageWithWrapper.expectedHtmlContent,
+          );
+
+        let* () =
+          runTest(
+            context,
+            ~name="PageWithData",
+            ~page=PageWithData.page,
+            ~expectedAppContent=PageWithData.expectedAppContent,
+            ~expectedHtmlContent=PageWithData.expectedHtmlContent,
+          );
+
+        let* () =
+          runTest(
+            context,
+            ~name="PageWrapperWithDataAndPageWithData",
+            ~page=PageWrapperWithDataAndPageWithData.page,
+            ~expectedAppContent=PageWrapperWithDataAndPageWithData.expectedAppContent,
+            ~expectedHtmlContent=PageWrapperWithDataAndPageWithData.expectedHtmlContent,
+          );
+
+        Js.Promise.resolve();
+      },
+    )
+    |> ignore;
 };

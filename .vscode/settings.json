@@ -3,11 +3,16 @@
     "kind": "opam",
     "switch": "${workspaceFolder:rescript-ssg}"
   },
-  "github.copilot.enable": {
-    "*": false,
-    "reason": true,
-    "ocaml": true,
-    "rescript": true,
-    "javascript": true
+  "[ocaml]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ocamllabs.ocaml-platform"
+  },
+  "[reason]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ocamllabs.ocaml-platform"
+  },
+  "ocaml.server.extraEnv": {
+    "OCAMLLSP_HOVER_IS_EXTENDED": "true",
+    "REFMT_PRINT_WIDTH": "120"
   },
 }

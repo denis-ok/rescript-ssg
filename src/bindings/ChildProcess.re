@@ -8,8 +8,7 @@ type spawnSyncOutput = {
 };
 
 [@mel.module "node:child_process"]
-external spawnSync': (. string, array(string), Js.t('a)) => spawnSyncOutput =
-  "spawnSync";
+external spawnSync': (. string, array(string), Js.t('a)) => spawnSyncOutput = "spawnSync";
 
 type error =
   | JsError(jsError)
@@ -23,8 +22,7 @@ let spawnSync = (command, args, options) => {
   switch (jsError) {
   | Some(e) => Belt.Result.Error(JsError(e))
   | None =>
-    let exitCode =
-      result.status->Js.Nullable.toOption->Belt.Option.getWithDefault(0);
+    let exitCode = result.status->Js.Nullable.toOption->Belt.Option.getWithDefault(0);
     if (exitCode != 0) {
       Belt.Result.Error(ExitCodeIsNotZero(exitCode));
     } else {

@@ -10,10 +10,7 @@ external window: _ = "window";
 // @module("path") external dirnameFromFilepath: string => string = "dirname"
 
 let dirnameFromFilepath = filepath => {
-  filepath
-  ->Js.String.split(~sep="/", _)
-  ->Js.Array.slice(~start=0, ~end_=-1, _)
-  ->Js.Array.join(~sep="/", _);
+  filepath->Js.String.split(~sep="/", _)->Js.Array.slice(~start=0, ~end_=-1, _)->Js.Array.join(~sep="/", _);
 };
 
 // Reusable functions that can be simply called from any module instead of
@@ -21,11 +18,7 @@ let dirnameFromFilepath = filepath => {
 
 let getFilepathFromError = jsError => {
   let lineWithPath =
-    jsError
-    ->getStack
-    ->Js.String.split(~sep="\n", _)
-    ->Js.Array.slice(~start=2, ~end_=3, _)
-    ->Belt.Array.get(0);
+    jsError->getStack->Js.String.split(~sep="\n", _)->Js.Array.slice(~start=2, ~end_=3, _)->Belt.Array.get(0);
 
   switch (lineWithPath) {
   | None => Js.Exn.raiseError("[getFilepathFromError] lineWithPath is None")
@@ -48,18 +41,21 @@ let getDirname = () => makeError()->getFilepathFromError->dirnameFromFilepath;
 
 let getModuleNameFromModulePath = modulePath => {
   let segments = modulePath->Js.String.split(~sep="/", _);
-
-  let filename =
-    segments->Js.Array.copy->Js.Array.reverseInPlace->Belt.Array.get(0);
-
+  let filename = segments->Belt.Array.get(Belt.Array.length(segments) - 1);
   switch (filename) {
   | None
   | Some("") =>
-    Js.Console.error(
-      "[Utils.getModuleNameFromModulePath] Filename is empty or None",
-    );
+    Js.Console.error("[Utils.getModuleNameFromModulePath] Filename is empty or None, modulePath: " ++ modulePath);
     Process.exit(1);
-  | Some(filename) => filename->Js.String.replace(~search=".bs.js", ~replacement="")
+  | Some(filename) =>
+    let filenameSplit = filename->Js.String.split(~sep=".", _);
+    let moduleName = filenameSplit->Belt.Array.get(0);
+    switch (moduleName) {
+    | None =>
+      Js.Console.error("[Utils.getModuleNameFromModulePath] moduleName is None, modulePath: " ++ modulePath);
+      Process.exit(1);
+    | Some(moduleName) => moduleName
+    };
   };
 };
 

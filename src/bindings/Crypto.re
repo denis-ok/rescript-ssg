@@ -5,14 +5,11 @@ module Hash = {
 
   [@mel.module "node:crypto"] external crypto: crypto = "default";
 
-  [@mel.send "createHash"]
-  external createHash': (crypto, string) => hash = "createHash";
+  [@mel.send "createHash"] external createHash': (crypto, string) => hash = "createHash";
 
-  [@mel.send "update"]
-  external updateBufferWithBuffer: (hash, Buffer.t) => hash = "update";
+  [@mel.send "update"] external updateBufferWithBuffer: (hash, Buffer.t) => hash = "update";
 
-  [@mel.send "update"]
-  external updateBufferWithString: (hash, string) => hash = "update";
+  [@mel.send "update"] external updateBufferWithString: (hash, string) => hash = "update";
 
   [@mel.send "digest"] external digest: (hash, string) => string = "digest";
 
@@ -21,14 +18,8 @@ module Hash = {
   let createMd5 = () => crypto->createHash'("md5");
 
   let bufferToHash = (data: Buffer.t) =>
-    createMd5()
-    ->updateBufferWithBuffer(data)
-    ->digest("hex")
-    ->Js.String.slice(~start=0, ~end_=digestLength, _);
+    createMd5()->updateBufferWithBuffer(data)->digest("hex")->Js.String.slice(~start=0, ~end_=digestLength, _);
 
   let stringToHash = (data: string) =>
-    createMd5()
-    ->updateBufferWithString(data)
-    ->digest("hex")
-    ->Js.String.slice(~start=0, ~end_=digestLength, _);
+    createMd5()->updateBufferWithString(data)->digest("hex")->Js.String.slice(~start=0, ~end_=digestLength, _);
 };

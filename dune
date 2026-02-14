@@ -1,0 +1,39 @@
+(dirs :standard \ node_modules)
+
+(melange.emit
+ (target all)
+ (libraries rescript-ssg example)
+ (module_systems
+  (es6 mel.mjs)))
+
+(melange.emit
+ (alias install)
+ (target ssgbin)
+ (libraries rescript-ssg)
+ (module_systems
+  (es6 mel.mjs)))
+
+(install
+ (section lib)
+ (package rescript-ssg)
+ (files
+  (glob_files ssgbin/node_modules/melange/*.mjs)
+  (glob_files ssgbin/node_modules/melange.belt/*.mjs)
+  (glob_files ssgbin/node_modules/melange.dom/*.mjs)
+  (glob_files ssgbin/node_modules/melange.js/*.mjs)
+  (glob_files ssgbin/node_modules/reason-react/*.mjs)
+  (glob_files ssgbin/node_modules/rescript-ssg/*.mjs)
+  (glob_files ssgbin/node_modules/rescript-ssg/bindings/*.mjs)))
+
+(install
+ (section libexec)
+ (package rescript-ssg)
+ (files
+  (glob_files ssgbin/node_modules/rescript-ssg/js/bin.mjs)))
+
+(env
+ (_
+  (env-vars
+   (REFMT_PRINT_WIDTH 120))
+  (flags
+   (-warn-error +A))))

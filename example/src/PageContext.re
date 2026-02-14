@@ -2,7 +2,10 @@ type variant =
   | One
   | Two(string);
 
-type polyVariant = [ | `hello | `world];
+type polyVariant = [
+  | `hello
+  | `world
+];
 
 type t = {
   string,

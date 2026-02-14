@@ -6,18 +6,12 @@ let make = (~h1Text) => {
     <h1> h1Text->React.string </h1>
     <h3> "Page examples:"->React.string </h3>
     <ul>
-      <li>
-        <a href="/">
-          <h3> "root (same as page-without-data)"->React.string </h3>
-        </a>
-      </li>
+      <li> <a href="/"> <h3> "root (same as page-without-data)"->React.string </h3> </a> </li>
       {Page.all
        ->(
-           Js.Array2.map(page => {
+           Js.Array.map(~f=page => {
              let slug = Page.toSlug(page);
-             <li key=slug>
-               <a href={"/" ++ slug}> <h3> slug->React.string </h3> </a>
-             </li>;
+             <li key=slug> <a href={"/" ++ slug}> <h3> slug->React.string </h3> </a> </li>;
            })
          )
        ->React.array}

@@ -1,16 +1,18 @@
+open RescriptSsg;
+
 let currentDir = Utils.getDirname();
 
 let () =
   Commands.start(
+    ~melangeArtifactsExtension=Pages.melangeArtifactsExtension,
     ~pageAppArtifactsType=Js,
     ~pages=Pages.pages,
-    ~webpackDevServerOptions={listenTo: Port(9007), proxy: None},
-    ~webpackMode=Development,
-    ~outputDir=Pages.outputDir,
-    ~projectRootDir=Path.join2(currentDir, "../../../"),
-    ~logLevel=Info,
     ~globalEnvValues=Pages.globalEnvValues,
-    ~webpackBundleAnalyzerMode=None,
+    ~outputDir=Pages.outputDir,
+    ~melangeOutputDir=Pages.melangeOutputDir,
+    ~projectRootDir=Pages.projectRootDir,
+    ~logLevel=Info,
     ~buildWorkersCount=1,
+    ~pageAppArtifactsSuffix=UnixTimestamp,
     (),
   );

@@ -1,4 +1,4 @@
-let modulePath = Utils.getFilepath();
+let modulePath = RescriptSsg.Utils.getFilepath();
 
 [@react.component]
 let make = (~data: option(PageContext.t)) =>
@@ -11,18 +11,9 @@ let make = (~data: option(PageContext.t)) =>
        | Some({string, int, float, bool, variant, polyVariant, option}) =>
          <ul>
            <li> "string: "->React.string string->React.string </li>
-           <li>
-             "int: "->React.string
-             {int->Belt.Int.toString->React.string}
-           </li>
-           <li>
-             "float: "->React.string
-             {float->Belt.Float.toString->React.string}
-           </li>
-           <li>
-             "bool: "->React.string
-             {bool->string_of_bool->React.string}
-           </li>
+           <li> "int: "->React.string {int->Belt.Int.toString->React.string} </li>
+           <li> "float: "->React.string {float->Belt.Float.toString->React.string} </li>
+           <li> "bool: "->React.string {bool->string_of_bool->React.string} </li>
            <li>
              "variant: "->React.string
              {switch ((variant: PageContext.variant)) {

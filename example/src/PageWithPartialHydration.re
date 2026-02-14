@@ -1,4 +1,4 @@
-let modulePath = Utils.getFilepath();
+let modulePath = RescriptSsg.Utils.getFilepath();
 
 module Local = {
   [@react.component]
@@ -8,18 +8,14 @@ module Local = {
 [@react.component]
 let make = () =>
   <>
-    <MetaTags
-      title="PageWithPartialHydration"
-      description="PageWithPartialHydration description"
-    />
+    <MetaTags title="PageWithPartialHydration" description="PageWithPartialHydration description" />
     <Header h1Text="PageWithPartialHydration" />
     <div> "THIS_SHOULD_NOT_BE_HYDRATED"->React.string </div>
-    <PartialHydration.WithHydration
-      moduleName="PageWithPartialHydration.Local">
+    <RescriptSsg.PartialHydration.WithHydration moduleName="PageWithPartialHydration.Local">
       <Local />
-    </PartialHydration.WithHydration>
-    <PartialHydration.WithHydration moduleName="Content">
+    </RescriptSsg.PartialHydration.WithHydration>
+    <RescriptSsg.PartialHydration.WithHydration moduleName="Content">
       <Content />
-    </PartialHydration.WithHydration>
+    </RescriptSsg.PartialHydration.WithHydration>
     <Footer />
   </>;

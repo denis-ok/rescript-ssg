@@ -18,8 +18,7 @@ type wrapperComponentWithData('data) = {
 
 type wrapperComponent =
   | WrapperWithChildren(React.element => React.element)
-  | WrapperWithDataAndChildren(wrapperComponentWithData('a))
-    : wrapperComponent;
+  | WrapperWithDataAndChildren(wrapperComponentWithData('a)): wrapperComponent;
 
 type hydrationMode =
   | FullHydration
@@ -65,43 +64,41 @@ let unsafeStringifyPropValue = data => {
 
 let wrapJsTextWithScriptTag = (jsText: string) => {j|<script>$(jsText)</script>|j};
 
-let globalValuesToScriptTag =
-    (globalValues: array((string, Js.Json.t))): string => {
+let globalValuesToScriptTag = (globalValues: array((string, Js.Json.t))): string => {
   globalValues
-  ->Js.Array.map(~f=((key, value)) => {
-      let keyS: string =
-        switch (Js.Json.stringifyAny(key)) {
-        | Some(key) => key
-        | None =>
-          Js.Console.error2(
-            "[globalValuesToScriptTag] Failed to stringify JSON (globalValues key). key:",
-            key,
-          );
-          Process.exit(1);
-        };
-      let valueS: string =
-        switch (Js.Json.stringifyAny(value)) {
-        | Some(value) => value
-        | None =>
-          Js.Console.error4(
-            "[globalValuesToScriptTag] Failed to stringify JSON (globalValues value). key:",
-            key,
-            "value:",
-            value,
-          );
-          Process.exit(1);
-        };
-      {j|globalThis[$(keyS)] = $(valueS)|j};
-    }, _)
+  ->Js.Array.map(
+      ~f=
+        ((key, value)) => {
+          let keyS: string =
+            switch (Js.Json.stringifyAny(key)) {
+            | Some(key) => key
+            | None =>
+              Js.Console.error2("[globalValuesToScriptTag] Failed to stringify JSON (globalValues key). key:", key);
+              Process.exit(1);
+            };
+          let valueS: string =
+            switch (Js.Json.stringifyAny(value)) {
+            | Some(value) => value
+            | None =>
+              Js.Console.error4(
+                "[globalValuesToScriptTag] Failed to stringify JSON (globalValues value). key:",
+                key,
+                "value:",
+                value,
+              );
+              Process.exit(1);
+            };
+          {j|globalThis[$(keyS)] = $(valueS)|j};
+        },
+      _,
+    )
   ->Js.Array.join(~sep="\n", _)
   ->wrapJsTextWithScriptTag;
 };
 
-let getArtifactsOutputDir = (~outputDir) =>
-  Path.join2(outputDir, "artifacts");
+let getArtifactsOutputDir = (~outputDir) => Path.join2(outputDir, "artifacts");
 
-let pagePathToPageAppModuleName =
-    (~pageAppArtifactsSuffix, ~pagePath, ~moduleName) => {
+let pagePathToPageAppModuleName = (~pageAppArtifactsSuffix, ~pagePath, ~moduleName) => {
   let modulePrefix =
     pagePath
     ->Js.String.replaceByRe(~regexp=[%re {|/\//g|}], ~replacement="", _)
@@ -132,16 +129,14 @@ let renderHtmlTemplate =
     switch (hydrationMode) {
     | FullHydration => pageElement
     | PartialHydration =>
-      <PartialHydration.WithHydrationContext.Provider
-        modulesWithHydration__Mutable>
+      <PartialHydration.WithHydrationContext.Provider modulesWithHydration__Mutable>
         pageElement
       </PartialHydration.WithHydrationContext.Provider>
     };
 
   let html = ReactDOMServer.renderToString(pageElement);
 
-  let Emotion.Server.{html: renderedHtml, css, ids} =
-    Emotion.Server.extractCritical(html);
+  let Emotion.Server.{html: renderedHtml, css, ids} = Emotion.Server.extractCritical(html);
 
   let emotionIds = ids->Js.Array.join(~sep=" ", _);
 
@@ -154,11 +149,7 @@ let renderHtmlTemplate =
     switch (headCssFilepaths) {
     | [||] => None
     | cssFiles =>
-      Some(
-        cssFiles
-        ->Js.Array.map(~f=filepath => Fs.readFileSyncAsUtf8(filepath), _)
-        ->Js.Array.join(~sep="\n", _),
-      )
+      Some(cssFiles->Js.Array.map(~f=filepath => Fs.readFileSyncAsUtf8(filepath), _)->Js.Array.join(~sep="\n", _))
     };
 
   let headCssStyleTag =
@@ -167,7 +158,7 @@ let renderHtmlTemplate =
     | Some(css) => "<style>" ++ css ++ "</style>"
     };
 
-  let helmet = ReactHelmet.renderStatic();
+  let helmet = ReasonReactHelmet.renderStatic();
 
   let htmlAttributes = helmet.htmlAttributes.toString();
   let title = helmet.title.toString();
@@ -177,8 +168,7 @@ let renderHtmlTemplate =
   let noscript = helmet.noscript.toString();
   let style = helmet.style.toString();
   let bodyAttributes = helmet.bodyAttributes.toString();
-  let scriptTagWithGlobalValues: string =
-    globalValuesToScriptTag(globalValues);
+  let scriptTagWithGlobalValues: string = globalValuesToScriptTag(globalValues);
   let headScript: string = headScripts->groupScripts;
   let bodyScript: string = bodyScripts->groupScripts;
 
@@ -213,18 +203,13 @@ type processedDataProp = {
 let pageWrappersDataDirname = "__pageWrappersData";
 
 module ReasonArtifact = {
-  let renderReactAppTemplate =
-      (
-        ~importPageWrapperDataString="",
-        ~importPageDataString="",
-        elementString: string,
-      ) => {
+  let renderReactAppTemplate = (~importPageWrapperDataString="", ~importPageDataString="", elementString: string) => {
     {j|
 $(importPageWrapperDataString)
 $(importPageDataString)
 
 switch (ReactDOM.querySelector("#root")) {
-| Some(root) => ReactDOM.hydrate($(elementString), root)
+| Some(root) => ReactDOM.Client.hydrateRoot(root, $(elementString))->ignore
 | None => ()
 };
 |j};
@@ -243,11 +228,7 @@ switch (ReactDOM.querySelector("#root")) {
   };
 
   let makeStringToImportJsFileFromReason =
-      (
-        ~pageDataType: PageData.t,
-        ~jsDataFilename: string,
-        ~relativePathToDataDir: string,
-      ) => {
+      (~pageDataType: PageData.t, ~jsDataFilename: string, ~relativePathToDataDir: string) => {
     let valueName = PageData.toValueName(pageDataType);
     {j|
 type $(valueName);
@@ -275,8 +256,7 @@ type $(valueName);
         switch (melangePageOutputDir) {
         | None => "."
         | Some(melangePageOutputDir) =>
-          let relativePath =
-            Path.relative(~from=melangePageOutputDir, ~to_=pageOutputDir);
+          let relativePath = Path.relative(~from=melangePageOutputDir, ~to_=pageOutputDir);
           relativePath;
         }
 
@@ -300,12 +280,7 @@ type $(valueName);
 
     let jsDataFilename = moduleName ++ "_Data_" ++ propDataHash ++ ".mjs";
 
-    let importString =
-      makeStringToImportJsFileFromReason(
-        ~pageDataType,
-        ~relativePathToDataDir,
-        ~jsDataFilename,
-      );
+    let importString = makeStringToImportJsFileFromReason(~pageDataType, ~relativePathToDataDir, ~jsDataFilename);
 
     let jsDataFileContent = {j|export const data = $(stringifiedData)|j};
 
@@ -347,14 +322,7 @@ type $(valueName);
       | ComponentWithData({component, data}) =>
         let pageDataType = PageData.PageData;
         let dataPropString = makeDataPropString(pageDataType);
-        let elementString =
-          "<"
-          ++ pageModuleName
-          ++ " "
-          ++ dataPropName
-          ++ "="
-          ++ dataPropString
-          ++ " />";
+        let elementString = "<" ++ pageModuleName ++ " " ++ dataPropName ++ "=" ++ dataPropString ++ " />";
 
         let element = component(data);
 
@@ -389,8 +357,7 @@ type $(valueName);
       | WrapperWithChildren(f) =>
         let wrapperOpenTag = "<" ++ wrapperModuleName ++ ">";
         let wrapperCloseTag = "</" ++ wrapperModuleName ++ ">";
-        let wrappedElementString =
-          wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+        let wrappedElementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
 
         let wrappedElement = f(element);
 
@@ -403,17 +370,9 @@ type $(valueName);
       | WrapperWithDataAndChildren({component, data}) =>
         let pageDataType = PageData.PageWrapperData;
         let dataPropString = makeDataPropString(pageDataType);
-        let wrapperOpenTag =
-          "<"
-          ++ wrapperModuleName
-          ++ " "
-          ++ dataPropName
-          ++ "="
-          ++ dataPropString
-          ++ " >";
+        let wrapperOpenTag = "<" ++ wrapperModuleName ++ " " ++ dataPropName ++ "=" ++ dataPropString ++ " >";
         let wrapperCloseTag = "</" ++ wrapperModuleName ++ ">";
-        let wrappedElementString =
-          wrapperOpenTag ++ elementString ++ wrapperCloseTag;
+        let wrappedElementString = wrapperOpenTag ++ elementString ++ wrapperCloseTag;
 
         let wrappedElement = component(data, element);
 
@@ -439,12 +398,7 @@ type $(valueName);
 };
 
 module JsArtifact = {
-  let renderElementTemplate =
-      (
-        ~componentName,
-        ~dataProp: option(string),
-        ~childrenProp: option(string),
-      ) => {
+  let renderElementTemplate = (~componentName, ~dataProp: option(string), ~childrenProp: option(string)) => {
     let dataPropString: string =
       switch (dataProp) {
       | None => "undefined"
@@ -456,7 +410,7 @@ module JsArtifact = {
       | Some(childrenProp) => childrenProp
       };
     {j|
-React.createElement($(componentName).make, {
+JsxRuntime.jsx($(componentName).make, {
   data: $(dataPropString),
   children: $(childrenPropString),
 })
@@ -479,12 +433,7 @@ React.createElement($(componentName).make, {
         (dataPropImport, Some(dataValueName));
       };
 
-    let pageElement =
-      renderElementTemplate(
-        ~componentName="Page",
-        ~dataProp=pageDataProp,
-        ~childrenProp=None,
-      );
+    let pageElement = renderElementTemplate(~componentName="Page", ~dataProp=pageDataProp, ~childrenProp=None);
 
     let (pageWrapperImport, pageWrapperDataImport, elementString) =
       switch (pageWrapperArtifactPath) {
@@ -494,11 +443,7 @@ React.createElement($(componentName).make, {
         switch (pageWrapperDataPath) {
         | None =>
           let pageWrapperElement =
-            renderElementTemplate(
-              ~componentName="PageWrapper",
-              ~dataProp=None,
-              ~childrenProp=Some(pageElement),
-            );
+            renderElementTemplate(~componentName="PageWrapper", ~dataProp=None, ~childrenProp=Some(pageElement));
           (pageWrapperImport, "", pageWrapperElement);
         | Some(pageWrapperDataPath) =>
           let dataPropImport = {j|import {data as pageWrapperData} from "$(pageWrapperDataPath)";|j};
@@ -514,8 +459,8 @@ React.createElement($(componentName).make, {
       };
 
     {j|
-import * as React from "react";
-import * as ReactDom from "react-dom";
+import * as Client from "react-dom/client";
+import * as JsxRuntime from "react/jsx-runtime";
 import * as Page from "$(pageArtifactPath)";
 $(pageDataImport)
 $(pageWrapperImport)
@@ -523,8 +468,8 @@ $(pageWrapperDataImport)
 
 const root = document.querySelector("#root");
 
-if (root !== null) {
-  ReactDom.hydrate($(elementString), root);
+if (!(root == null)) {
+  Client.hydrateRoot(root, $(elementString));
 }
 |j};
   };
@@ -536,13 +481,7 @@ if (root !== null) {
   };
 
   let makeProcessedDataProp =
-      (
-        ~data: 'a,
-        ~pageDataType: PageData.t,
-        ~moduleName: string,
-        ~pageOutputDir: string,
-        ~pageWrappersDataDir,
-      )
+      (~data: 'a, ~pageDataType: PageData.t, ~moduleName: string, ~pageOutputDir: string, ~pageWrappersDataDir)
       : processedDataProp => {
     let stringifiedData = unsafeStringifyPropValue(data);
 
@@ -558,7 +497,10 @@ if (root !== null) {
       | PageWrapperData => Path.join2(pageWrappersDataDir, jsDataFilename)
       };
 
-    {jsDataFileContent, jsDataFilepath};
+    {
+      jsDataFileContent,
+      jsDataFilepath,
+    };
   };
 
   let processPageComponentWithWrapperJs =
@@ -596,13 +538,21 @@ if (root !== null) {
       };
 
     switch (pageWrapper) {
-    | None => {element, pageDataProp, pageWrapperDataProp: None}
+    | None => {
+        element,
+        pageDataProp,
+        pageWrapperDataProp: None,
+      }
     | Some({component, modulePath}) =>
       let wrapperModuleName = Utils.getModuleNameFromModulePath(modulePath);
       switch (component) {
       | WrapperWithChildren(f) =>
         let wrappedElement = f(element);
-        {element: wrappedElement, pageDataProp, pageWrapperDataProp: None};
+        {
+          element: wrappedElement,
+          pageDataProp,
+          pageWrapperDataProp: None,
+        };
       | WrapperWithDataAndChildren({component, data}) =>
         let pageDataType = PageData.PageWrapperData;
         let wrappedElement = component(data, element);
@@ -626,6 +576,7 @@ if (root !== null) {
 
 let buildPageHtmlAndReactApp =
     (
+      ~melangeArtifactsExtension: string,
       ~pageAppArtifactsType: pageAppArtifactsType,
       ~outputDir: string,
       ~melangeOutputDir: option(string),
@@ -647,38 +598,24 @@ let buildPageHtmlAndReactApp =
     switch (melangeOutputDir) {
     | None => None
     | Some(melangeOutputDir) =>
-      let melangeArtifactsOutputDir =
-        getArtifactsOutputDir(~outputDir=melangeOutputDir);
+      let melangeArtifactsOutputDir = getArtifactsOutputDir(~outputDir=melangeOutputDir);
       Some(Path.join2(melangeArtifactsOutputDir, pagePath));
     };
 
-  let pageWrappersDataDir =
-    Path.join2(artifactsOutputDir, pageWrappersDataDirname);
+  let pageWrappersDataDir = Path.join2(artifactsOutputDir, pageWrappersDataDirname);
 
   logger.debug(() =>
-    Js.log(
-      {j|[PageBuilder.buildPageHtmlAndReactApp] Building page module: $(moduleName), page path: $(pagePath)|j},
-    )
+    Js.log({j|[PageBuilder.buildPageHtmlAndReactApp] Building page module: $(moduleName), page path: $(pagePath)|j})
   );
 
-  logger.debug(() =>
-    Js.log2(
-      "[PageBuilder.buildPageHtmlAndReactApp] Output dir for page: ",
-      pageOutputDir,
-    )
-  );
+  logger.debug(() => Js.log2("[PageBuilder.buildPageHtmlAndReactApp] Output dir for page: ", pageOutputDir));
 
   let modulesWithHydration__Mutable = [||];
 
   let (resultHtml, resultReactApp, pageDataProp, pageWrapperDataProp) =
     switch (pageAppArtifactsType) {
     | Reason =>
-      let {
-        ReasonArtifact.element,
-        elementString,
-        pageDataProp,
-        pageWrapperDataProp,
-      } =
+      let {ReasonArtifact.element, elementString, pageDataProp, pageWrapperDataProp} =
         ReasonArtifact.processPageComponentWithWrapper(
           ~pageComponent=page.component,
           ~pageWrapper=page.pageWrapper,
@@ -701,16 +638,11 @@ let buildPageHtmlAndReactApp =
         switch (page.hydrationMode) {
         | FullHydration =>
           ReasonArtifact.renderReactAppTemplate(
-            ~importPageWrapperDataString=?
-              Belt.Option.map(pageWrapperDataProp, v => v.importString),
-            ~importPageDataString=?
-              Belt.Option.map(pageDataProp, v => v.importString),
+            ~importPageWrapperDataString=?Belt.Option.map(pageWrapperDataProp, v => v.importString),
+            ~importPageDataString=?Belt.Option.map(pageDataProp, v => v.importString),
             elementString,
           )
-        | PartialHydration =>
-          PartialHydration.renderReactAppTemplate(
-            ~modulesWithHydration__Mutable,
-          )
+        | PartialHydration => PartialHydration.renderReactAppTemplate(~modulesWithHydration__Mutable)
         };
       (
         resultHtml,
@@ -762,26 +694,17 @@ let buildPageHtmlAndReactApp =
       (resultHtml, resultReactApp, pageDataProp, pageWrapperDataProp);
     };
 
-  let pageAppModuleName =
-    pagePathToPageAppModuleName(
-      ~pageAppArtifactsSuffix,
-      ~pagePath,
-      ~moduleName,
-    );
+  let pageAppModuleName = pagePathToPageAppModuleName(~pageAppArtifactsSuffix, ~pagePath, ~moduleName);
 
   let resultHtmlPath = Path.join2(pageOutputDir, "index.html");
 
   let mkDirPromises =
     [|
       Fs.Promises.mkDir(pageOutputDir, {recursive: true})
-      ->Promise.Result.catch(
-          ~context=
-            "[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageOutputDir)]",
-        ),
+      ->Promise.catchResult(~context="[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageOutputDir)]"),
       Fs.Promises.mkDir(pageWrappersDataDir, {recursive: true})
-      ->Promise.Result.catch(
-          ~context=
-            "[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageWrappersDataDir)]",
+      ->Promise.catchResult(
+          ~context="[PageBuilder.buildPageHtmlAndReactApp] [Fs.Promises.mkDir(pageWrappersDataDir)]",
         ),
     |]
     ->Promise.all
@@ -799,43 +722,27 @@ let buildPageHtmlAndReactApp =
 
       let resultHtmlFilePromise =
         Fs.Promises.writeFile(~path=resultHtmlPath, ~data=resultHtml)
-        ->Promise.Result.catch(
-            ~context=
-              "[PageBuilder.buildPageHtmlAndReactApp] [resultHtmlFilePromise]",
-          );
+        ->Promise.catchResult(~context="[PageBuilder.buildPageHtmlAndReactApp] [resultHtmlFilePromise]");
 
       let resultReactAppFilePromise =
-        Fs.Promises.writeFile(
-          ~path=Path.join2(pageOutputDir, reactAppFilename),
-          ~data=resultReactApp,
-        )
-        ->Promise.Result.catch(
-            ~context=
-              "[PageBuilder.buildPageHtmlAndReactApp] [resultReactAppFilePromise]",
-          );
+        Fs.Promises.writeFile(~path=Path.join2(pageOutputDir, reactAppFilename), ~data=resultReactApp)
+        ->Promise.catchResult(~context="[PageBuilder.buildPageHtmlAndReactApp] [resultReactAppFilePromise]");
 
       let jsFilesPromises =
         [|pageWrapperDataProp, pageDataProp|]
-        ->Js.Array.map(~f=data =>
-            switch (data) {
-            | None => Promise.resolve(Belt.Result.Ok())
-            | Some({jsDataFileContent, jsDataFilepath, _}) =>
-              Fs.Promises.writeFile(
-                ~path=jsDataFilepath,
-                ~data=jsDataFileContent,
-              )
-              ->Promise.Result.catch(
-                  ~context=
-                    "[PageBuilder.buildPageHtmlAndReactApp] [jsFilesPromises]",
-                )
-            },
-          _);
+        ->Js.Array.map(
+            ~f=
+              data =>
+                switch (data) {
+                | None => Promise.resolve(Belt.Result.Ok())
+                | Some({jsDataFileContent, jsDataFilepath, _}) =>
+                  Fs.Promises.writeFile(~path=jsDataFilepath, ~data=jsDataFileContent)
+                  ->Promise.catchResult(~context="[PageBuilder.buildPageHtmlAndReactApp] [jsFilesPromises]")
+                },
+            _,
+          );
 
-      let promises =
-        Js.Array.concat(
-          ~other=jsFilesPromises,
-          [|resultHtmlFilePromise, resultReactAppFilePromise|]
-        );
+      let promises = Js.Array.concat(~other=jsFilesPromises, [|resultHtmlFilePromise, resultReactAppFilePromise|]);
 
       promises->Promise.all->Promise.Result.all;
     });
@@ -843,12 +750,11 @@ let buildPageHtmlAndReactApp =
   writeFilePromises->Promise.Result.map(_createdFiles => {
     let compiledReactAppFilename =
       switch (pageAppArtifactsType) {
-      | Reason => ".bs.js"
+      | Reason => "." ++ melangeArtifactsExtension
       | Js => ".mjs"
       };
 
-    let compiledReactAppFilename =
-      pageAppModuleName ++ compiledReactAppFilename;
+    let compiledReactAppFilename = pageAppModuleName ++ compiledReactAppFilename;
 
     let renderedPage: RenderedPage.t = {
       path: page.path,
@@ -856,22 +762,14 @@ let buildPageHtmlAndReactApp =
         switch (pageAppArtifactsType) {
         | Js => Path.join2(pageOutputDir, compiledReactAppFilename)
         | Reason =>
-          Path.join2(
-            melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir),
-            compiledReactAppFilename,
-          )
+          Path.join2(melangePageOutputDir->Belt.Option.getWithDefault(pageOutputDir), compiledReactAppFilename)
         };
       },
       outputDir: pageOutputDir,
       htmlTemplatePath: resultHtmlPath,
     };
 
-    logger.debug(() =>
-      Js.log2(
-        "[PageBuilder.buildPageHtmlAndReactApp] Build finished: ",
-        moduleName,
-      )
-    );
+    logger.debug(() => Js.log2("[PageBuilder.buildPageHtmlAndReactApp] Build finished: ", moduleName));
 
     renderedPage;
   });

@@ -1,6 +1,9 @@
 let makeMinimalPrintablePageObj = (~pagePath: PagePath.t, ~pageModulePath) => {
   let pagePath = PagePath.toString(pagePath);
-  {"Page path": pagePath, "Page module path": pageModulePath};
+  {
+    "Page path": pagePath,
+    "Page module path": pageModulePath,
+  };
 };
 
 type level =

@@ -24,20 +24,16 @@ module Plugin = {
   let watchModePlugin = {
     name: "watchPlugin",
     setup: buildCallbacks => {
-      buildCallbacks.onEnd(_buildResult =>
-        Js.log("[Esbuild] Rebuild finished!")
-      );
+      buildCallbacks.onEnd(_buildResult => Js.log("[Esbuild] Rebuild finished!"));
     },
   };
 };
 
 [@mel.module "esbuild"] external esbuild: esbuild = "default";
 
-[@mel.send]
-external build': (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
+[@mel.send] external build': (esbuild, Js.t('a)) => Promise.t(buildResult) = "build";
 
-[@mel.send]
-external context: (esbuild, Js.t('a)) => Promise.t(context) = "context";
+[@mel.send] external context: (esbuild, Js.t('a)) => Promise.t(context) = "context";
 
 [@mel.send] external watch: (context, unit) => Promise.t(unit) = "watch";
 
@@ -55,8 +51,7 @@ type serveResult = {
   port: int,
 };
 
-[@mel.send]
-external serve: (context, serveOptions) => Promise.t(serveResult) = "serve";
+[@mel.send] external serve: (context, serveOptions) => Promise.t(serveResult) = "serve";
 
 module HtmlPlugin = {
   // https://github.com/craftamap/esbuild-plugin-html/blob/b74debfe7f089a4f073f5a0cf9bbdb2e59370a7c/src/index.ts#L8
@@ -68,8 +63,7 @@ module HtmlPlugin = {
     scriptLoading: string,
   };
 
-  [@mel.module "@craftamap/esbuild-plugin-html"]
-  external make: (. options) => Plugin.t = "htmlPlugin";
+  [@mel.module "@craftamap/esbuild-plugin-html"] external make: (. options) => Plugin.t = "htmlPlugin";
 };
 
 module LogLevel = {
@@ -101,70 +95,70 @@ let makeConfig =
       ~logOverride: Js.Dict.t(LogLevel.t),
       ~logLevel: LogLevel.t,
       ~logLimit: int,
-    ) =>
+    ) => {
   // https://esbuild.github.io/api/
-  {
-    "entryPoints": renderedPages->Js.Array.map(~f=(page: RenderedPage.t) => page.entryPath, _),
-    "entryNames": Bundler.assetsDirname ++ "/" ++ "js/[dir]/[name]-[hash]",
-    "chunkNames": Bundler.assetsDirname ++ "/" ++ "js/_chunks/[name]-[hash]",
-    "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
-    "outdir": Bundler.getOutputDir(~outputDir),
-    "publicPath": Bundler.assetPrefix,
-    "format": "esm",
-    "bundle": true,
-    "minify": {
-      switch (mode) {
-      | Build => true
-      | Watch => false
-      };
-    },
-    "metafile": true,
-    "splitting": true,
-    "treeShaking": true,
-    "logLimit": logLimit,
-    "logLevel": logLevel->LogLevel.toString,
-    "logOverride": {
-      let logOverride: Js.Dict.t(string) =
-        logOverride
-        ->Js.Dict.entries
-        ->Js.Array.map(~f=((error, logLevel)) =>
-            (error, logLevel->LogLevel.toString)
-          , _)
-        ->Js.Dict.fromArray;
-      logOverride;
-    },
-    "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
-    "loader": {
-      Bundler.assetFileExtensionsWithoutCss
-      ->Js.Array.map(~f=ext => {("." ++ ext, "file")}, _)
+
+  "entryPoints": renderedPages->Js.Array.map(~f=(page: RenderedPage.t) => page.entryPath, _),
+  "entryNames": Bundler.assetsDirname ++ "/" ++ "js/[dir]/[name]-[hash]",
+  "chunkNames": Bundler.assetsDirname ++ "/" ++ "js/_chunks/[name]-[hash]",
+  "assetNames": Bundler.assetsDirname ++ "/" ++ "[name]-[hash]",
+  "outdir": Bundler.getOutputDir(~outputDir),
+  "publicPath": Bundler.assetPrefix,
+  "format": "esm",
+  "bundle": true,
+  "minify": {
+    switch (mode) {
+    | Build => true
+    | Watch => false
+    };
+  },
+  "metafile": true,
+  "splitting": true,
+  "treeShaking": true,
+  "logLimit": logLimit,
+  "logLevel": logLevel->LogLevel.toString,
+  "logOverride": {
+    let logOverride: Js.Dict.t(string) =
+      logOverride
+      ->Js.Dict.entries
+      ->Js.Array.map(~f=((error, logLevel)) => (error, logLevel->LogLevel.toString), _)
       ->Js.Dict.fromArray;
-    },
-    "plugins": {
-      let htmlPluginFiles =
-        renderedPages->Js.Array.map(~f=(renderedPage: RenderedPage.t) => {
-          let pagePath = renderedPage.path->PagePath.toString;
+    logOverride;
+  },
+  "define": Bundler.getGlobalEnvValuesDict(globalEnvValues),
+  "loader": {
+    Bundler.assetFileExtensionsWithoutCss->Js.Array.map(~f=ext => {("." ++ ext, "file")}, _)->Js.Dict.fromArray;
+  },
+  "plugins": {
+    // entryPoint must be relative path to the root of user's project
+    // filename field, which if actually a path will be relative to "outdir".
+    let htmlPluginFiles =
+      renderedPages->Js.Array.map(
+                       ~f=
+                         (renderedPage: RenderedPage.t) => {
+                           let pagePath = renderedPage.path->PagePath.toString;
 
-          // entryPoint must be relative path to the root of user's project
-          let entryPathRelativeToProjectRoot =
-            Path.relative(~from=projectRootDir, ~to_=renderedPage.entryPath);
+                           let entryPathRelativeToProjectRoot =
+                             Path.relative(~from=projectRootDir, ~to_=renderedPage.entryPath);
 
-          {
-            // filename field, which if actually a path will be relative to "outdir".
-            HtmlPlugin.filename: pagePath ++ "/index.html",
-            entryPoints: [|entryPathRelativeToProjectRoot|],
-            htmlTemplate: renderedPage.htmlTemplatePath,
-            scriptLoading: "module",
-          };
-        }, _);
+                           {
+                             HtmlPlugin.filename: pagePath ++ "/index.html",
+                             entryPoints: [|entryPathRelativeToProjectRoot|],
+                             htmlTemplate: renderedPage.htmlTemplatePath,
+                             scriptLoading: "module",
+                           };
+                         },
+                       _,
+                     );
 
-      let htmlPlugin = HtmlPlugin.make(. {files: htmlPluginFiles});
+    let htmlPlugin = HtmlPlugin.make(. {files: htmlPluginFiles});
 
-      switch (mode) {
-      | Build => [|htmlPlugin|]
-      | Watch => [|htmlPlugin, Plugin.watchModePlugin|]
-      };
-    },
-  };
+    switch (mode) {
+    | Build => [|htmlPlugin|]
+    | Watch => [|htmlPlugin, Plugin.watchModePlugin|]
+    };
+  },
+};
 
 let build =
     (
@@ -206,10 +200,7 @@ let build =
       )
     })
   ->Promise.catch(error => {
-      Js.Console.error2(
-        "[Esbuild] Build failed! Promise.catch:",
-        error->Util.inspect,
-      );
+      Js.Console.error2("[Esbuild] Build failed! Promise.catch:", error->Util.inspect);
       Process.exit(1);
     });
 };
@@ -249,10 +240,11 @@ let watchAndServe =
     Js.log("[Esbuild] Stopping esbuild...");
 
     Js.Global.setTimeout(
-      ~f=() => {
-        Js.log("[Esbuild] Failed to gracefully shutdown.");
-        Process.exit(1);
-      },
+      ~f=
+        () => {
+          Js.log("[Esbuild] Failed to gracefully shutdown.");
+          Process.exit(1);
+        },
       GracefulShutdown.gracefulShutdownTimeout,
     )
     ->ignore;
@@ -272,7 +264,10 @@ let watchAndServe =
   ->Promise.flatMap(() => {
       Js.Console.timeStart(serveDurationLabel);
       contextPromise->Promise.flatMap(context =>
-        context->serve({port, servedir: Some(config##outdir)})
+        context->serve({
+          port,
+          servedir: Some(config##outdir),
+        })
       );
     })
   ->Promise.map(serveResult => {
@@ -304,8 +299,7 @@ type metafile = {inputs: Js.Dict.t(input)};
 external unsafeJsonToMetafile: Js.Json.t => metafile = "%identity";
 
 let getModuleDependencies =
-    (~exitOnError, ~projectRootDir: string, ~modulePath: string)
-    : Js.Promise.t(array(string)) => {
+    (~exitOnError, ~projectRootDir: string, ~modulePath: string): Js.Promise.t(array(string)) => {
   let config = {
     "entryPoints": [|modulePath|],
     // Outdir technically isn't used because "write" is false, but esbuild has complaints without it
@@ -319,9 +313,7 @@ let getModuleDependencies =
     "treeShaking": false,
     "logLevel": LogLevel.toString(Silent),
     "loader": {
-      Bundler.assetFileExtensionsWithoutCss
-      ->Js.Array.map(~f=ext => {("." ++ ext, "file")}, _)
-      ->Js.Dict.fromArray;
+      Bundler.assetFileExtensionsWithoutCss->Js.Array.map(~f=ext => {("." ++ ext, "file")}, _)->Js.Dict.fromArray;
     },
   };
 

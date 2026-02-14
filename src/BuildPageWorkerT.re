@@ -30,6 +30,7 @@ type workerPage = {
 };
 
 type workerData = {
+  melangeArtifactsExtension: string,
   pageAppArtifactsType: PageBuilder.pageAppArtifactsType,
   outputDir: string,
   melangeOutputDir: option(string),

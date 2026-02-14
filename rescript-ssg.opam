@@ -1,0 +1,43 @@
+opam-version: "2.0"
+name: "rescript-ssg"
+synopsis: "Rescript React static site generator"
+maintainer: "Denis Strelkov <strelkov.d.d@gmail.com>"
+authors: "Denis Strelkov <strelkov.d.d@gmail.com>"
+homepage: "https://github.com/denis-ok/rescript-ssg/"
+doc: "https://github.com/denis-ok/rescript-ssg/"
+bug-reports: "https://github.com/denis-ok/rescript-ssg/issues"
+dev-repo: "git+https://github.com/denis-ok/rescript-ssg.git"
+depends: [
+  "dune" {>= "3.20.2"}
+  "ocaml"
+  "melange"
+  "melange-fest" {with-dev-setup}
+  "reason" 
+  "reason-react" 
+  "reason-react-ppx"
+  "server-reason-react" 
+  "styled-ppx"
+  "ocamlformat" {with-dev-setup}
+  "ocaml-lsp-server" {with-dev-setup}
+  # "opam-check-npm-deps" {with-dev-setup}
+  "odoc" {with-dev-setup}
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]
+pin-depends: [
+  ["melange-fest.dev" "git+https://github.com/ahrefs/melange-fest.git#2b805fddfdcfcb659215a02bc837549977ebbe07"]
+  ["styled-ppx.dev" "git+https://github.com/davesnx/styled-ppx.git#aa0d3c533ea88418cd0fb82e13adbc59b6d4dfd3"]
+  ["server-reason-react.dev" "git+https://github.com/ml-in-barcelona/server-reason-react#6f43db0583e70d567266b3eb0156076802b790eb"]
+]

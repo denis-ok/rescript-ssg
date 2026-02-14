@@ -1,9 +1,13 @@
+open RescriptSsg;
+
 // It's more reliable to have a constant for the project root directory and build paths relative to it
 // instead of building paths relative to the directory of the current module.
 // In the case of Melange, JS files are emitted to a different directory with a different nesting structure
 // which can lead to issues. So better to use project root dir as the base.
 
 external projectRootDir': option(string) = "process.env.PROJECT_ROOT_DIR";
+
+let melangeArtifactsExtension = "mel.mjs";
 
 let projectRootDir =
   switch (projectRootDir') {
@@ -15,20 +19,15 @@ let projectRootDir =
 
 let outputDir = Path.join2(projectRootDir, "example/build");
 
-let normalizeCssFilePath =
-  Path.join2(projectRootDir, "example/src/css/normalize.css");
+let melangeOutputDir = Path.join2(projectRootDir, "_build/default/all/example/build");
 
-let globalEnvValues = [|
-  ("process.env.ENV_VAR", Env.envVar),
-  ("GLOBAL_VAR", "BAR"),
-|];
+let normalizeCssFilePath = Path.join2(projectRootDir, "example/src/css/normalize.css");
+
+let globalEnvValues = [|("process.env.ENV_VAR", Env.envVar), ("GLOBAL_VAR", "BAR")|];
 
 let wrapperWithoutData: PageBuilder.pageWrapper = (
   {
-    PageBuilder.component:
-      WrapperWithChildren(
-        children => <WrapperWithoutData> children </WrapperWithoutData>,
-      ),
+    PageBuilder.component: WrapperWithChildren(children => <WrapperWithoutData> children </WrapperWithoutData>),
     modulePath: WrapperWithoutData.modulePath,
   }: PageBuilder.pageWrapper
 );
@@ -37,8 +36,7 @@ let wrapperWithData: PageBuilder.pageWrapper = (
   {
     component:
       WrapperWithDataAndChildren({
-        component: (data, children) =>
-          <WrapperWithData data> children </WrapperWithData>,
+        component: (data, children) => <WrapperWithData data> children </WrapperWithData>,
         data: "LALA \"escaped quotes\"",
       }),
     modulePath: WrapperWithData.modulePath,
@@ -54,10 +52,7 @@ let pageWithoutData: PageBuilder.page = (
     headCssFilepaths: [|normalizeCssFilePath|],
     path: Path([|Page.toSlug(PageWithoutData)|]),
     globalValues:
-      Some([|
-        ("PER_PAGE_GLOBAL_1", "ONE!"->Js.Json.string),
-        ("PER_PAGE_GLOBAL_2", "TWO!"->Js.Json.string),
-      |]),
+      Some([|("PER_PAGE_GLOBAL_1", "ONE!"->Js.Json.string), ("PER_PAGE_GLOBAL_2", "TWO!"->Js.Json.string)|]),
     headScripts: [||],
     bodyScripts: [||],
   }: PageBuilder.page
@@ -156,7 +151,10 @@ let pageWithoutHydration: PageBuilder.page = (
 );
 
 let pages = [|
-  {...pageWithoutData, path: Root},
+  {
+    ...pageWithoutData,
+    path: Root,
+  },
   pageWithoutData,
   pageWithoutDataAndWrapperWithoutData,
   pageWithoutDataAndWrapperWithData,
@@ -172,18 +170,17 @@ let pages = [|
 let fakeExtralanguages = [|"es"|];
 
 let localizedPages =
-  Js.Array2.map(fakeExtralanguages, language =>
-    Js.Array2.map(pages, page =>
+  Js.Array.map(fakeExtralanguages, ~f=language =>
+    Js.Array.map(pages, ~f=(page: RescriptSsg.PageBuilder.page) =>
       {
         ...page,
         path:
           switch (page.path) {
           | Root => Path([|language|])
-          | Path(segments) =>
-            Path(Js.Array2.concat([|language|], segments))
+          | Path(segments) => Path(Js.Array.concat(~other=[|language|], segments))
           },
       }
     )
   );
 
-let pages = Js.Array2.concat([|pages|], localizedPages);
+let pages = Js.Array.concat(~other=[|pages|], localizedPages);
